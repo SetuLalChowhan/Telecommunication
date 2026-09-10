@@ -22,6 +22,10 @@ export class UpdateDoctorProfileDto {
   @Min(0)
   fee?: number;
 
+  @IsOptional()
+  @IsString()
+  slug?: string;
+
   /**
    * Full replacement list of specialty IDs for this doctor.
    * Pass an empty array to clear all specialties.

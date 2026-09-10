@@ -139,21 +139,21 @@ export class DoctorController {
     return this.doctorService.deleteDayOff(userId, dayOffId);
   }
 
-  @Get(':id/availability')
+  @Get(':idOrSlug/availability')
   @ResponseMessage('Doctor availability fetched successfully')
-  getPublicDoctorAvailability(@Param('id') id: string) {
-    return this.doctorService.getPublicDoctorAvailability(id);
+  getPublicDoctorAvailability(@Param('idOrSlug') idOrSlug: string) {
+    return this.doctorService.getPublicDoctorAvailability(idOrSlug);
   }
 
-  @Get(':id/days-off')
+  @Get(':idOrSlug/days-off')
   @ResponseMessage('Doctor days off fetched successfully')
-  getPublicDoctorDaysOff(@Param('id') id: string) {
-    return this.doctorService.getPublicDoctorDaysOff(id);
+  getPublicDoctorDaysOff(@Param('idOrSlug') idOrSlug: string) {
+    return this.doctorService.getPublicDoctorDaysOff(idOrSlug);
   }
 
-  @Get(':id')
+  @Get(':idOrSlug')
   @ResponseMessage('Doctor profile fetched successfully')
-  getPublicDoctorById(@Param('id') id: string) {
-    return this.doctorService.getPublicDoctorById(id);
+  getPublicDoctorById(@Param('idOrSlug') idOrSlug: string) {
+    return this.doctorService.getPublicDoctorById(idOrSlug);
   }
 }

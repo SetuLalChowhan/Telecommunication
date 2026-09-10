@@ -3,9 +3,10 @@ import { prismaAdapter } from 'better-auth/adapters/prisma';
 
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
+import pg from 'pg';
 
 import { sendEmail } from './email.js';
-import pg from 'pg';
+import { generateDoctorSlug } from '../common/utils/slug.utils.js';
 
 const authPool = new pg.Pool({
   connectionString: process.env.DATABASE_URL!,
@@ -41,8 +42,9 @@ export const auth = betterAuth({
       create: {
         after: async (user) => {
           if (user.role === 'DOCTOR') {
+            const initialSlug = generateDoctorSlug(user.name, user.id);
             await prisma.doctorProfile.create({
-              data: { userId: user.id, fee: 0 },
+              data: { userId: user.id, fee: 0, slug: initialSlug },
             });
           } else if (user.role === 'PATIENT') {
             await prisma.patientProfile.create({

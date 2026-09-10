@@ -73,13 +73,18 @@ export class AppointmentsService {
   async getAvailableSlots(query: SlotQueryDto) {
     const { doctorId, date } = query;
 
-    const doctor = await this.prisma.doctorProfile.findUnique({
-      where: { id: doctorId },
+    const doctor = await this.prisma.doctorProfile.findFirst({
+      where: {
+        verified: true,
+        OR: [{ id: doctorId }, { slug: doctorId }],
+      },
     });
 
-    if (!doctor || !doctor.verified) {
+    if (!doctor) {
       throw new NotFoundException('Doctor not found or not verified');
     }
+
+    const resolvedDoctorId = doctor.id;
 
     const targetDate = new Date(`${date}T00:00:00.000Z`);
     if (isNaN(targetDate.getTime())) {
@@ -89,7 +94,7 @@ export class AppointmentsService {
     // 1. Check if doctor is on Day Off for this date
     const dayOff = await this.prisma.doctorDayOff.findFirst({
       where: {
-        doctorId,
+        doctorId: resolvedDoctorId,
         date: targetDate,
       },
     });
@@ -107,7 +112,7 @@ export class AppointmentsService {
     const dayOfWeek = DAYS_MAP[targetDate.getUTCDay()];
     const schedules = await this.prisma.availability.findMany({
       where: {
-        doctorId,
+        doctorId: resolvedDoctorId,
         dayOfWeek,
         isActive: true,
       },
@@ -129,7 +134,7 @@ export class AppointmentsService {
 
     const existingBookings = await this.prisma.booking.findMany({
       where: {
-        doctorId,
+        doctorId: resolvedDoctorId,
         slotStart: { gte: startOfDay, lte: endOfDay },
         status: { not: BookingStatus.CANCELLED },
       },

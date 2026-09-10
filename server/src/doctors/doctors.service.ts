@@ -1,4 +1,6 @@
 import {
+  BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -14,6 +16,7 @@ import {
   createPaginationMeta,
   getPaginationParams,
 } from '../common/pagination/pagination.utils.js';
+import { generateDoctorSlug, slugify } from '../common/utils/slug.utils.js';
 
 const DOCTOR_PROFILE_INCLUDE = {
   user: {
@@ -38,6 +41,7 @@ export class DoctorService {
   private async getOwnProfileOrThrow(userId: string) {
     const profile = await this.prisma.doctorProfile.findUnique({
       where: { userId },
+      include: { user: true },
     });
 
     if (!profile) {
@@ -72,6 +76,20 @@ export class DoctorService {
       }
     }
 
+    let sanitizedSlug: string | undefined = undefined;
+    if (dto.slug) {
+      sanitizedSlug = slugify(dto.slug);
+      const existing = await this.prisma.doctorProfile.findFirst({
+        where: {
+          slug: sanitizedSlug,
+          id: { not: profile.id },
+        },
+      });
+      if (existing) {
+        throw new ConflictException('This doctor slug is already taken. Please choose another.');
+      }
+    }
+
     return this.prisma.$transaction(async (tx) => {
       if (dto.specialtyIds) {
         await tx.doctorSpecialty.deleteMany({
@@ -91,6 +109,7 @@ export class DoctorService {
           bio: dto.bio,
           experienceYears: dto.experienceYears,
           fee: dto.fee,
+          ...(sanitizedSlug ? { slug: sanitizedSlug } : {}),
         },
         include: DOCTOR_PROFILE_INCLUDE,
       });
@@ -225,9 +244,15 @@ export class DoctorService {
     };
   }
 
-  async getPublicDoctorById(id: string) {
+  /**
+   * Public doctor profile lookup by either CUID ID or SEO slug
+   */
+  async getPublicDoctorById(idOrSlug: string) {
     const doctor = await this.prisma.doctorProfile.findFirst({
-      where: { id, verified: true },
+      where: {
+        verified: true,
+        OR: [{ id: idOrSlug }, { slug: idOrSlug }],
+      },
       include: DOCTOR_PROFILE_INCLUDE,
     });
 
@@ -283,21 +308,21 @@ export class DoctorService {
     });
   }
 
-  async getPublicDoctorAvailability(id: string) {
-    await this.getPublicDoctorById(id);
+  async getPublicDoctorAvailability(idOrSlug: string) {
+    const doctor = await this.getPublicDoctorById(idOrSlug);
 
     return this.prisma.availability.findMany({
-      where: { doctorId: id, isActive: true },
+      where: { doctorId: doctor.id, isActive: true },
       orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
     });
   }
 
-  async getPublicDoctorDaysOff(id: string) {
-    await this.getPublicDoctorById(id);
+  async getPublicDoctorDaysOff(idOrSlug: string) {
+    const doctor = await this.getPublicDoctorById(idOrSlug);
 
     return this.prisma.doctorDayOff.findMany({
       where: {
-        doctorId: id,
+        doctorId: doctor.id,
         date: { gte: new Date() },
       },
       orderBy: { date: 'asc' },

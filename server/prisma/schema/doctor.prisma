@@ -1,6 +1,7 @@
 model DoctorProfile {
   id              String    @id @default(cuid())
   userId          String    @unique
+  slug            String?   @unique
   experienceYears Int       @default(0)
   fee             Decimal   @db.Decimal(10, 2)
   bio             String?
