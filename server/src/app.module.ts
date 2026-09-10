@@ -1,4 +1,6 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { createObserveModule } from '@nestjs/observe';
 import { auth } from './auth/auth.js';
 import { AuthModule } from '@thallesp/nestjs-better-auth';
@@ -15,6 +17,7 @@ import { MedicalReportsModule } from './medical-reports/medical-reports.module.j
 import { ReviewsModule } from './reviews/reviews.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { GoogleModule } from './google/google.module.js';
+import { HealthModule } from './health/health.module.js';
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
 @Module({
@@ -23,11 +26,19 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
       isGlobal: true,
     }),
 
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 120,
+      },
+    ]),
+
     AuthModule.forRoot({
       auth,
     }),
 
     PrismaModule,
+    HealthModule,
     UsersModule,
     DoctorModule,
     SpecialtiesModule,
@@ -38,6 +49,12 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     ReviewsModule,
     NotificationsModule,
     GoogleModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule implements NestModule {

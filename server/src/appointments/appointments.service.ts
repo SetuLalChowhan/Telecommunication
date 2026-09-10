@@ -249,8 +249,66 @@ export class AppointmentsService {
       );
     }
 
-    // 3. Database-level concurrency protection inside transaction
+    // 3. Validate requested slot strictly against Doctor's active Availability grid
+    const dayOfWeek = DAYS_MAP[slotStart.getUTCDay()];
+    const schedules = await this.prisma.availability.findMany({
+      where: {
+        doctorId: dto.doctorId,
+        dayOfWeek,
+        isActive: true,
+      },
+    });
+
+    if (schedules.length === 0) {
+      throw new BadRequestException('Doctor has no available schedule on this day');
+    }
+
+    const dateStr = slotStart.toISOString().split('T')[0];
+    let isValidSlot = false;
+
+    for (const schedule of schedules) {
+      const duration = schedule.consultationDuration || 30;
+      const [startH, startM] = schedule.startTime.split(':').map(Number);
+      const [endH, endM] = schedule.endTime.split(':').map(Number);
+
+      let currentMinute = startH * 60 + startM;
+      const endMinute = endH * 60 + endM;
+
+      while (currentMinute + duration <= endMinute) {
+        const nextMinute = currentMinute + duration;
+        const sH = String(Math.floor(currentMinute / 60)).padStart(2, '0');
+        const sM = String(currentMinute % 60).padStart(2, '0');
+        const eH = String(Math.floor(nextMinute / 60)).padStart(2, '0');
+        const eM = String(nextMinute % 60).padStart(2, '0');
+
+        const validStart = new Date(`${dateStr}T${sH}:${sM}:00.000Z`);
+        const validEnd = new Date(`${dateStr}T${eH}:${eM}:00.000Z`);
+
+        if (
+          slotStart.getTime() === validStart.getTime() &&
+          slotEnd.getTime() === validEnd.getTime()
+        ) {
+          isValidSlot = true;
+          break;
+        }
+
+        currentMinute = nextMinute;
+      }
+
+      if (isValidSlot) break;
+    }
+
+    if (!isValidSlot) {
+      throw new BadRequestException(
+        'The requested slot does not match the doctor\'s predefined availability schedule',
+      );
+    }
+
+    // 4. Database-level concurrency protection inside transaction with Postgres advisory lock
     const booking = await this.prisma.$transaction(async (tx) => {
+      // Serializes concurrent booking attempts for this doctor at DB level
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${dto.doctorId}));`;
+
       const conflict = await tx.booking.findFirst({
         where: {
           doctorId: dto.doctorId,

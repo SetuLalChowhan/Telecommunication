@@ -21,10 +21,19 @@ export async function sendEmail(
   subject: string,
   html: string,
 ) {
-  await transporter.sendMail({
-    from: `"Nest Auth API" <${process.env.EMAIL_USER}>`,
-    to,
-    subject,
-    html,
-  });
+  if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER) {
+    console.log(`[Email Service (Dev/Unconfigured)] To: ${to} | Subject: ${subject}`);
+    return;
+  }
+
+  try {
+    await transporter.sendMail({
+      from: `"Telemedicine" <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html,
+    });
+  } catch (err) {
+    console.warn(`[Email Service] Failed to send email to ${to}:`, err);
+  }
 }
