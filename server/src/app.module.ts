@@ -7,6 +7,10 @@ import { UsersModule } from './users/users.module.js';
 import { ConfigModule } from '@nestjs/config';
 import { LoggerMiddleware } from './common/middleware/logger.middleware.js';
 import { DoctorModule } from './doctors/doctors.module.js';
+import { SpecialtiesModule } from './specialties/specialties.module.js';
+import { PatientsModule } from './patients/patients.module.js';
+import { AdminModule } from './admin/admin.module.js';
+import { AppointmentsModule } from './appointments/appointments.module.js';
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
 @Module({
@@ -22,6 +26,10 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     PrismaModule,
     UsersModule,
     DoctorModule,
+    SpecialtiesModule,
+    PatientsModule,
+    AdminModule,
+    AppointmentsModule,
   ],
 })
 export class AppModule implements NestModule {

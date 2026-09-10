@@ -240,7 +240,7 @@ export class DoctorService {
 
   async listMyDaysOff(userId: string) {
     const profile = await this.getOwnProfileOrThrow(userId);
-    return (this.prisma as any).doctorDayOff.findMany({
+    return this.prisma.doctorDayOff.findMany({
       where: { doctorId: profile.id },
       orderBy: { date: 'asc' },
     });
@@ -250,7 +250,7 @@ export class DoctorService {
     const profile = await this.getOwnProfileOrThrow(userId);
     const dateObj = new Date(dto.date);
 
-    return (this.prisma as any).doctorDayOff.upsert({
+    return this.prisma.doctorDayOff.upsert({
       where: {
         doctorId_date: {
           doctorId: profile.id,
@@ -270,7 +270,7 @@ export class DoctorService {
 
   async deleteDayOff(userId: string, dayOffId: string) {
     const profile = await this.getOwnProfileOrThrow(userId);
-    const dayOff = await (this.prisma as any).doctorDayOff.findUnique({
+    const dayOff = await this.prisma.doctorDayOff.findUnique({
       where: { id: dayOffId },
     });
 
@@ -278,7 +278,7 @@ export class DoctorService {
       throw new NotFoundException('Day off entry not found');
     }
 
-    return (this.prisma as any).doctorDayOff.delete({
+    return this.prisma.doctorDayOff.delete({
       where: { id: dayOffId },
     });
   }
@@ -295,7 +295,7 @@ export class DoctorService {
   async getPublicDoctorDaysOff(id: string) {
     await this.getPublicDoctorById(id);
 
-    return (this.prisma as any).doctorDayOff.findMany({
+    return this.prisma.doctorDayOff.findMany({
       where: {
         doctorId: id,
         date: { gte: new Date() },
