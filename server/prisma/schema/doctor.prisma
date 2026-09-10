@@ -19,6 +19,7 @@ model DoctorProfile {
   specialties  DoctorSpecialty[]
   documents    DoctorDocument[]
   availability Availability[]
+  daysOff      DoctorDayOff[]
 
   @@index([verified])
 }
@@ -60,6 +61,19 @@ model Availability {
   doctor DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
 
   @@index([doctorId, dayOfWeek])
+}
+
+model DoctorDayOff {
+  id        String   @id @default(cuid())
+  doctorId  String
+  date      DateTime @db.Date
+  reason    String?
+  createdAt DateTime @default(now())
+
+  doctor DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@unique([doctorId, date])
+  @@index([doctorId])
 }
 
 enum DocumentType {

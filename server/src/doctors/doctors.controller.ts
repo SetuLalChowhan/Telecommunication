@@ -18,6 +18,7 @@ import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto.js';
 import { CreateAvailabilityDto } from './dto/create-availability.dto.js';
 import { UpdateAvailabilityDto } from './dto/update-availability.dto.js';
 import { DoctorQueryDto } from './dto/doctor-query.dto.js';
+import { CreateDayOffDto } from './dto/create-day-off.dto.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { CurrentUser } from '../common/decorator/current-user.decorator.js';
@@ -106,6 +107,48 @@ export class DoctorController {
   @ResponseMessage('Doctors fetched successfully')
   listPublicDoctors(@Query() query: DoctorQueryDto) {
     return this.doctorService.listPublicDoctors(query);
+  }
+
+  @Get('me/days-off')
+  @Roles('DOCTOR')
+  @UseGuards(RolesGuard)
+  @ResponseMessage('Days off fetched successfully')
+  listMyDaysOff(@CurrentUser('id') userId: string) {
+    return this.doctorService.listMyDaysOff(userId);
+  }
+
+  @Post('me/days-off')
+  @Roles('DOCTOR')
+  @UseGuards(RolesGuard)
+  @ResponseMessage('Day off added successfully')
+  createDayOff(
+    @CurrentUser('id') userId: string,
+    @Body() dto: CreateDayOffDto,
+  ) {
+    return this.doctorService.createDayOff(userId, dto);
+  }
+
+  @Delete('me/days-off/:id')
+  @Roles('DOCTOR')
+  @UseGuards(RolesGuard)
+  @ResponseMessage('Day off removed successfully')
+  deleteDayOff(
+    @CurrentUser('id') userId: string,
+    @Param('id') dayOffId: string,
+  ) {
+    return this.doctorService.deleteDayOff(userId, dayOffId);
+  }
+
+  @Get(':id/availability')
+  @ResponseMessage('Doctor availability fetched successfully')
+  getPublicDoctorAvailability(@Param('id') id: string) {
+    return this.doctorService.getPublicDoctorAvailability(id);
+  }
+
+  @Get(':id/days-off')
+  @ResponseMessage('Doctor days off fetched successfully')
+  getPublicDoctorDaysOff(@Param('id') id: string) {
+    return this.doctorService.getPublicDoctorDaysOff(id);
   }
 
   @Get(':id')

@@ -9,6 +9,7 @@ import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto.js';
 import { CreateAvailabilityDto } from './dto/create-availability.dto.js';
 import { UpdateAvailabilityDto } from './dto/update-availability.dto.js';
 import { DoctorQueryDto } from './dto/doctor-query.dto.js';
+import { CreateDayOffDto } from './dto/create-day-off.dto.js';
 import {
   createPaginationMeta,
   getPaginationParams,
@@ -27,6 +28,7 @@ const DOCTOR_PROFILE_INCLUDE = {
   specialties: { include: { specialty: true } },
   documents: true,
   availability: true,
+  daysOff: true,
 } as const;
 
 @Injectable()
@@ -234,5 +236,71 @@ export class DoctorService {
     }
 
     return doctor;
+  }
+
+  async listMyDaysOff(userId: string) {
+    const profile = await this.getOwnProfileOrThrow(userId);
+    return (this.prisma as any).doctorDayOff.findMany({
+      where: { doctorId: profile.id },
+      orderBy: { date: 'asc' },
+    });
+  }
+
+  async createDayOff(userId: string, dto: CreateDayOffDto) {
+    const profile = await this.getOwnProfileOrThrow(userId);
+    const dateObj = new Date(dto.date);
+
+    return (this.prisma as any).doctorDayOff.upsert({
+      where: {
+        doctorId_date: {
+          doctorId: profile.id,
+          date: dateObj,
+        },
+      },
+      update: {
+        reason: dto.reason,
+      },
+      create: {
+        doctorId: profile.id,
+        date: dateObj,
+        reason: dto.reason,
+      },
+    });
+  }
+
+  async deleteDayOff(userId: string, dayOffId: string) {
+    const profile = await this.getOwnProfileOrThrow(userId);
+    const dayOff = await (this.prisma as any).doctorDayOff.findUnique({
+      where: { id: dayOffId },
+    });
+
+    if (!dayOff || dayOff.doctorId !== profile.id) {
+      throw new NotFoundException('Day off entry not found');
+    }
+
+    return (this.prisma as any).doctorDayOff.delete({
+      where: { id: dayOffId },
+    });
+  }
+
+  async getPublicDoctorAvailability(id: string) {
+    await this.getPublicDoctorById(id);
+
+    return this.prisma.availability.findMany({
+      where: { doctorId: id, isActive: true },
+      orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
+    });
+  }
+
+  async getPublicDoctorDaysOff(id: string) {
+    await this.getPublicDoctorById(id);
+
+    return (this.prisma as any).doctorDayOff.findMany({
+      where: {
+        doctorId: id,
+        date: { gte: new Date() },
+      },
+      orderBy: { date: 'asc' },
+    });
   }
 }
