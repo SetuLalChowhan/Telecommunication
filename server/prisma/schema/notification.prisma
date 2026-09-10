@@ -1,0 +1,23 @@
+model Notification {
+  id               String           @id @default(cuid())
+  userId           String
+  type             NotificationType
+  title            String
+  message          String
+  isRead           Boolean          @default(false)
+  relatedBookingId String?
+  createdAt        DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  BOOKING_REMINDER
+  DOCTOR_VERIFIED
+  DOCUMENT_REJECTED
+  GENERAL
+}

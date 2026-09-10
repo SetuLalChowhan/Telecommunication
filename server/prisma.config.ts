@@ -2,7 +2,7 @@ import "dotenv/config";
 import { defineConfig, env } from "prisma/config";
 
 export default defineConfig({
-  schema: "prisma/schema.prisma",
+  schema: "prisma/schema",
 
   datasource: {
     url: env("DATABASE_URL"),
@@ -10,9 +10,5 @@ export default defineConfig({
 
   migrations: {
     path: "prisma/migrations",
-  },
-
-  skills: {
-    agents: ["claude", "cursor", "agents", "devin"],
-  },
+  }
 });

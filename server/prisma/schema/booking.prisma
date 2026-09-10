@@ -1,0 +1,54 @@
+model Booking {
+  id            String        @id @default(cuid())
+  doctorId      String
+  patientId     String
+  slotStart     DateTime
+  slotEnd       DateTime
+  status        BookingStatus @default(PENDING)
+  meetLink      String?
+  googleEventId String?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  doctor  DoctorProfile   @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+  patient PatientProfile  @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  reports MedicalReport[]
+  review  Review?
+
+  @@index([doctorId, slotStart])
+  @@index([patientId])
+  @@index([doctorId, status])
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model MedicalReport {
+  id         String   @id @default(cuid())
+  patientId  String
+  bookingId  String?
+  fileUrl    String
+  fileName   String?
+  uploadedAt DateTime @default(now())
+
+  patient PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  booking Booking?       @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([patientId])
+  @@index([bookingId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  bookingId String   @unique
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}

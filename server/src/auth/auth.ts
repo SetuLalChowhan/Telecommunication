@@ -7,11 +7,11 @@ import { PrismaClient } from '@prisma/client';
 import { sendEmail } from './email.js';
 
 const adapter = new PrismaPg({
-    connectionString: process.env.DATABASE_URL!,
+  connectionString: process.env.DATABASE_URL!,
 });
 
 const prisma = new PrismaClient({
-    adapter,
+  adapter,
 });
 
 export const auth = betterAuth({
@@ -27,7 +27,7 @@ export const auth = betterAuth({
     additionalFields: {
       role: {
         type: 'string',
-        defaultValue: 'USER',
+        defaultValue: 'PATIENT',
       },
     },
   },

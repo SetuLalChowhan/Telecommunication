@@ -1,0 +1,86 @@
+model DoctorProfile {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  experienceYears Int       @default(0)
+  fee             Decimal   @db.Decimal(10, 2)
+  bio             String?
+  verified        Boolean   @default(false)
+  verifiedAt      DateTime?
+  verifiedById    String?
+  rating          Float     @default(0)
+  bookings        Booking[]
+  totalReviews    Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verifiedBy User?  @relation("DoctorVerifiedBy", fields: [verifiedById], references: [id], onDelete: SetNull)
+
+  specialties  DoctorSpecialty[]
+  documents    DoctorDocument[]
+  availability Availability[]
+
+  @@index([verified])
+}
+
+model DoctorSpecialty {
+  doctorId    String
+  specialtyId String
+
+  doctor    DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  specialty Specialty     @relation(fields: [specialtyId], references: [id], onDelete: Cascade)
+
+  @@id([doctorId, specialtyId])
+}
+
+model DoctorDocument {
+  id         String         @id @default(cuid())
+  doctorId   String
+  docType    DocumentType
+  fileUrl    String
+  status     DocumentStatus @default(PENDING)
+  uploadedAt DateTime       @default(now())
+
+  doctor DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId])
+}
+
+model Availability {
+  id                   String    @id @default(cuid())
+  doctorId             String
+  dayOfWeek            DayOfWeek
+  startTime            String
+  endTime              String
+  consultationDuration Int       @default(30)
+  isActive             Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  doctor DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId, dayOfWeek])
+}
+
+enum DocumentType {
+  LICENSE
+  DEGREE_CERTIFICATE
+  NATIONAL_ID
+  OTHER
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DayOfWeek {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
