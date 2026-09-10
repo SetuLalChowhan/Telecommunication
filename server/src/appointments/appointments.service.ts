@@ -15,6 +15,8 @@ import {
   getPaginationParams,
 } from '../common/pagination/pagination.utils.js';
 
+import { GoogleService } from '../google/google.service.js';
+
 const DAYS_MAP: Record<number, DayOfWeek> = {
   0: DayOfWeek.SUNDAY,
   1: DayOfWeek.MONDAY,
@@ -57,8 +59,6 @@ const BOOKING_INCLUDE = {
   reports: true,
   review: true,
 } as const;
-
-import { GoogleService } from '../google/google.service.js';
 
 @Injectable()
 export class AppointmentsService {
