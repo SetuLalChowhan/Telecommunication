@@ -11,6 +11,10 @@ import { SpecialtiesModule } from './specialties/specialties.module.js';
 import { PatientsModule } from './patients/patients.module.js';
 import { AdminModule } from './admin/admin.module.js';
 import { AppointmentsModule } from './appointments/appointments.module.js';
+import { MedicalReportsModule } from './medical-reports/medical-reports.module.js';
+import { ReviewsModule } from './reviews/reviews.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
+import { GoogleModule } from './google/google.module.js';
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
 @Module({
@@ -30,6 +34,10 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     PatientsModule,
     AdminModule,
     AppointmentsModule,
+    MedicalReportsModule,
+    ReviewsModule,
+    NotificationsModule,
+    GoogleModule,
   ],
 })
 export class AppModule implements NestModule {

@@ -41,7 +41,7 @@ const ADMIN_DOCTOR_INCLUDE = {
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async listDoctors(query: AdminDoctorQueryDto = {}) {
     const { skip, take } = getPaginationParams(query.page, query.limit);
@@ -50,10 +50,10 @@ export class AdminService {
       ...(query.verified !== undefined ? { verified: query.verified } : {}),
       ...(query.search
         ? {
-            user: {
-              name: { contains: query.search, mode: 'insensitive' as const },
-            },
-          }
+          user: {
+            name: { contains: query.search, mode: 'insensitive' as const },
+          },
+        }
         : {}),
     };
 
@@ -213,6 +213,155 @@ export class AdminService {
       totalSpecialties,
       totalBookings,
       todayBookings,
+    };
+  }
+
+  async listPatients(query: { search?: string; page?: number; limit?: number } = {}) {
+    const { skip, take } = getPaginationParams(query.page, query.limit);
+
+    const where = query.search
+      ? {
+          user: {
+            name: { contains: query.search, mode: 'insensitive' as const },
+          },
+        }
+      : {};
+
+    const [patients, total] = await Promise.all([
+      this.prisma.patientProfile.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+              image: true,
+              createdAt: true,
+            },
+          },
+          _count: {
+            select: { bookings: true, medicalReports: true },
+          },
+        },
+      }),
+      this.prisma.patientProfile.count({ where }),
+    ]);
+
+    return {
+      data: patients,
+      meta: createPaginationMeta(query.page || 1, query.limit || 10, total),
+    };
+  }
+
+  async getPatientDetails(patientId: string) {
+    const patient = await this.prisma.patientProfile.findUnique({
+      where: { id: patientId },
+      include: {
+        user: true,
+        bookings: {
+          orderBy: { slotStart: 'desc' },
+          take: 10,
+          include: {
+            doctor: {
+              include: { user: { select: { name: true, email: true } } },
+            },
+          },
+        },
+        medicalReports: {
+          orderBy: { uploadedAt: 'desc' },
+        },
+      },
+    });
+
+    if (!patient) {
+      throw new NotFoundException(`Patient with ID "${patientId}" not found`);
+    }
+
+    return patient;
+  }
+
+  async listAppointments(query: {
+    status?: any;
+    doctorId?: string;
+    patientId?: string;
+    page?: number;
+    limit?: number;
+  } = {}) {
+    const { skip, take } = getPaginationParams(query.page, query.limit);
+
+    const where: any = {};
+    if (query.status) where.status = query.status;
+    if (query.doctorId) where.doctorId = query.doctorId;
+    if (query.patientId) where.patientId = query.patientId;
+
+    const [bookings, total] = await Promise.all([
+      this.prisma.booking.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { slotStart: 'desc' },
+        include: {
+          doctor: {
+            include: {
+              user: { select: { name: true, email: true, phone: true } },
+            },
+          },
+          patient: {
+            include: {
+              user: { select: { name: true, email: true, phone: true } },
+            },
+          },
+          reports: true,
+          review: true,
+        },
+      }),
+      this.prisma.booking.count({ where }),
+    ]);
+
+    return {
+      data: bookings,
+      meta: createPaginationMeta(query.page || 1, query.limit || 10, total),
+    };
+  }
+
+  async listReviews(query: { doctorId?: string; page?: number; limit?: number } = {}) {
+    const { skip, take } = getPaginationParams(query.page, query.limit);
+
+    const where = query.doctorId
+      ? { booking: { doctorId: query.doctorId } }
+      : {};
+
+    const [reviews, total] = await Promise.all([
+      this.prisma.review.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          booking: {
+            select: {
+              slotStart: true,
+              doctor: {
+                include: { user: { select: { name: true } } },
+              },
+              patient: {
+                include: { user: { select: { name: true } } },
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.review.count({ where }),
+    ]);
+
+    return {
+      data: reviews,
+      meta: createPaginationMeta(query.page || 1, query.limit || 10, total),
     };
   }
 }

@@ -58,9 +58,14 @@ const BOOKING_INCLUDE = {
   review: true,
 } as const;
 
+import { GoogleService } from '../google/google.service.js';
+
 @Injectable()
 export class AppointmentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly googleService: GoogleService,
+  ) {}
 
   /**
    * Generates concrete slots for a specific date and marks occupied ones
@@ -200,15 +205,18 @@ export class AppointmentsService {
     // 1. Ensure PatientProfile exists
     let patient = await this.prisma.patientProfile.findUnique({
       where: { userId },
+      include: { user: true },
     });
     if (!patient) {
       patient = await this.prisma.patientProfile.create({
         data: { userId },
+        include: { user: true },
       });
     }
 
     const doctor = await this.prisma.doctorProfile.findUnique({
       where: { id: dto.doctorId },
+      include: { user: true },
     });
 
     if (!doctor || !doctor.verified) {
@@ -242,7 +250,7 @@ export class AppointmentsService {
     }
 
     // 3. Database-level concurrency protection inside transaction
-    return this.prisma.$transaction(async (tx) => {
+    const booking = await this.prisma.$transaction(async (tx) => {
       const conflict = await tx.booking.findFirst({
         where: {
           doctorId: dto.doctorId,
@@ -282,6 +290,35 @@ export class AppointmentsService {
         include: BOOKING_INCLUDE,
       });
     });
+
+    // 4. Generate Google Meet link / Calendar Event
+    try {
+      const meetingResult = await this.googleService.createMeetingEvent({
+        doctorUserId: doctor.userId,
+        doctorName: doctor.user.name,
+        patientEmail: patient.user.email,
+        patientName: patient.user.name,
+        slotStart,
+        slotEnd,
+        bookingId: booking.id,
+        notes: dto.notes,
+      });
+
+      if (meetingResult.meetLink) {
+        return this.prisma.booking.update({
+          where: { id: booking.id },
+          data: {
+            meetLink: meetingResult.meetLink,
+            googleEventId: meetingResult.googleEventId,
+          },
+          include: BOOKING_INCLUDE,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to create Google Meet event for booking:', err);
+    }
+
+    return booking;
   }
 
   /**

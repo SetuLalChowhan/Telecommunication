@@ -73,4 +73,52 @@ export class AdminController {
   ) {
     return this.adminService.updateDocumentStatus(documentId, status);
   }
+
+  @Get('patients')
+  @ResponseMessage('Patients list fetched successfully')
+  listPatients(
+    @Query('search') search?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.adminService.listPatients({ search, page: Number(page) || 1, limit: Number(limit) || 10 });
+  }
+
+  @Get('patients/:id')
+  @ResponseMessage('Patient details fetched successfully')
+  getPatientDetails(@Param('id') id: string) {
+    return this.adminService.getPatientDetails(id);
+  }
+
+  @Get('appointments')
+  @ResponseMessage('All appointments fetched successfully')
+  listAppointments(
+    @Query('status') status?: any,
+    @Query('doctorId') doctorId?: string,
+    @Query('patientId') patientId?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.adminService.listAppointments({
+      status,
+      doctorId,
+      patientId,
+      page: Number(page) || 1,
+      limit: Number(limit) || 10,
+    });
+  }
+
+  @Get('reviews')
+  @ResponseMessage('All reviews fetched successfully')
+  listReviews(
+    @Query('doctorId') doctorId?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.adminService.listReviews({
+      doctorId,
+      page: Number(page) || 1,
+      limit: Number(limit) || 10,
+    });
+  }
 }
