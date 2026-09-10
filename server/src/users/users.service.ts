@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateProfileDto } from './dto/update-profile.dto.js';
@@ -103,7 +103,7 @@ export class UsersService {
         email: dto.email,
         dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
         phone: dto.phone,
-        role: dto.role ?? 'USER',
+        role: dto.role ?? Role.PATIENT,
       },
       select: {
         id: true,

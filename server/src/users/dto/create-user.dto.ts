@@ -36,6 +36,6 @@ export class CreateUserDto {
   phone?: string;
 
   @IsOptional()
-  @IsEnum(Role, { message: 'Role must be either USER or ADMIN' })
+  @IsEnum(Role, { message: 'Role must be ADMIN, DOCTOR, or PATIENT' })
   role?: Role;
 }

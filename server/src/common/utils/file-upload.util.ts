@@ -60,6 +60,56 @@ export const avatarUploadOptions = {
   },
 };
 
+export const DOCUMENT_UPLOAD_DIR = './uploads/documents';
+
+if (!existsSync(DOCUMENT_UPLOAD_DIR)) {
+  mkdirSync(DOCUMENT_UPLOAD_DIR, { recursive: true });
+}
+
+export const doctorDocumentUploadOptions = {
+  storage: diskStorage({
+    destination: (_req: Request, _file: Express.Multer.File, cb) => {
+      cb(null, DOCUMENT_UPLOAD_DIR);
+    },
+    filename: (_req: Request, file: Express.Multer.File, cb) => {
+      const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+      const ext = extname(file.originalname).toLowerCase();
+      cb(null, `doc-${uniqueSuffix}${ext}`);
+    },
+  }),
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
+  fileFilter: (
+    _req: Request,
+    file: Express.Multer.File,
+    cb: (error: Error | null, acceptFile: boolean) => void,
+  ) => {
+    const allowedMimeTypes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'application/pdf',
+    ];
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.pdf'];
+    const ext = extname(file.originalname).toLowerCase();
+
+    if (
+      !allowedMimeTypes.includes(file.mimetype.toLowerCase()) &&
+      !allowedExtensions.includes(ext)
+    ) {
+      return cb(
+        new BadRequestException(
+          'Invalid file type. Only JPG, PNG, and PDF files are allowed.',
+        ),
+        false,
+      );
+    }
+    cb(null, true);
+  },
+};
+
+
 /**
  * Helper to delete an existing file from disk safely
  */
