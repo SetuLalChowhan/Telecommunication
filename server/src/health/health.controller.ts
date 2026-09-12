@@ -1,8 +1,10 @@
 import { Controller, Get } from '@nestjs/common';
+import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('Health')
+@AllowAnonymous()
 @Controller('health')
 export class HealthController {
   constructor(private readonly prisma: PrismaService) {}

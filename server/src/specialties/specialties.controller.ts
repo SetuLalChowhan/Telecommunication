@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 import { SpecialtiesService } from './specialties.service.js';
 import { CreateSpecialtyDto } from './dto/create-specialty.dto.js';
 import { UpdateSpecialtyDto } from './dto/update-specialty.dto.js';
@@ -22,12 +23,14 @@ export class SpecialtiesController {
   constructor(private readonly specialtiesService: SpecialtiesService) {}
 
   @Get()
+  @AllowAnonymous()
   @ResponseMessage('Specialties fetched successfully')
   findAll(@Query() query: SpecialtyQueryDto) {
     return this.specialtiesService.findAll(query);
   }
 
   @Get(':slug')
+  @AllowAnonymous()
   @ResponseMessage('Specialty details fetched successfully')
   findBySlug(@Param('slug') slug: string) {
     return this.specialtiesService.findBySlug(slug);

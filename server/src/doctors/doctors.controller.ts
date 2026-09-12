@@ -12,6 +12,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 import { DocumentType } from '@prisma/client';
 import { DoctorService } from './doctors.service.js';
 import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto.js';
@@ -104,6 +105,7 @@ export class DoctorController {
   }
 
   @Get()
+  @AllowAnonymous()
   @ResponseMessage('Doctors fetched successfully')
   listPublicDoctors(@Query() query: DoctorQueryDto) {
     return this.doctorService.listPublicDoctors(query);
@@ -140,18 +142,21 @@ export class DoctorController {
   }
 
   @Get(':idOrSlug/availability')
+  @AllowAnonymous()
   @ResponseMessage('Doctor availability fetched successfully')
   getPublicDoctorAvailability(@Param('idOrSlug') idOrSlug: string) {
     return this.doctorService.getPublicDoctorAvailability(idOrSlug);
   }
 
   @Get(':idOrSlug/days-off')
+  @AllowAnonymous()
   @ResponseMessage('Doctor days off fetched successfully')
   getPublicDoctorDaysOff(@Param('idOrSlug') idOrSlug: string) {
     return this.doctorService.getPublicDoctorDaysOff(idOrSlug);
   }
 
   @Get(':idOrSlug')
+  @AllowAnonymous()
   @ResponseMessage('Doctor profile fetched successfully')
   getPublicDoctorById(@Param('idOrSlug') idOrSlug: string) {
     return this.doctorService.getPublicDoctorById(idOrSlug);

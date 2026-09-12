@@ -7,6 +7,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 import { ReviewsService } from './reviews.service.js';
 import { CreateReviewDto } from './dto/create-review.dto.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
@@ -31,6 +32,7 @@ export class ReviewsController {
   }
 
   @Get('doctor/:doctorId')
+  @AllowAnonymous()
   @ResponseMessage('Doctor reviews fetched successfully')
   getDoctorReviews(
     @Param('doctorId') doctorId: string,

@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 import { AppointmentsService } from './appointments.service.js';
 import { CreateBookingDto } from './dto/create-booking.dto.js';
 import { SlotQueryDto } from './dto/slot-query.dto.js';
@@ -22,6 +23,7 @@ export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
   @Get('slots')
+  @AllowAnonymous()
   @ResponseMessage('Available slots calculated successfully')
   getAvailableSlots(@Query() query: SlotQueryDto) {
     return this.appointmentsService.getAvailableSlots(query);
