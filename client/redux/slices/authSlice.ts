@@ -1,27 +1,73 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { User, Role } from "@/types";
 
-const initialState = {
+export interface AuthState {
+  user: User | null;
+  role: Role | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  isInitialized: boolean;
+}
+
+const initialState: AuthState = {
+  user: null,
+  role: null,
   token: null,
   isAuthenticated: false,
+  isInitialized: false,
 };
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setToken: (state, action) => {
-      const { token } = action.payload;
-      state.token = token;
-      state.isAuthenticated = !!token;
+    setToken: (state, action: PayloadAction<{ token: string | null }>) => {
+      state.token = action.payload.token;
+      state.isAuthenticated = !!action.payload.token;
+    },
+    setSession: (
+      state,
+      action: PayloadAction<{
+        user: User;
+        token?: string | null;
+      }>
+    ) => {
+      state.user = action.payload.user;
+      state.role = (action.payload.user.role as Role) || "PATIENT";
+      state.token = action.payload.token ?? state.token;
+      state.isAuthenticated = true;
+      state.isInitialized = true;
+    },
+    setUserProfile: (state, action: PayloadAction<User>) => {
+      state.user = action.payload;
+      state.role = (action.payload.role as Role) || state.role || "PATIENT";
     },
     clearAuth: (state) => {
+      state.user = null;
+      state.role = null;
       state.token = null;
       state.isAuthenticated = false;
+      state.isInitialized = true;
+    },
+    setInitialized: (state) => {
+      state.isInitialized = true;
     },
   },
 });
 
-export const { setToken, clearAuth } = authSlice.actions;
+export const {
+  setToken,
+  setSession,
+  setUserProfile,
+  clearAuth,
+  setInitialized,
+} = authSlice.actions;
+
 export default authSlice.reducer;
-export const selectCurrentToken = (state: any) => state.auth.token;
-export const selectIsAuthenticated = (state: any) => state.auth.isAuthenticated;
+
+// Selectors
+export const selectCurrentToken = (state: { auth: AuthState }) => state.auth.token;
+export const selectIsAuthenticated = (state: { auth: AuthState }) => state.auth.isAuthenticated;
+export const selectCurrentUser = (state: { auth: AuthState }) => state.auth.user;
+export const selectCurrentRole = (state: { auth: AuthState }) => state.auth.role;
+export const selectIsAuthInitialized = (state: { auth: AuthState }) => state.auth.isInitialized;

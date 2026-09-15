@@ -10,6 +10,7 @@ import AuthSplitLayout from "@/components/auth/AuthSplitLayout";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/api";
 
 const forgotPasswordSchema = z.object({
   email: z
@@ -21,9 +22,11 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 export default function ForgotPasswordPage() {
+  const { forgotPassword } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const {
     register,
@@ -38,12 +41,16 @@ export default function ForgotPasswordPage() {
 
   const onSubmit = async (data: ForgotPasswordFormValues) => {
     setIsLoading(true);
-
-    setTimeout(() => {
-      setIsLoading(false);
+    setServerError(null);
+    try {
+      await forgotPassword({ email: data.email });
       setSubmittedEmail(data.email);
       setIsSubmitted(true);
-    }, 900);
+    } catch (err: any) {
+      setServerError(err.message || "Failed to process reset password request.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

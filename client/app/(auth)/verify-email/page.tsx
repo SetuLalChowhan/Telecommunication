@@ -7,19 +7,43 @@ import { Mail, ArrowRight, RotateCw, CheckCircle2, Edit2, Loader2 } from "lucide
 import AuthSplitLayout from "@/components/auth/AuthSplitLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/lib/api";
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
+  const token = searchParams.get("token");
   const initialEmail = searchParams.get("email") || "patient@telehealth.com";
 
+  const { verifyEmail } = useAuth();
   const [email, setEmail] = useState(initialEmail);
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [tempEmail, setTempEmail] = useState(initialEmail);
+
+  const [isVerifyingToken, setIsVerifyingToken] = useState(!!token);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
 
   // 42-second countdown timer requested by user
   const [countdown, setCountdown] = useState(42);
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
+
+  // Auto-verify when arriving with a token in the URL
+  useEffect(() => {
+    if (token) {
+      setIsVerifyingToken(true);
+      verifyEmail(token)
+        .then(() => {
+          setVerificationSuccess(true);
+        })
+        .catch((err) => {
+          setVerificationError(err.message || "Verification link is invalid or expired.");
+        })
+        .finally(() => {
+          setIsVerifyingToken(false);
+        });
+    }
+  }, [token, verifyEmail]);
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -50,6 +74,38 @@ function VerifyEmailContent() {
       setResendSuccess(true);
     }
   };
+
+  if (isVerifyingToken) {
+    return (
+      <div className="space-y-4 text-center py-6">
+        <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
+        <h2 className="text-xl font-bold text-foreground">Verifying your email...</h2>
+        <p className="text-sm text-secondary-text">Please wait a moment while we confirm your email address.</p>
+      </div>
+    );
+  }
+
+  if (verificationSuccess) {
+    return (
+      <div className="space-y-5 text-center py-4">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-success/10 text-success">
+          <CheckCircle2 className="h-8 w-8" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold text-foreground">Email verified!</h2>
+          <p className="text-sm sm:text-base text-secondary-text">
+            Your email has been successfully verified. You can now access all services.
+          </p>
+        </div>
+        <Link href="/login" className="block pt-2">
+          <Button className="w-full h-11 bg-primary hover:bg-primary-dark text-white font-medium rounded-xl">
+            <span>Continue to Sign in</span>
+            <ArrowRight className="h-4 w-4 ml-1.5" />
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 sm:space-y-5 text-center">

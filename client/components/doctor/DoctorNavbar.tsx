@@ -1,11 +1,9 @@
 "use client";
 
 import React from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { Bell, Menu, User, Settings, LogOut } from "lucide-react";
+import { Bell, Menu, Settings, LogOut, ShieldCheck } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { clearAuth } from "@/redux/slices/authSlice";
-import { clearUiState } from "@/redux/slices/userSlice";
+import { useAuth } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -17,34 +15,28 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface DashNavbarProps {
+interface DoctorNavbarProps {
   open: boolean;
   setOpen: (open: boolean) => void;
 }
 
-const DashNavbar: React.FC<DashNavbarProps> = ({ open, setOpen }) => {
+export const DoctorNavbar: React.FC<DoctorNavbarProps> = ({ open, setOpen }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const dispatch = useDispatch();
+  const { user, logout } = useAuth();
 
-  // Get user profile from Redux state
-  const currentUser = useSelector((state: any) => state.user.user);
-
-  const handleLogout = () => {
-    dispatch(clearAuth());
-    dispatch(clearUiState());
-    router.push("/login");
+  const handleLogout = async () => {
+    await logout();
   };
 
-  // Format path for breadcrumb display name (e.g. /dashboard/admin-list -> Admin List)
   const getPageTitle = () => {
-    if (pathname === "/dashboard") return "Dashboard";
+    if (pathname === "/doctor/dashboard") return "Doctor Console";
     const segment = pathname.split("/").pop() || "";
     return segment.charAt(0).toUpperCase() + segment.slice(1).replace("-", " ");
   };
 
-  const getInitials = (name?: string) => {
-    if (!name) return "U";
+  const getInitials = (name?: string | null) => {
+    if (!name) return "DR";
     return name
       .split(" ")
       .map((n) => n[0])
@@ -55,7 +47,7 @@ const DashNavbar: React.FC<DashNavbarProps> = ({ open, setOpen }) => {
 
   return (
     <header className="flex h-16 w-full items-center justify-between border-b border-border bg-card px-4 md:px-8 shrink-0">
-      {/* Left section: Mobile Toggle & Page Title */}
+      {/* Mobile Toggle & Page Title */}
       <div className="flex items-center gap-4 min-w-0">
         <Button
           variant="ghost"
@@ -66,14 +58,19 @@ const DashNavbar: React.FC<DashNavbarProps> = ({ open, setOpen }) => {
           <Menu className="h-5 w-5" />
           <span className="sr-only">Toggle Sidebar</span>
         </Button>
-        <h1 className="text-xl font-bold text-foreground truncate capitalize">
-          {getPageTitle()}
-        </h1>
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-xl font-bold text-foreground truncate capitalize">
+            {getPageTitle()}
+          </h1>
+          <span className="inline-flex items-center gap-1 text-[11px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+            <ShieldCheck className="h-3 w-3" />
+            Doctor
+          </span>
+        </div>
       </div>
 
-      {/* Right section: Notifications & User Profile */}
+      {/* Notifications & Doctor Profile Dropdown */}
       <div className="flex items-center gap-4">
-        {/* Notifications Icon Button */}
         <Button
           variant="ghost"
           size="icon"
@@ -84,7 +81,6 @@ const DashNavbar: React.FC<DashNavbarProps> = ({ open, setOpen }) => {
           <span className="sr-only">Notifications</span>
         </Button>
 
-        {/* User Profile Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -92,9 +88,9 @@ const DashNavbar: React.FC<DashNavbarProps> = ({ open, setOpen }) => {
               className="relative h-9 w-9 rounded-full border border-border p-0 cursor-pointer overflow-hidden"
             >
               <Avatar className="h-9 w-9">
-                <AvatarImage src={currentUser?.avatar} alt={currentUser?.name || "User Avatar"} />
+                <AvatarImage src={user?.image || undefined} alt={user?.name || "Doctor"} />
                 <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                  {getInitials(currentUser?.name)}
+                  {getInitials(user?.name)}
                 </AvatarFallback>
               </Avatar>
             </Button>
@@ -102,16 +98,16 @@ const DashNavbar: React.FC<DashNavbarProps> = ({ open, setOpen }) => {
           <DropdownMenuContent align="end" className="w-56 p-1">
             <DropdownMenuLabel className="p-3.5 flex flex-col gap-0.5">
               <span className="font-semibold text-sm text-foreground leading-none">
-                {currentUser?.name || "User"}
+                Dr. {user?.name || "Doctor"}
               </span>
               <span className="text-xs text-muted-foreground leading-none truncate">
-                {currentUser?.email || ""}
+                {user?.email || ""}
               </span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => router.push("/dashboard/settings")}
-              className="flex items-center gap-2 p-2.5"
+              onClick={() => router.push("/doctor/settings")}
+              className="flex items-center gap-2 p-2.5 cursor-pointer"
             >
               <Settings className="h-4 w-4 text-muted-foreground" />
               <span>Settings</span>
@@ -131,4 +127,4 @@ const DashNavbar: React.FC<DashNavbarProps> = ({ open, setOpen }) => {
   );
 };
 
-export default DashNavbar;
+export default DoctorNavbar;

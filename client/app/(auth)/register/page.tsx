@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Eye, EyeOff, Info, Loader2, Stethoscope, User } from "lucide-react";
+import { Eye, EyeOff, Info, Loader2, Stethoscope, User, AlertCircle } from "lucide-react";
 import AuthSplitLayout from "@/components/auth/AuthSplitLayout";
 import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
 import AuthDivider from "@/components/auth/AuthDivider";
@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useAuth } from "@/lib/api";
 
 const registerSchema = z
   .object({
@@ -49,11 +50,12 @@ const registerSchema = z
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
-  const router = useRouter();
+  const { register: registerAuth, loginWithGoogle } = useAuth();
   const [role, setRole] = useState<"PATIENT" | "DOCTOR">("PATIENT");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const {
     register,
@@ -80,17 +82,19 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormValues) => {
     setIsLoading(true);
-
-    // Simulate registration submission
-    setTimeout(() => {
+    setServerError(null);
+    try {
+      await registerAuth({
+        name: `${data.firstName} ${data.lastName}`.trim(),
+        email: data.email,
+        password: data.password,
+        role: data.role,
+      });
+    } catch (err: any) {
+      setServerError(err.message || "Registration failed. Please try again.");
+    } finally {
       setIsLoading(false);
-      console.log("Registration submitted", data);
-      if (data.role === "DOCTOR") {
-        router.push("/doctor-verification");
-      } else {
-        router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
-      }
-    }, 1000);
+    }
   };
 
   return (
@@ -102,6 +106,23 @@ export default function RegisterPage() {
       description="Start your journey with trusted healthcare professionals."
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+        {/* Server Error Alert */}
+        {serverError && (
+          <div
+            role="alert"
+            className="rounded-xl border border-error/20 bg-error/5 p-3.5 text-sm transition-all"
+          >
+            <div className="flex items-start gap-2.5">
+              <AlertCircle className="h-4 w-4 text-error shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <p className="font-semibold text-foreground text-sm sm:text-base">Unable to register</p>
+                <p className="text-secondary-text text-xs sm:text-sm leading-relaxed">
+                  {serverError}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Role Selection: Simple Segmented Control */}
         <div className="flex flex-col gap-2 sm:gap-2.5">
           <Label className="text-sm sm:text-base font-semibold text-foreground">
@@ -353,7 +374,7 @@ export default function RegisterPage() {
         <GoogleAuthButton
           disabled={isLoading}
           onClick={() => {
-            console.log("Initiating Google Sign-Up");
+            loginWithGoogle("/dashboard");
           }}
         />
 

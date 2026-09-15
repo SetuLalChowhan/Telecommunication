@@ -12,6 +12,7 @@ import AuthDivider from "@/components/auth/AuthDivider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/api";
 
 const loginSchema = z.object({
   email: z
@@ -27,6 +28,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  const { login, loginWithGoogle } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -46,18 +48,14 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     setServerError(null);
-
-    // Simulate authentication check (ready for API integration)
-    setTimeout(() => {
+    try {
+      await login({ email: data.email, password: data.password });
+      
+    } catch (err: any) {
+      setServerError(err.message || "Invalid email or password. Please try again.");
+    } finally {
       setIsLoading(false);
-      // Demo test trigger: if user types wrong@test.com it shows the exact error banner
-      if (data.email.includes("error")) {
-        setServerError("The email or password is incorrect. Please try again.");
-      } else {
-        // Success state demonstration
-        console.log("Login submitted successfully", data);
-      }
-    }, 900);
+    }
   };
 
   return (
@@ -174,7 +172,7 @@ export default function LoginPage() {
         <GoogleAuthButton
           disabled={isLoading}
           onClick={() => {
-            console.log("Initiating Google Sign-In");
+            loginWithGoogle("/dashboard");
           }}
         />
 

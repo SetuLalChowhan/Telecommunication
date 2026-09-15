@@ -1,5 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
+import { oneTap } from 'better-auth/plugins';
 
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
@@ -36,6 +37,11 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     },
   },
+
+  plugins: [
+    oneTap(),
+  ],
+
 
   databaseHooks: {
     user: {

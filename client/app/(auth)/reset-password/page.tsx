@@ -6,11 +6,12 @@ import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Eye, EyeOff, Check, CheckCircle2, ArrowLeft, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Check, CheckCircle2, ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 import AuthSplitLayout from "@/components/auth/AuthSplitLayout";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/api";
 
 const resetPasswordSchema = z
   .object({
@@ -31,7 +32,10 @@ type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const initialSuccess = searchParams.get("success") === "true";
+  const token = searchParams.get("token") || "";
 
+  const { resetPassword } = useAuth();
+  const [serverError, setServerError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(initialSuccess);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -100,13 +104,20 @@ function ResetPasswordContent() {
   }, [strengthScore]);
 
   const onSubmit = async (data: ResetPasswordFormValues) => {
+    if (!token) {
+      setServerError("Reset token is missing from the link. Please request a new password reset.");
+      return;
+    }
     setIsLoading(true);
-
-    setTimeout(() => {
-      setIsLoading(false);
-      console.log("Password reset success", data);
+    setServerError(null);
+    try {
+      await resetPassword({ newPassword: data.newPassword, token });
       setIsSuccess(true);
-    }, 1000);
+    } catch (err: any) {
+      setServerError(err.message || "Failed to reset password. Link may be invalid or expired.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   /* 
@@ -152,6 +163,23 @@ function ResetPasswordContent() {
       description="Choose a strong password for your account."
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5" noValidate>
+        {/* Error Alert */}
+        {serverError && (
+          <div
+            role="alert"
+            className="rounded-xl border border-error/20 bg-error/5 p-3.5 text-sm transition-all"
+          >
+            <div className="flex items-start gap-2.5">
+              <AlertCircle className="h-4 w-4 text-error shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <p className="font-semibold text-foreground text-sm sm:text-base">Unable to reset password</p>
+                <p className="text-secondary-text text-xs sm:text-sm leading-relaxed">
+                  {serverError}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         {/* New Password */}
         <div className="flex flex-col gap-2 sm:gap-2.5">
           <Label htmlFor="newPassword" className="text-sm sm:text-base font-semibold text-foreground">
