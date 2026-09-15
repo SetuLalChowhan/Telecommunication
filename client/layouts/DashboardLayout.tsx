@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import DashNavbar from "@/components/dashboard/common/DashNavbar";
 import SideBar, { type SidebarItem } from "@/components/dashboard/common/SideBar";
 import { LayoutDashboard, UserCog } from "lucide-react";
-import useUserProfile from "@/api/hooks/useUserProfile";
+import useUserProfile from "@/lib/hooks/useUserProfile";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
