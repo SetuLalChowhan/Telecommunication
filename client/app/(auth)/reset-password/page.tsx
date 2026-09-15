@@ -34,12 +34,13 @@ function ResetPasswordContent() {
   const initialSuccess = searchParams.get("success") === "true";
   const token = searchParams.get("token") || "";
 
-  const { resetPassword } = useAuth();
-  const [serverError, setServerError] = useState<string | null>(null);
+  const { resetPassword, resetPasswordMutation } = useAuth();
+  const [customError, setCustomError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(initialSuccess);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const isLoading = resetPasswordMutation.isPending;
+  const serverError = customError || resetPasswordMutation.error?.message;
 
   const {
     register,
@@ -105,20 +106,14 @@ function ResetPasswordContent() {
 
   const onSubmit = async (data: ResetPasswordFormValues) => {
     if (!token) {
-      setServerError("Reset token is missing from the link. Please request a new password reset.");
+      setCustomError("Reset token is missing from the link. Please request a new password reset.");
       return;
     }
-    setIsLoading(true);
-    setServerError(null);
-    try {
-      await resetPassword({ newPassword: data.newPassword, token });
-      setIsSuccess(true);
-    } catch (err: any) {
-      setServerError(err.message || "Failed to reset password. Link may be invalid or expired.");
-    } finally {
-      setIsLoading(false);
-    }
+    setCustomError(null);
+    await resetPassword({ newPassword: data.newPassword, token });
+    setIsSuccess(true);
   };
+
 
   /* 
     6. Reset Password Success State:

@@ -14,14 +14,14 @@ function VerifyEmailContent() {
   const token = searchParams.get("token");
   const initialEmail = searchParams.get("email") || "patient@telehealth.com";
 
-  const { verifyEmail } = useAuth();
+  const { verifyEmail, verifyEmailMutation } = useAuth();
   const [email, setEmail] = useState(initialEmail);
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [tempEmail, setTempEmail] = useState(initialEmail);
 
-  const [isVerifyingToken, setIsVerifyingToken] = useState(!!token);
-  const [verificationSuccess, setVerificationSuccess] = useState(false);
-  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const isVerifyingToken = verifyEmailMutation.isPending;
+  const verificationSuccess = verifyEmailMutation.isSuccess;
+  const verificationError = verifyEmailMutation.error?.message || null;
 
   // 42-second countdown timer requested by user
   const [countdown, setCountdown] = useState(42);
@@ -31,19 +31,10 @@ function VerifyEmailContent() {
   // Auto-verify when arriving with a token in the URL
   useEffect(() => {
     if (token) {
-      setIsVerifyingToken(true);
-      verifyEmail(token)
-        .then(() => {
-          setVerificationSuccess(true);
-        })
-        .catch((err) => {
-          setVerificationError(err.message || "Verification link is invalid or expired.");
-        })
-        .finally(() => {
-          setIsVerifyingToken(false);
-        });
+      verifyEmail(token);
     }
   }, [token, verifyEmail]);
+
 
   useEffect(() => {
     if (countdown <= 0) return;

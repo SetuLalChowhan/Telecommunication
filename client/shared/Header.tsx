@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, ArrowRight, User } from "lucide-react";
@@ -18,10 +18,16 @@ const NAV_LINKS = [
 
 export const Header: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
-  const { user, isAuthenticated, isDoctor } = useAuth();
+  const { user, isAuthenticated, isDoctor, isSessionLoading } = useAuth();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const dashboardRoute = isDoctor ? "/doctor/dashboard" : "/patient/dashboard";
+  const firstName = user?.name ? user.name.split(" ")[0] : "Dashboard";
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/70 bg-background/80 backdrop-blur-md">
@@ -49,12 +55,17 @@ export const Header: React.FC = () => {
         </nav>
 
         {/* Desktop CTA / Auth buttons */}
-        <div className="hidden md:flex items-center gap-3">
-          {isAuthenticated ? (
+        <div className="hidden md:flex items-center gap-3 min-w-[140px] justify-end">
+          {!mounted || (isSessionLoading && !isAuthenticated) ? (
+            <div className="flex items-center gap-2">
+              <div className="h-9 w-20 rounded-xl bg-muted/60 animate-pulse" />
+              <div className="h-9 w-28 rounded-xl bg-primary/20 animate-pulse" />
+            </div>
+          ) : isAuthenticated ? (
             <Link href={dashboardRoute}>
-              <Button size="sm" className="gap-2 rounded-xl">
+              <Button size="sm" className="gap-2 rounded-xl transition-all duration-200">
                 <User className="h-4 w-4" />
-                <span>Dashboard ({user?.name?.split(" ")[0] || "Account"})</span>
+                <span>Dashboard ({firstName})</span>
               </Button>
             </Link>
           ) : (
@@ -110,11 +121,13 @@ export const Header: React.FC = () => {
           </nav>
 
           <div className="pt-3 border-t border-border flex flex-col gap-2">
-            {isAuthenticated ? (
+            {!mounted || (isSessionLoading && !isAuthenticated) ? (
+              <div className="h-10 w-full rounded-xl bg-muted/50 animate-pulse" />
+            ) : isAuthenticated ? (
               <Link href={dashboardRoute} onClick={() => setMobileMenuOpen(false)}>
                 <Button className="w-full gap-2 rounded-xl">
                   <User className="h-4 w-4" />
-                  <span>Go to Dashboard</span>
+                  <span>Go to Dashboard ({firstName})</span>
                 </Button>
               </Link>
             ) : (

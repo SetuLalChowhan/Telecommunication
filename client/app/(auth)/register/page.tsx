@@ -50,12 +50,12 @@ const registerSchema = z
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
-  const { register: registerAuth, loginWithGoogle } = useAuth();
+  const { register: registerAuth, registerMutation } = useAuth();
   const [role, setRole] = useState<"PATIENT" | "DOCTOR">("PATIENT");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(null);
+  const isLoading = registerMutation.isPending;
+  const serverError = registerMutation.error?.message;
 
   const {
     register,
@@ -80,22 +80,15 @@ export default function RegisterPage() {
     setValue("role", newRole);
   };
 
-  const onSubmit = async (data: RegisterFormValues) => {
-    setIsLoading(true);
-    setServerError(null);
-    try {
-      await registerAuth({
-        name: `${data.firstName} ${data.lastName}`.trim(),
-        email: data.email,
-        password: data.password,
-        role: data.role,
-      });
-    } catch (err: any) {
-      setServerError(err.message || "Registration failed. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+  const onSubmit = (data: RegisterFormValues) => {
+    registerAuth({
+      name: `${data.firstName} ${data.lastName}`.trim(),
+      email: data.email,
+      password: data.password,
+      role: data.role,
+    });
   };
+
 
   return (
     <AuthSplitLayout
@@ -371,12 +364,8 @@ export default function RegisterPage() {
         <AuthDivider text="or continue with" />
 
         {/* Google OAuth */}
-        <GoogleAuthButton
-          disabled={isLoading}
-          onClick={() => {
-            loginWithGoogle("/dashboard");
-          }}
-        />
+        <GoogleAuthButton disabled={isLoading} />
+
 
         {/* Bottom Switch Link (Visible on desktop & mobile under OAuth button) */}
         <p className="text-center text-sm sm:text-base text-secondary-text pt-3">

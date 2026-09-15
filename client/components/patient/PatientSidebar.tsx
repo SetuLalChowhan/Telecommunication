@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   X,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -64,7 +65,8 @@ const PATIENT_NAV_ITEMS: NavItem[] = [
 
 export const PatientSidebar: React.FC<PatientSidebarProps> = ({ open, setOpen }) => {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { logout, logoutMutation } = useAuth();
+  const isLoggingOut = logoutMutation.isPending;
 
   return (
     <>
@@ -132,11 +134,16 @@ export const PatientSidebar: React.FC<PatientSidebarProps> = ({ open, setOpen })
         <div className="p-4 border-t border-border shrink-0">
           <Button
             variant="ghost"
+            disabled={isLoggingOut}
             onClick={logout}
-            className="w-full justify-start gap-3.5 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl"
+            className="w-full justify-start gap-3.5 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl disabled:opacity-50"
           >
-            <LogOut className="h-5 w-5" />
-            <span>Sign Out</span>
+            {isLoggingOut ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <LogOut className="h-5 w-5" />
+            )}
+            <span>{isLoggingOut ? "Signing out..." : "Sign Out"}</span>
           </Button>
         </div>
       </aside>

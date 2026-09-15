@@ -28,10 +28,10 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const { login, loginWithGoogle } = useAuth();
+  const { login, loginMutation } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(null);
+  const isLoading = loginMutation.isPending;
+  const serverError = loginMutation.error?.message;
 
   const {
     register,
@@ -45,18 +45,10 @@ export default function LoginPage() {
     },
   });
 
-  const onSubmit = async (data: LoginFormValues) => {
-    setIsLoading(true);
-    setServerError(null);
-    try {
-      await login({ email: data.email, password: data.password });
-      
-    } catch (err: any) {
-      setServerError(err.message || "Invalid email or password. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+  const onSubmit = (data: LoginFormValues) => {
+    login({ email: data.email, password: data.password });
   };
+
 
   return (
     <AuthSplitLayout
@@ -169,12 +161,8 @@ export default function LoginPage() {
         <AuthDivider text="or continue with" />
 
         {/* Google OAuth */}
-        <GoogleAuthButton
-          disabled={isLoading}
-          onClick={() => {
-            loginWithGoogle("/dashboard");
-          }}
-        />
+        <GoogleAuthButton disabled={isLoading} />
+
 
         {/* Bottom Switch Link */}
         <p className="text-center text-xs sm:text-sm text-secondary-text pt-2 sm:pt-3">

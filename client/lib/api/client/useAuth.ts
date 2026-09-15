@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -8,6 +8,8 @@ import {
   selectCurrentUser,
   selectCurrentRole,
   selectIsAuthenticated,
+  setSession,
+  setUserProfile,
   clearAuth,
 } from "@/redux/slices/authSlice";
 import {
@@ -23,6 +25,7 @@ import { toast } from "react-toastify";
 import { User, Role } from "@/types";
 import { useClient } from "./useClient";
 import { useMutationClient } from "./useMutationClient";
+import { axiosPublic } from "./useAxiosPublic";
 
 export type { Role } from "@/types";
 
@@ -80,6 +83,18 @@ export const useAuth = () => {
 
   const isAuthenticated = reduxIsAuthenticated || !!session?.user;
 
+  // Safe one-time sync: If session is present from cookies/server but Redux is not yet populated
+  useEffect(() => {
+    if (session?.user && !reduxIsAuthenticated) {
+      dispatch(
+        setSession({
+          user: session.user as unknown as User,
+          token: (session as any)?.token || (session as any)?.session?.token || null,
+        })
+      );
+    }
+  }, [session?.user, reduxIsAuthenticated, dispatch]);
+
   // 1. useClient hook to fetch and cache user profile
   const { data: profileUser, isLoading: isProfileLoading } = useClient<User>({
     queryKey: ["user", "me"],
@@ -103,7 +118,18 @@ export const useAuth = () => {
     successMessage: "Welcome back! Signed in successfully.",
     invalidateKeys: [["user", "me"]],
     onSuccess: (data, variables) => {
-      const userRole = (data as any)?.user?.role || role;
+      const authUser = (data as any)?.user;
+      const authSession = (data as any)?.session;
+      if (authUser) {
+        dispatch(
+          setSession({
+            user: authUser as unknown as User,
+            token: authSession?.token || (data as any)?.token || null,
+          })
+        );
+      }
+      queryClient.invalidateQueries();
+      const userRole = authUser?.role || role;
       const destination = variables.redirectTo || getRoleDashboardRoute(userRole);
       router.push(destination);
     },
@@ -120,7 +146,18 @@ export const useAuth = () => {
     },
     successMessage: "Account created successfully!",
     invalidateKeys: [["user", "me"]],
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables) => {
+      const authUser = (data as any)?.user;
+      const authSession = (data as any)?.session;
+      if (authUser) {
+        dispatch(
+          setSession({
+            user: authUser as unknown as User,
+            token: authSession?.token || (data as any)?.token || null,
+          })
+        );
+      }
+      queryClient.invalidateQueries();
       if (variables.role === "DOCTOR") {
         router.push("/doctor-verification");
       } else {
@@ -184,7 +221,35 @@ export const useAuth = () => {
     successMessage: "Email verified successfully!",
   });
 
-  // Social Login
+  // 8. Google Credential (One-Tap / @react-oauth/google) Mutation
+  const loginWithGoogleCredentialMutation = useMutationClient<any, { credential: string }>({
+    mutationFn: async ({ credential }) => {
+      const res = await axiosPublic.post("/api/auth/one-tap/callback", {
+        idToken: credential,
+      });
+      return res.data;
+    },
+    successMessage: "Welcome! Signed in with Google.",
+    invalidateKeys: [["user", "me"]],
+    onSuccess: (data) => {
+      const authUser = (data as any)?.user;
+      const authSession = (data as any)?.session;
+      if (authUser) {
+        dispatch(
+          setSession({
+            user: authUser as unknown as User,
+            token: authSession?.token || (data as any)?.token || null,
+          })
+        );
+      }
+      queryClient.invalidateQueries();
+      const userRole = authUser?.role || role;
+      router.push(getRoleDashboardRoute(userRole));
+    },
+  });
+
+
+  // Social Login (Redirect fallback)
   const loginWithGoogle = useCallback(async (callbackURL = "/dashboard") => {
     try {
       await signIn.social({
@@ -203,7 +268,8 @@ export const useAuth = () => {
     logoutMutation.isPending ||
     forgotPasswordMutation.isPending ||
     resetPasswordMutation.isPending ||
-    verifyEmailMutation.isPending;
+    verifyEmailMutation.isPending ||
+    loginWithGoogleCredentialMutation.isPending;
 
   const error =
     loginMutation.error?.message ||
@@ -212,7 +278,9 @@ export const useAuth = () => {
     forgotPasswordMutation.error?.message ||
     resetPasswordMutation.error?.message ||
     verifyEmailMutation.error?.message ||
+    loginWithGoogleCredentialMutation.error?.message ||
     null;
+
 
   return {
     user,
@@ -235,6 +303,8 @@ export const useAuth = () => {
       resetPasswordMutation.mutateAsync(params),
     verifyEmail: (token: string) => verifyEmailMutation.mutateAsync(token),
     loginWithGoogle,
+    loginWithGoogleCredential: (credential: string) =>
+      loginWithGoogleCredentialMutation.mutateAsync({ credential }),
     // Expose granular mutation hooks for direct use
     loginMutation,
     registerMutation,
@@ -242,7 +312,9 @@ export const useAuth = () => {
     forgotPasswordMutation,
     resetPasswordMutation,
     verifyEmailMutation,
+    loginWithGoogleCredentialMutation,
   };
 };
+
 
 export default useAuth;

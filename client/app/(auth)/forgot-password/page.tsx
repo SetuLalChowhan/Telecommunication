@@ -22,11 +22,10 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 export default function ForgotPasswordPage() {
-  const { forgotPassword } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const { forgotPassword, forgotPasswordMutation } = useAuth();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
-  const [serverError, setServerError] = useState<string | null>(null);
+  const isLoading = forgotPasswordMutation.isPending;
 
   const {
     register,
@@ -40,18 +39,11 @@ export default function ForgotPasswordPage() {
   });
 
   const onSubmit = async (data: ForgotPasswordFormValues) => {
-    setIsLoading(true);
-    setServerError(null);
-    try {
-      await forgotPassword({ email: data.email });
-      setSubmittedEmail(data.email);
-      setIsSubmitted(true);
-    } catch (err: any) {
-      setServerError(err.message || "Failed to process reset password request.");
-    } finally {
-      setIsLoading(false);
-    }
+    await forgotPassword({ email: data.email });
+    setSubmittedEmail(data.email);
+    setIsSubmitted(true);
   };
+
 
   return (
     <AuthSplitLayout

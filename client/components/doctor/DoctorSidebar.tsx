@@ -12,6 +12,7 @@ import {
   Settings,
   LogOut,
   X,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,7 @@ const DOCTOR_NAV_ITEMS: NavItem[] = [
   {
     id: 1,
     icon: <LayoutDashboard className="h-5 w-5" />,
-    text: "Doctor Console",
+    text: "Overview",
     path: "/doctor/dashboard",
   },
   {
@@ -52,13 +53,13 @@ const DOCTOR_NAV_ITEMS: NavItem[] = [
   {
     id: 4,
     icon: <Clock className="h-5 w-5" />,
-    text: "Weekly Schedule",
+    text: "My Schedule",
     path: "/doctor/schedule",
   },
   {
     id: 5,
     icon: <FileCheck2 className="h-5 w-5" />,
-    text: "Verification Portal",
+    text: "Verification",
     path: "/doctor-verification",
   },
   {
@@ -71,7 +72,8 @@ const DOCTOR_NAV_ITEMS: NavItem[] = [
 
 export const DoctorSidebar: React.FC<DoctorSidebarProps> = ({ open, setOpen }) => {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { logout, logoutMutation } = useAuth();
+  const isLoggingOut = logoutMutation.isPending;
 
   return (
     <>
@@ -139,14 +141,20 @@ export const DoctorSidebar: React.FC<DoctorSidebarProps> = ({ open, setOpen }) =
         <div className="p-4 border-t border-border shrink-0">
           <Button
             variant="ghost"
+            disabled={isLoggingOut}
             onClick={logout}
-            className="w-full justify-start gap-3.5 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl"
+            className="w-full justify-start gap-3.5 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl disabled:opacity-50"
           >
-            <LogOut className="h-5 w-5" />
-            <span>Sign Out</span>
+            {isLoggingOut ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <LogOut className="h-5 w-5" />
+            )}
+            <span>{isLoggingOut ? "Signing out..." : "Sign Out"}</span>
           </Button>
         </div>
       </aside>
+
     </>
   );
 };
