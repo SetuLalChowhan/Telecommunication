@@ -50,7 +50,26 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+        ignoredActions: [
+          FLUSH,
+          REHYDRATE,
+          PAUSE,
+          PERSIST,
+          PURGE,
+          REGISTER,
+          "auth/setSession",
+          "auth/setUserProfile",
+        ],
+        ignoredActionPaths: [
+          "payload.user.createdAt",
+          "payload.user.updatedAt",
+          "payload.createdAt",
+          "payload.updatedAt",
+        ],
+        ignoredPaths: [
+          "auth.user.createdAt",
+          "auth.user.updatedAt",
+        ],
       },
     }),
 });

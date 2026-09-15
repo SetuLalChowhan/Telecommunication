@@ -17,6 +17,15 @@ const initialState: AuthState = {
   isInitialized: false,
 };
 
+function sanitizeUser(user: any): User | null {
+  if (!user) return null;
+  try {
+    return JSON.parse(JSON.stringify(user));
+  } catch {
+    return user;
+  }
+}
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -32,15 +41,17 @@ const authSlice = createSlice({
         token?: string | null;
       }>
     ) => {
-      state.user = action.payload.user;
-      state.role = (action.payload.user.role as Role) || "PATIENT";
+      const sanitizedUser = sanitizeUser(action.payload.user);
+      state.user = sanitizedUser;
+      state.role = (sanitizedUser?.role as Role) || "PATIENT";
       state.token = action.payload.token ?? state.token;
-      state.isAuthenticated = true;
+      state.isAuthenticated = !!sanitizedUser;
       state.isInitialized = true;
     },
     setUserProfile: (state, action: PayloadAction<User>) => {
-      state.user = action.payload;
-      state.role = (action.payload.role as Role) || state.role || "PATIENT";
+      const sanitizedUser = sanitizeUser(action.payload);
+      state.user = sanitizedUser;
+      state.role = (sanitizedUser?.role as Role) || state.role || "PATIENT";
     },
     clearAuth: (state) => {
       state.user = null;

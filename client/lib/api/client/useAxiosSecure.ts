@@ -59,10 +59,6 @@ axiosSecure.interceptors.response.use(
     return data;
   },
   (error) => {
-    if (error.response?.status === 401) {
-      store.dispatch(clearAuth());
-    }
-
     const message =
       error.response?.data?.message ||
       error.message ||
