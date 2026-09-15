@@ -3,14 +3,12 @@
 import React, { useState } from "react";
 import PatientNavbar from "@/components/patient/PatientNavbar";
 import PatientSidebar from "@/components/patient/PatientSidebar";
-import { useClient } from "@/lib/api";
 
 interface PatientLayoutProps {
   children: React.ReactNode;
 }
 
 const PatientLayout: React.FC<PatientLayoutProps> = ({ children }) => {
-  useClient({ queryKey: ["user", "me"], url: "/users/me", isPrivate: true });
   const [open, setOpen] = useState(false);
 
   return (

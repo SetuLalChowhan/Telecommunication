@@ -134,9 +134,7 @@ export const useAuth = () => {
       return res.data;
     },
     successMessage: "Account created! Please check your email for the verification link.",
-    invalidateKeys: [["user", "me"]],
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries();
       // Pass role to verify-email so doctor verification flow is primed
       router.push(`/verify-email?email=${encodeURIComponent(variables.email)}&role=${encodeURIComponent(variables.role)}`);
     },
