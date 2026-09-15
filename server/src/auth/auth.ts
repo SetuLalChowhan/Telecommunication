@@ -74,6 +74,10 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     sendResetPassword: async ({ user, url }) => {
+      const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+      const targetUrl = new URL(url);
+      const resetLink = `${clientUrl}/reset-password${targetUrl.search}`;
+
       await sendEmail(
         user.email,
         'Reset your password',
@@ -83,7 +87,7 @@ export const auth = betterAuth({
           <p>Please click the link below to reset your password:</p>
 
           <p>
-            <a href="${url}">Reset Password</a>
+            <a href="${resetLink}">Reset Password</a>
           </p>
 
           <p>If you did not request a password reset, you can safely ignore this email.</p>
@@ -96,6 +100,10 @@ export const auth = betterAuth({
     sendOnSignUp: true,
 
     sendVerificationEmail: async ({ user, url }) => {
+      const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+      const targetUrl = new URL(url);
+      const verificationLink = `${clientUrl}${targetUrl.pathname}${targetUrl.search}`;
+
       await sendEmail(
         user.email,
         'Verify your email address',
@@ -105,7 +113,7 @@ export const auth = betterAuth({
           <p>Please verify your email address:</p>
 
           <p>
-            <a href="${url}">Verify Email</a>
+            <a href="${verificationLink}">Verify Email</a>
           </p>
 
           <p>If you did not create this account, you can ignore this email.</p>
