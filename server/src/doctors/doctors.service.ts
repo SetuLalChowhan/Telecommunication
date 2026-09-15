@@ -17,6 +17,7 @@ import {
   getPaginationParams,
 } from '../common/pagination/pagination.utils.js';
 import { generateDoctorSlug, slugify } from '../common/utils/slug.utils.js';
+import { CloudinaryService } from '../common/cloudinary/cloudinary.service.js';
 
 const DOCTOR_PROFILE_INCLUDE = {
   user: {
@@ -36,7 +37,10 @@ const DOCTOR_PROFILE_INCLUDE = {
 
 @Injectable()
 export class DoctorService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   private async getOwnProfileOrThrow(userId: string) {
     const profile = await this.prisma.doctorProfile.findUnique({
@@ -183,11 +187,17 @@ export class DoctorService {
   ) {
     const profile = await this.getOwnProfileOrThrow(userId);
 
+    const uploadRes = await this.cloudinaryService.uploadFile(
+      file,
+      'telehealth/documents',
+      { resourceType: 'auto' },
+    );
+
     return this.prisma.doctorDocument.create({
       data: {
         doctorId: profile.id,
         docType,
-        fileUrl: `/uploads/documents/${file.filename}`,
+        fileUrl: uploadRes.secureUrl,
       },
     });
   }

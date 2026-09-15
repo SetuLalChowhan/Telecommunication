@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { UploadReportDto } from './dto/upload-report.dto.js';
-import { deleteFileFromDisk } from '../common/utils/file-upload.util.js';
+import { CloudinaryService } from '../common/cloudinary/cloudinary.service.js';
 import {
   createPaginationMeta,
   getPaginationParams,
@@ -15,7 +15,10 @@ import { PaginationDto } from '../common/pagination/pagination.dto.js';
 
 @Injectable()
 export class MedicalReportsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   private async getOrCreatePatient(userId: string) {
     let patient = await this.prisma.patientProfile.findUnique({
@@ -59,7 +62,12 @@ export class MedicalReportsService {
       }
     }
 
-    const fileUrl = `/uploads/reports/${file.filename}`;
+    const uploadRes = await this.cloudinaryService.uploadFile(
+      file,
+      'telehealth/reports',
+      { resourceType: 'auto' },
+    );
+    const fileUrl = uploadRes.secureUrl;
     const displayName = dto.fileName || file.originalname;
 
     return this.prisma.medicalReport.create({
@@ -172,7 +180,9 @@ export class MedicalReportsService {
       );
     }
 
-    await deleteFileFromDisk(report.fileUrl);
+    if (report.fileUrl) {
+      await this.cloudinaryService.deleteFile(report.fileUrl);
+    }
 
     return this.prisma.medicalReport.delete({
       where: { id: reportId },

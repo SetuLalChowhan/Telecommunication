@@ -8,7 +8,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateProfileDto } from './dto/update-profile.dto.js';
 import { AdminUpdateUserDto } from './dto/admin-update-user.dto.js';
-import { deleteFileFromDisk } from '../common/utils/file-upload.util.js';
+import { CloudinaryService } from '../common/cloudinary/cloudinary.service.js';
 import {
   PaginationDto,
 } from '../common/pagination/pagination.dto.js';
@@ -19,7 +19,10 @@ import {
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   async findAll(query: PaginationDto = {}) {
     const { skip, take } = getPaginationParams(query.page, query.limit);
@@ -123,7 +126,7 @@ export class UsersService {
   }
 
   /**
-   * User self-profile update with optional image upload
+   * User self-profile update with Cloudinary image upload and old asset cleanup
    */
   async updateProfile(
     userId: string,
@@ -134,10 +137,16 @@ export class UsersService {
 
     let imageUrl = user.image;
     if (file) {
-      imageUrl = `/uploads/avatars/${file.filename}`;
-      // Clean up previous image file if existed
+      const uploadRes = await this.cloudinaryService.uploadFile(
+        file,
+        'telehealth/avatars',
+        { resourceType: 'image' },
+      );
+      imageUrl = uploadRes.secureUrl;
+
+      // Clean up previous image asset on Cloudinary if existed
       if (user.image) {
-        await deleteFileFromDisk(user.image);
+        await this.cloudinaryService.deleteFile(user.image);
       }
     }
 
@@ -178,7 +187,7 @@ export class UsersService {
   }
 
   /**
-   * Admin-level update allowing modification of all fields including role and verification status
+   * Admin-level update allowing modification of all fields including role, verification status, and avatar
    */
   async adminUpdateUser(
     id: string,
@@ -198,9 +207,15 @@ export class UsersService {
 
     let imageUrl = dto.image !== undefined ? dto.image : user.image;
     if (file) {
-      imageUrl = `/uploads/avatars/${file.filename}`;
+      const uploadRes = await this.cloudinaryService.uploadFile(
+        file,
+        'telehealth/avatars',
+        { resourceType: 'image' },
+      );
+      imageUrl = uploadRes.secureUrl;
+
       if (user.image) {
-        await deleteFileFromDisk(user.image);
+        await this.cloudinaryService.deleteFile(user.image);
       }
     }
 
@@ -247,7 +262,7 @@ export class UsersService {
     const user = await this.findOne(id);
 
     if (user.image) {
-      await deleteFileFromDisk(user.image);
+      await this.cloudinaryService.deleteFile(user.image);
     }
 
     return this.prisma.user.delete({

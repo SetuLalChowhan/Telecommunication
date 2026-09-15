@@ -18,6 +18,7 @@ import { ReviewsModule } from './reviews/reviews.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { GoogleModule } from './google/google.module.js';
 import { HealthModule } from './health/health.module.js';
+import { CloudinaryModule } from './common/cloudinary/cloudinary.module.js';
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
 @Module({
@@ -25,6 +26,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    CloudinaryModule,
 
     ThrottlerModule.forRoot([
       {
