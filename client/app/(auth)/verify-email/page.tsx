@@ -1,48 +1,36 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Mail, ArrowRight, RotateCw, CheckCircle2, Edit2, Loader2 } from "lucide-react";
+import { Mail, ArrowRight, RotateCw, CheckCircle2, AlertCircle, Loader2, ShieldCheck } from "lucide-react";
 import AuthSplitLayout from "@/components/auth/AuthSplitLayout";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/api";
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-  const initialEmail = searchParams.get("email") || "patient@telehealth.com";
+  const status = searchParams.get("status");
+  const errorMessage = searchParams.get("message");
+  const email = searchParams.get("email") || "your-email@example.com";
 
   const { verifyEmail, verifyEmailMutation } = useAuth();
-  const [email, setEmail] = useState(initialEmail);
-  const [isEditingEmail, setIsEditingEmail] = useState(false);
-  const [tempEmail, setTempEmail] = useState(initialEmail);
 
-  const isVerifyingToken = verifyEmailMutation.isPending;
-  const verificationSuccess = verifyEmailMutation.isSuccess;
-  const verificationError = verifyEmailMutation.error?.message || null;
+  const isManualVerifying = verifyEmailMutation.isPending;
+  const isManualSuccess = verifyEmailMutation.isSuccess;
+  const isManualError = verifyEmailMutation.error?.message;
 
-  // 42-second countdown timer requested by user
+  // 42-second countdown timer for resend
   const [countdown, setCountdown] = useState(42);
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
 
-  // Auto-verify when arriving with a token in the URL
-  useEffect(() => {
+  const handleManualVerify = () => {
     if (token) {
       verifyEmail(token);
     }
-  }, [token, verifyEmail]);
-
-
-  useEffect(() => {
-    if (countdown <= 0) return;
-    const timer = setInterval(() => {
-      setCountdown((prev) => prev - 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [countdown]);
+  };
 
   const handleResend = () => {
     if (countdown > 0 || isResending) return;
@@ -52,40 +40,21 @@ function VerifyEmailContent() {
     setTimeout(() => {
       setIsResending(false);
       setResendSuccess(true);
-      setCountdown(42); // Reset countdown
+      setCountdown(42);
     }, 1200);
   };
 
-  const handleSaveEmail = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (tempEmail && tempEmail.includes("@")) {
-      setEmail(tempEmail);
-      setIsEditingEmail(false);
-      setCountdown(42);
-      setResendSuccess(true);
-    }
-  };
-
-  if (isVerifyingToken) {
-    return (
-      <div className="space-y-4 text-center py-6">
-        <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
-        <h2 className="text-xl font-bold text-foreground">Verifying your email...</h2>
-        <p className="text-sm text-secondary-text">Please wait a moment while we confirm your email address.</p>
-      </div>
-    );
-  }
-
-  if (verificationSuccess) {
+  // State 1: Verification was successful (via server redirect or manual button)
+  if (status === "success" || isManualSuccess) {
     return (
       <div className="space-y-5 text-center py-4">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-success/10 text-success">
-          <CheckCircle2 className="h-8 w-8" />
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200">
+          <CheckCircle2 className="h-8 w-8 stroke-[2.2]" />
         </div>
         <div className="space-y-2">
           <h2 className="text-2xl font-bold text-foreground">Email verified!</h2>
           <p className="text-sm sm:text-base text-secondary-text">
-            Your email has been successfully verified. You can now access all services.
+            Your email has been successfully verified. You can now sign in and access all platform services.
           </p>
         </div>
         <Link href="/login" className="block pt-2">
@@ -98,6 +67,57 @@ function VerifyEmailContent() {
     );
   }
 
+  // State 2: Verification error
+  if (status === "error" || isManualError) {
+    return (
+      <div className="space-y-5 text-center py-4">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive border border-destructive/20">
+          <AlertCircle className="h-8 w-8 stroke-[2.2]" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold text-foreground">Verification Failed</h2>
+          <p className="text-sm sm:text-base text-secondary-text">
+            {errorMessage || isManualError || "The verification link is invalid or has expired."}
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 pt-2">
+          <Link href="/login">
+            <Button className="w-full h-11 bg-primary hover:bg-primary-dark text-white font-medium rounded-xl">
+              <span>Go to Sign In</span>
+              <ArrowRight className="h-4 w-4 ml-1.5" />
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // State 3: Arrived with token directly but not yet verified
+  if (token) {
+    return (
+      <div className="space-y-5 text-center py-4">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary border border-primary/20">
+          <ShieldCheck className="h-8 w-8 stroke-[2.2]" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold text-foreground">Confirm Email Verification</h2>
+          <p className="text-sm sm:text-base text-secondary-text">
+            Click the button below to verify your email address and activate your account.
+          </p>
+        </div>
+        <Button
+          onClick={handleManualVerify}
+          disabled={isManualVerifying}
+          className="w-full h-11 bg-primary hover:bg-primary-dark text-white font-medium rounded-xl flex items-center justify-center gap-2 cursor-pointer"
+        >
+          {isManualVerifying && <Loader2 className="h-4 w-4 animate-spin" />}
+          <span>{isManualVerifying ? "Verifying..." : "Verify Email Now"}</span>
+        </Button>
+      </div>
+    );
+  }
+
+  // State 4: Default awaiting verification state (e.g. just signed up)
   return (
     <div className="space-y-4 sm:space-y-5 text-center">
       {/* Mail Visual Graphic */}
@@ -105,58 +125,22 @@ function VerifyEmailContent() {
         <Mail className="h-8 w-8 text-primary" strokeWidth={1.75} />
       </div>
 
-      {/* Target Email Display & Typo correction option */}
+      {/* Target Email Display */}
       <div className="space-y-1.5">
         <p className="text-xs sm:text-sm text-secondary-text">
           We&apos;ve sent a verification link to
         </p>
 
-        {isEditingEmail ? (
-          <form onSubmit={handleSaveEmail} className="flex gap-2 max-w-sm mx-auto pt-1">
-            <Input
-              type="email"
-              value={tempEmail}
-              onChange={(e) => setTempEmail(e.target.value)}
-              className="h-9 text-xs sm:text-sm"
-              placeholder="Enter correct email"
-              autoFocus
-            />
-            <Button type="submit" size="sm" className="h-9 px-3.5 bg-primary text-white text-xs">
-              Save
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditingEmail(false)}
-              className="h-9 px-2.5 text-xs"
-            >
-              Cancel
-            </Button>
-          </form>
-        ) : (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted text-foreground font-medium text-xs sm:text-sm">
-            <span>{email}</span>
-            <button
-              type="button"
-              onClick={() => {
-                setTempEmail(email);
-                setIsEditingEmail(true);
-              }}
-              className="text-secondary-text hover:text-primary transition-colors p-0.5 rounded"
-              title="Change email"
-            >
-              <Edit2 className="h-3 w-3" />
-            </button>
-          </div>
-        )}
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted text-foreground font-medium text-xs sm:text-sm">
+          <span>{email}</span>
+        </div>
 
         <p className="text-xs sm:text-sm text-secondary-text max-w-sm mx-auto leading-relaxed pt-1">
           Please check your inbox and click the verification link to continue.
         </p>
       </div>
 
-      {/* Resend confirmation toast/alert */}
+      {/* Resend confirmation alert */}
       {resendSuccess && (
         <div className="flex items-center justify-center gap-2 text-xs sm:text-sm font-medium text-success bg-success/10 py-2 px-3 rounded-lg border border-success/20 animate-in fade-in duration-200">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
@@ -168,7 +152,7 @@ function VerifyEmailContent() {
       <div className="pt-2 border-t border-border space-y-2.5">
         <p className="text-xs sm:text-sm text-secondary-text">Didn&apos;t receive the email?</p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2">
           {countdown > 0 ? (
             <Button
               type="button"
@@ -184,7 +168,7 @@ function VerifyEmailContent() {
               variant="outline"
               onClick={handleResend}
               disabled={isResending}
-              className="w-full sm:w-auto border-border text-foreground hover:bg-muted font-medium text-xs sm:text-sm flex items-center gap-2 h-10"
+              className="w-full sm:w-auto border-border text-foreground hover:bg-muted font-medium text-xs sm:text-sm flex items-center gap-2 h-10 cursor-pointer"
             >
               {isResending ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
@@ -192,20 +176,6 @@ function VerifyEmailContent() {
                 <RotateCw className="h-3.5 w-3.5 text-primary" />
               )}
               <span>{isResending ? "Resending..." : "Resend email"}</span>
-            </Button>
-          )}
-
-          {!isEditingEmail && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => {
-                setTempEmail(email);
-                setIsEditingEmail(true);
-              }}
-              className="w-full sm:w-auto text-secondary-text hover:text-foreground text-xs sm:text-sm h-10"
-            >
-              Change email
             </Button>
           )}
         </div>
@@ -243,3 +213,4 @@ export default function VerifyEmailPage() {
     </AuthSplitLayout>
   );
 }
+

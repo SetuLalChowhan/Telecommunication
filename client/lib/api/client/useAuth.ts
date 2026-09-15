@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -83,18 +83,6 @@ export const useAuth = () => {
 
   const isAuthenticated = reduxIsAuthenticated || !!session?.user;
 
-  // Safe one-time sync: If session is present from cookies/server but Redux is not yet populated
-  useEffect(() => {
-    if (session?.user && !reduxIsAuthenticated) {
-      dispatch(
-        setSession({
-          user: session.user as unknown as User,
-          token: (session as any)?.token || (session as any)?.session?.token || null,
-        })
-      );
-    }
-  }, [session?.user, reduxIsAuthenticated, dispatch]);
-
   // 1. useClient hook to fetch and cache user profile
   const { data: profileUser, isLoading: isProfileLoading } = useClient<User>({
     queryKey: ["user", "me"],
@@ -144,25 +132,12 @@ export const useAuth = () => {
       }
       return res.data;
     },
-    successMessage: "Account created successfully!",
+    successMessage: "Account created! Please check your email for the verification link.",
     invalidateKeys: [["user", "me"]],
-    onSuccess: (data, variables) => {
-      const authUser = (data as any)?.user;
-      const authSession = (data as any)?.session;
-      if (authUser) {
-        dispatch(
-          setSession({
-            user: authUser as unknown as User,
-            token: authSession?.token || (data as any)?.token || null,
-          })
-        );
-      }
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries();
-      if (variables.role === "DOCTOR") {
-        router.push("/doctor-verification");
-      } else {
-        router.push(`/verify-email?email=${encodeURIComponent(variables.email)}`);
-      }
+      // Always redirect both doctors and patients to verify-email first!
+      router.push(`/verify-email?email=${encodeURIComponent(variables.email)}`);
     },
   });
 
