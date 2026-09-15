@@ -73,10 +73,9 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
-    sendResetPassword: async ({ user, url }) => {
+    sendResetPassword: async ({ user, token }: any) => {
       const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
-      const targetUrl = new URL(url);
-      const resetLink = `${clientUrl}/reset-password${targetUrl.search}`;
+      const resetLink = `${clientUrl}/reset-password?token=${encodeURIComponent(token)}`;
 
       await sendEmail(
         user.email,
@@ -102,6 +101,10 @@ export const auth = betterAuth({
     sendVerificationEmail: async ({ user, url }) => {
       const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
       const targetUrl = new URL(url);
+      const userRole = (user as any)?.role;
+      if (userRole) {
+        targetUrl.searchParams.set('role', userRole);
+      }
       const verificationLink = `${clientUrl}${targetUrl.pathname}${targetUrl.search}`;
 
       await sendEmail(

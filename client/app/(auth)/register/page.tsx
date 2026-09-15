@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Eye, EyeOff, Info, Loader2, Stethoscope, User, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Info, Loader2, Stethoscope, User, AlertCircle, Check } from "lucide-react";
 import AuthSplitLayout from "@/components/auth/AuthSplitLayout";
 import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
 import AuthDivider from "@/components/auth/AuthDivider";
@@ -33,8 +33,9 @@ const registerSchema = z
       .email("Please enter a valid email address"),
     password: z
       .string()
-      .min(1, "Password is required")
-      .min(8, "Password must be at least 8 characters"),
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+      .regex(/[0-9]/, "Password must contain at least one number"),
     confirmPassword: z
       .string()
       .min(1, "Please confirm your password"),
@@ -61,6 +62,7 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -74,6 +76,55 @@ export default function RegisterPage() {
       agreeToTerms: true,
     },
   });
+
+  const passwordValue = watch("password") || "";
+
+  // Password requirements calculation
+  const hasMinLength = passwordValue.length >= 8;
+  const hasUppercase = /[A-Z]/.test(passwordValue);
+  const hasNumber = /[0-9]/.test(passwordValue);
+
+  // Strength score (0 to 4)
+  const strengthScore = useMemo(() => {
+    if (!passwordValue) return 0;
+    let score = 0;
+    if (passwordValue.length >= 8) score++;
+    if (passwordValue.length >= 12) score++;
+    if (/[A-Z]/.test(passwordValue)) score++;
+    if (/[0-9]/.test(passwordValue)) score++;
+    if (/[^A-Za-z0-9]/.test(passwordValue)) score++;
+    return Math.min(score, 4);
+  }, [passwordValue]);
+
+  const strengthColor = useMemo(() => {
+    switch (strengthScore) {
+      case 1:
+        return "bg-error";
+      case 2:
+        return "bg-warning";
+      case 3:
+        return "bg-secondary";
+      case 4:
+        return "bg-success";
+      default:
+        return "bg-border";
+    }
+  }, [strengthScore]);
+
+  const strengthLabel = useMemo(() => {
+    switch (strengthScore) {
+      case 1:
+        return "Weak";
+      case 2:
+        return "Fair";
+      case 3:
+        return "Good";
+      case 4:
+        return "Strong";
+      default:
+        return "";
+    }
+  }, [strengthScore]);
 
   const handleRoleChange = (newRole: "PATIENT" | "DOCTOR") => {
     setRole(newRole);
@@ -316,6 +367,88 @@ export default function RegisterPage() {
             )}
           </div>
         </div>
+
+        {/* Password Strength Meter */}
+        {passwordValue.length > 0 && (
+          <div className="space-y-2 pt-1 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between text-xs sm:text-sm">
+              <span className="text-secondary-text">Password strength</span>
+              <span className="font-semibold text-foreground">{strengthLabel}</span>
+            </div>
+            <div className="h-2 w-full bg-border rounded-full overflow-hidden flex gap-1">
+              <div
+                className={`h-full transition-all duration-300 rounded-full ${
+                  strengthScore >= 1 ? strengthColor : "bg-transparent"
+                } w-1/4`}
+              />
+              <div
+                className={`h-full transition-all duration-300 rounded-full ${
+                  strengthScore >= 2 ? strengthColor : "bg-transparent"
+                } w-1/4`}
+              />
+              <div
+                className={`h-full transition-all duration-300 rounded-full ${
+                  strengthScore >= 3 ? strengthColor : "bg-transparent"
+                } w-1/4`}
+              />
+              <div
+                className={`h-full transition-all duration-300 rounded-full ${
+                  strengthScore >= 4 ? strengthColor : "bg-transparent"
+                } w-1/4`}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Dynamic Requirements Checklist (shown after typing) */}
+        {passwordValue.length > 0 && (
+          <div className="rounded-lg bg-muted/60 p-3.5 space-y-2.5 text-xs sm:text-sm text-secondary-text animate-in fade-in duration-200">
+            <div className="flex items-center gap-2.5">
+              <span
+                className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${
+                  hasMinLength
+                    ? "bg-success text-white"
+                    : "bg-border text-muted-foreground"
+                }`}
+              >
+                {hasMinLength ? <Check className="h-2.5 w-2.5" /> : "•"}
+              </span>
+              <span className={hasMinLength ? "text-foreground font-medium" : ""}>
+                8+ characters
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <span
+                className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${
+                  hasUppercase
+                    ? "bg-success text-white"
+                    : "bg-border text-muted-foreground"
+                }`}
+              >
+                {hasUppercase ? <Check className="h-2.5 w-2.5" /> : "•"}
+              </span>
+              <span className={hasUppercase ? "text-foreground font-medium" : ""}>
+                One uppercase letter
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <span
+                className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${
+                  hasNumber
+                    ? "bg-success text-white"
+                    : "bg-border text-muted-foreground"
+                }`}
+              >
+                {hasNumber ? <Check className="h-2.5 w-2.5" /> : "•"}
+              </span>
+              <span className={hasNumber ? "text-foreground font-medium" : ""}>
+                One number
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Terms and Privacy Policy Checkbox */}
         <div className="space-y-1.5 pt-1">

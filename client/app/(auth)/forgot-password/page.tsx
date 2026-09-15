@@ -71,10 +71,10 @@ export default function ForgotPasswordPage() {
           <div className="pt-2 space-y-3">
             <Button
               asChild
-              className="w-full h-11 bg-primary hover:bg-primary-dark text-white font-medium text-base rounded-lg shadow-sm"
+              className="w-full h-11 bg-primary hover:bg-primary-dark text-white font-medium text-base rounded-xl shadow-sm"
             >
-              <Link href="/reset-password">
-                Proceed to reset password (Demo)
+              <Link href="/login">
+                Back to sign in
               </Link>
             </Button>
 
@@ -82,7 +82,7 @@ export default function ForgotPasswordPage() {
               type="button"
               variant="ghost"
               onClick={() => setIsSubmitted(false)}
-              className="w-full text-secondary-text hover:text-foreground text-sm sm:text-base"
+              className="w-full text-secondary-text hover:text-foreground text-sm sm:text-base cursor-pointer"
             >
               Try another email
             </Button>

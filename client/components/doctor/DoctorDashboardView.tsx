@@ -23,26 +23,33 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
 }) => {
   return (
     <div className="space-y-6">
-      {/* Verification notice if not verified */}
+      {/* Verification Notice */}
       {!isVerified && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <h3 className="text-sm sm:text-base font-semibold text-amber-900">
-                Doctor Profile Verification Required
-              </h3>
-              <p className="text-xs sm:text-sm text-amber-700 mt-0.5">
-                Please upload your medical credentials and license so patients can book appointments with you.
-              </p>
+        <div className="rounded-2xl border border-amber-200/90 bg-amber-50/60 dark:border-amber-900/40 dark:bg-amber-950/20 p-4 sm:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="p-2.5 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 shrink-0 mt-0.5">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100">
+                  Profile verification required
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
+                  Upload your BMDC registration and medical credentials to activate your profile and start accepting patient appointments.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 sm:shrink-0 pl-12 sm:pl-0">
+              <Link href="/doctor-verification">
+                <Button className="h-10 px-4 bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-medium rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer">
+                  <span>Upload documents</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </div>
-          <Link href="/doctor-verification">
-            <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white shrink-0">
-              <span>Upload Documents</span>
-              <ArrowRight className="h-4 w-4 ml-1.5" />
-            </Button>
-          </Link>
         </div>
       )}
 

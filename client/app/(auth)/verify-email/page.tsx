@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Mail, ArrowRight, RotateCw, CheckCircle2, AlertCircle, Loader2, ShieldCheck } from "lucide-react";
@@ -13,18 +13,34 @@ function VerifyEmailContent() {
   const token = searchParams.get("token");
   const status = searchParams.get("status");
   const errorMessage = searchParams.get("message");
-  const email = searchParams.get("email") || "your-email@example.com";
+  const email = searchParams.get("email") || "";
+  const role = searchParams.get("role")?.toUpperCase() || "";
+  const isDoctor = role === "DOCTOR";
 
-  const { verifyEmail, verifyEmailMutation } = useAuth();
+  const {
+    verifyEmail,
+    verifyEmailMutation,
+    resendVerificationEmail,
+    resendVerificationEmailMutation,
+  } = useAuth();
 
   const isManualVerifying = verifyEmailMutation.isPending;
   const isManualSuccess = verifyEmailMutation.isSuccess;
   const isManualError = verifyEmailMutation.error?.message;
+  const isResending = resendVerificationEmailMutation.isPending;
 
-  // 42-second countdown timer for resend
-  const [countdown, setCountdown] = useState(42);
-  const [isResending, setIsResending] = useState(false);
+  // Countdown timer for resend (starts at 45s)
+  const [countdown, setCountdown] = useState(45);
   const [resendSuccess, setResendSuccess] = useState(false);
+
+  // Countdown timer tick effect
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const interval = setInterval(() => {
+      setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [countdown]);
 
   const handleManualVerify = () => {
     if (token) {
@@ -32,35 +48,38 @@ function VerifyEmailContent() {
     }
   };
 
-  const handleResend = () => {
-    if (countdown > 0 || isResending) return;
-    setIsResending(true);
-    setResendSuccess(false);
-
-    setTimeout(() => {
-      setIsResending(false);
+  const handleResend = async () => {
+    if (countdown > 0 || isResending || !email) return;
+    try {
+      await resendVerificationEmail({ email });
       setResendSuccess(true);
-      setCountdown(42);
-    }, 1200);
+      setCountdown(60);
+    } catch {
+      // Toast notification is automatically managed by useMutationClient
+    }
   };
 
   // State 1: Verification was successful (via server redirect or manual button)
   if (status === "success" || isManualSuccess) {
     return (
       <div className="space-y-5 text-center py-4">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800/50">
           <CheckCircle2 className="h-8 w-8 stroke-[2.2]" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-foreground">Email verified!</h2>
+          <h2 className="text-2xl font-bold text-foreground">
+            {isDoctor ? "Doctor Account Verified!" : "Email verified!"}
+          </h2>
           <p className="text-sm sm:text-base text-secondary-text">
-            Your email has been successfully verified. You can now sign in and access all platform services.
+            {isDoctor
+              ? "Your email address has been verified. Please proceed to upload your medical credentials and license to activate your profile."
+              : "Your email has been successfully verified. You can now sign in and access all platform services."}
           </p>
         </div>
-        <Link href="/login" className="block pt-2">
-          <Button className="w-full h-11 bg-primary hover:bg-primary-dark text-white font-medium rounded-xl">
-            <span>Continue to Sign in</span>
-            <ArrowRight className="h-4 w-4 ml-1.5" />
+        <Link href={isDoctor ? "/doctor-verification" : "/login"} className="block pt-2">
+          <Button className="w-full h-11 bg-primary hover:bg-primary-dark text-white font-medium rounded-xl flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all">
+            <span>{isDoctor ? "Continue to Document Upload" : "Continue to Sign in"}</span>
+            <ArrowRight className="h-4 w-4" />
           </Button>
         </Link>
       </div>
@@ -82,9 +101,9 @@ function VerifyEmailContent() {
         </div>
         <div className="flex flex-col gap-2 pt-2">
           <Link href="/login">
-            <Button className="w-full h-11 bg-primary hover:bg-primary-dark text-white font-medium rounded-xl">
+            <Button className="w-full h-11 bg-primary hover:bg-primary-dark text-white font-medium rounded-xl flex items-center justify-center gap-2">
               <span>Go to Sign In</span>
-              <ArrowRight className="h-4 w-4 ml-1.5" />
+              <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
         </div>
@@ -132,7 +151,7 @@ function VerifyEmailContent() {
         </p>
 
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted text-foreground font-medium text-xs sm:text-sm">
-          <span>{email}</span>
+          <span>{email || "your registered email"}</span>
         </div>
 
         <p className="text-xs sm:text-sm text-secondary-text max-w-sm mx-auto leading-relaxed pt-1">
@@ -142,9 +161,9 @@ function VerifyEmailContent() {
 
       {/* Resend confirmation alert */}
       {resendSuccess && (
-        <div className="flex items-center justify-center gap-2 text-xs sm:text-sm font-medium text-success bg-success/10 py-2 px-3 rounded-lg border border-success/20 animate-in fade-in duration-200">
+        <div className="flex items-center justify-center gap-2 text-xs sm:text-sm font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 py-2 px-3 rounded-lg border border-emerald-200 dark:border-emerald-800/50 animate-in fade-in duration-200">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
-          <span>A fresh verification link has been sent!</span>
+          <span>A fresh verification link has been sent to your email!</span>
         </div>
       )}
 
@@ -167,7 +186,7 @@ function VerifyEmailContent() {
               type="button"
               variant="outline"
               onClick={handleResend}
-              disabled={isResending}
+              disabled={isResending || !email}
               className="w-full sm:w-auto border-border text-foreground hover:bg-muted font-medium text-xs sm:text-sm flex items-center gap-2 h-10 cursor-pointer"
             >
               {isResending ? (
@@ -188,8 +207,8 @@ function VerifyEmailContent() {
           asChild
           className="w-full h-11 sm:h-12 bg-primary hover:bg-primary-dark text-white font-semibold text-sm sm:text-base rounded-xl transition-all shadow-[0_4px_14px_rgba(37,99,235,0.25)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.35)] active:scale-[0.995] flex items-center justify-center gap-2"
         >
-          <Link href="/login">
-            <span>Continue to sign in</span>
+          <Link href={isDoctor ? "/doctor-verification" : "/login"}>
+            <span>{isDoctor ? "Continue to verification" : "Continue to sign in"}</span>
             <ArrowRight className="h-4 w-4" />
           </Link>
         </Button>

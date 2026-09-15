@@ -25,8 +25,13 @@ export async function GET(request: NextRequest) {
     );
 
     if (res.ok) {
+      const data = await res.json().catch(() => null);
+      const userRole = data?.user?.role || data?.role || searchParams.get("role") || "";
       const redirectUrl = new URL("/verify-email", request.url);
       redirectUrl.searchParams.set("status", "success");
+      if (userRole) {
+        redirectUrl.searchParams.set("role", userRole);
+      }
       return NextResponse.redirect(redirectUrl);
     } else {
       const data = await res.json().catch(() => null);

@@ -20,6 +20,7 @@ import {
   requestPasswordReset,
   resetPassword,
   verifyEmail,
+  sendVerificationEmail,
 } from "./authClient";
 import { toast } from "react-toastify";
 import { User, Role } from "@/types";
@@ -136,8 +137,8 @@ export const useAuth = () => {
     invalidateKeys: [["user", "me"]],
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries();
-      // Always redirect both doctors and patients to verify-email first!
-      router.push(`/verify-email?email=${encodeURIComponent(variables.email)}`);
+      // Pass role to verify-email so doctor verification flow is primed
+      router.push(`/verify-email?email=${encodeURIComponent(variables.email)}&role=${encodeURIComponent(variables.role)}`);
     },
   });
 
@@ -196,7 +197,22 @@ export const useAuth = () => {
     successMessage: "Email verified successfully!",
   });
 
-  // 8. Google Credential (One-Tap / @react-oauth/google) Mutation
+  // 8. Resend Verification Email Mutation using useMutationClient
+  const resendVerificationEmailMutation = useMutationClient<any, { email: string; callbackURL?: string }>({
+    mutationFn: async ({ email, callbackURL }) => {
+      const res = await sendVerificationEmail({
+        email,
+        callbackURL: callbackURL || `${typeof window !== "undefined" ? window.location.origin : ""}/`,
+      });
+      if (res.error) {
+        throw new Error(res.error.message || "Failed to resend verification email.");
+      }
+      return res.data;
+    },
+    successMessage: "Verification link sent! Please check your inbox.",
+  });
+
+  // 9. Google Credential (One-Tap / @react-oauth/google) Mutation
   const loginWithGoogleCredentialMutation = useMutationClient<any, { credential: string }>({
     mutationFn: async ({ credential }) => {
       const res = await axiosPublic.post("/api/auth/one-tap/callback", {
@@ -244,6 +260,7 @@ export const useAuth = () => {
     forgotPasswordMutation.isPending ||
     resetPasswordMutation.isPending ||
     verifyEmailMutation.isPending ||
+    resendVerificationEmailMutation.isPending ||
     loginWithGoogleCredentialMutation.isPending;
 
   const error =
@@ -253,6 +270,7 @@ export const useAuth = () => {
     forgotPasswordMutation.error?.message ||
     resetPasswordMutation.error?.message ||
     verifyEmailMutation.error?.message ||
+    resendVerificationEmailMutation.error?.message ||
     loginWithGoogleCredentialMutation.error?.message ||
     null;
 
@@ -277,6 +295,8 @@ export const useAuth = () => {
     resetPassword: (params: { newPassword: string; token: string }) =>
       resetPasswordMutation.mutateAsync(params),
     verifyEmail: (token: string) => verifyEmailMutation.mutateAsync(token),
+    resendVerificationEmail: (params: { email: string; callbackURL?: string }) =>
+      resendVerificationEmailMutation.mutateAsync(params),
     loginWithGoogle,
     loginWithGoogleCredential: (credential: string) =>
       loginWithGoogleCredentialMutation.mutateAsync({ credential }),
@@ -287,6 +307,7 @@ export const useAuth = () => {
     forgotPasswordMutation,
     resetPasswordMutation,
     verifyEmailMutation,
+    resendVerificationEmailMutation,
     loginWithGoogleCredentialMutation,
   };
 };
