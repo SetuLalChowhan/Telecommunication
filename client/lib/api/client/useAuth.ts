@@ -9,7 +9,6 @@ import {
   selectCurrentRole,
   selectIsAuthenticated,
   setSession,
-  setUserProfile,
   clearAuth,
 } from "@/redux/slices/authSlice";
 import {
@@ -45,7 +44,7 @@ export interface RegisterParams {
 }
 
 /**
- * Helper to determine dashboard route based on user role
+ * Helper to determine dashboard route based on user role and verification status
  */
 export function getRoleDashboardRoute(role?: Role | string | null, isVerified?: boolean): string {
   switch (role) {
@@ -62,11 +61,12 @@ export function getRoleDashboardRoute(role?: Role | string | null, isVerified?: 
 
 /**
  * =============================================================================
- * useAuth
+ * useAuth Hook
  * =============================================================================
- * Unified Authentication Hook powered completely by:
- *   - useClient (for profile querying & caching)
- *   - useMutationClient (for all auth mutations with auto-toasts & cache invalidation)
+ * Unified authentication hook that coordinates:
+ * 1. Reactive Session & Profile State (Better-Auth + TanStack Query)
+ * 2. Instant Memory State (Redux)
+ * 3. Type-safe Authentication Mutations
  * =============================================================================
  */
 export const useAuth = () => {
@@ -74,17 +74,15 @@ export const useAuth = () => {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
 
-  // Better-Auth reactive session
+  // 1. Session & Global State Resolution
   const { data: session, isPending: isSessionLoading } = useSession();
-
-  // Redux store state (with fallback to session)
   const reduxUser = useAppSelector(selectCurrentUser);
   const reduxRole = useAppSelector(selectCurrentRole);
   const reduxIsAuthenticated = useAppSelector(selectIsAuthenticated);
 
-  const isAuthenticated = reduxIsAuthenticated || !!session?.user;
+  const isAuthenticated = !!(session?.user || reduxIsAuthenticated);
 
-  // 1. useClient hook to fetch and cache user profile
+  // Fetch full backend profile (with doctorProfile/patientProfile) when authenticated
   const { data: profileUser, isLoading: isProfileLoading } = useClient<User>({
     queryKey: ["user", "me"],
     url: "/users/me",
@@ -92,10 +90,13 @@ export const useAuth = () => {
     enabled: isAuthenticated,
   });
 
-  const user = profileUser || reduxUser || (session?.user as unknown as User) || null;
-  const role = profileUser?.role || reduxRole || ((session?.user as any)?.role as Role) || null;
+  // Consolidated User & Role: Profile data > Session data > Redux fallback
+  const user = profileUser || (session?.user as unknown as User) || reduxUser || null;
+  const role = (user?.role as Role) || profileUser?.role || reduxRole || "PATIENT";
 
-  // 2. Login Mutation using useMutationClient
+  // 2. Auth Mutations
+
+  // Email & Password Login
   const loginMutation = useMutationClient<any, LoginParams>({
     mutationFn: async ({ email, password, rememberMe = true }) => {
       const res = await signIn.email({ email, password, rememberMe });
@@ -124,7 +125,7 @@ export const useAuth = () => {
     },
   });
 
-  // 3. Register Mutation using useMutationClient
+  // Account Registration
   const registerMutation = useMutationClient<any, RegisterParams>({
     mutationFn: async ({ name, email, password, role }) => {
       const res = await signUp.email({ email, password, name, role } as any);
@@ -135,12 +136,13 @@ export const useAuth = () => {
     },
     successMessage: "Account created! Please check your email for the verification link.",
     onSuccess: (_data, variables) => {
-      // Pass role to verify-email so doctor verification flow is primed
-      router.push(`/verify-email?email=${encodeURIComponent(variables.email)}&role=${encodeURIComponent(variables.role)}`);
+      router.push(
+        `/verify-email?email=${encodeURIComponent(variables.email)}&role=${encodeURIComponent(variables.role)}`
+      );
     },
   });
 
-  // 4. Logout Mutation using useMutationClient
+  // Sign Out
   const logoutMutation = useMutationClient<void, void>({
     mutationFn: async () => {
       await signOut();
@@ -153,7 +155,7 @@ export const useAuth = () => {
     },
   });
 
-  // 5. Forgot Password Mutation using useMutationClient
+  // Forgot Password Request
   const forgotPasswordMutation = useMutationClient<any, { email: string; redirectTo?: string }>({
     mutationFn: async ({ email, redirectTo }) => {
       const res = await requestPasswordReset({
@@ -170,7 +172,7 @@ export const useAuth = () => {
     successMessage: "Password reset instructions sent to your email!",
   });
 
-  // 6. Reset Password Mutation using useMutationClient
+  // Reset Password Execution
   const resetPasswordMutation = useMutationClient<any, { newPassword: string; token: string }>({
     mutationFn: async ({ newPassword, token }) => {
       const res = await resetPassword({ newPassword, token });
@@ -183,7 +185,7 @@ export const useAuth = () => {
     redirectTo: "/login",
   });
 
-  // 7. Verify Email Mutation using useMutationClient
+  // Verify Email (via Token)
   const verifyEmailMutation = useMutationClient<any, string>({
     mutationFn: async (token) => {
       const res = await verifyEmail({ query: { token } });
@@ -195,7 +197,7 @@ export const useAuth = () => {
     successMessage: "Email verified successfully!",
   });
 
-  // 8. Resend Verification Email Mutation using useMutationClient
+  // Resend Email Verification Link
   const resendVerificationEmailMutation = useMutationClient<any, { email: string; callbackURL?: string }>({
     mutationFn: async ({ email, callbackURL }) => {
       const res = await sendVerificationEmail({
@@ -210,7 +212,7 @@ export const useAuth = () => {
     successMessage: "Verification link sent! Please check your inbox.",
   });
 
-  // 9. Google Credential (One-Tap / @react-oauth/google) Mutation
+  // Google One-Tap / ID-Token Login
   const loginWithGoogleCredentialMutation = useMutationClient<any, { credential: string }>({
     mutationFn: async ({ credential }) => {
       const res = await axiosPublic.post("/api/auth/one-tap/callback", {
@@ -237,8 +239,7 @@ export const useAuth = () => {
     },
   });
 
-
-  // Social Login (Redirect fallback)
+  // Social Redirect Fallback Login
   const loginWithGoogle = useCallback(async (callbackURL = "/dashboard") => {
     try {
       await signIn.social({
@@ -250,40 +251,17 @@ export const useAuth = () => {
     }
   }, []);
 
-  // Native React Query states
-  const isLoading =
-    loginMutation.isPending ||
-    registerMutation.isPending ||
-    logoutMutation.isPending ||
-    forgotPasswordMutation.isPending ||
-    resetPasswordMutation.isPending ||
-    verifyEmailMutation.isPending ||
-    resendVerificationEmailMutation.isPending ||
-    loginWithGoogleCredentialMutation.isPending;
-
-  const error =
-    loginMutation.error?.message ||
-    registerMutation.error?.message ||
-    logoutMutation.error?.message ||
-    forgotPasswordMutation.error?.message ||
-    resetPasswordMutation.error?.message ||
-    verifyEmailMutation.error?.message ||
-    resendVerificationEmailMutation.error?.message ||
-    loginWithGoogleCredentialMutation.error?.message ||
-    null;
-
-
   return {
+    // Current User & State
     user,
     role,
     isDoctor: role === "DOCTOR",
     isPatient: role === "PATIENT",
     isAdmin: role === "ADMIN",
     isAuthenticated,
-    isSessionLoading: isSessionLoading || isProfileLoading,
-    isLoading,
-    error,
-    // Async actions
+    isSessionLoading: isSessionLoading || (isAuthenticated && isProfileLoading),
+
+    // Auth Action Methods
     login: (params: LoginParams, redirectTo?: string) =>
       loginMutation.mutateAsync({ ...params, redirectTo }),
     register: (params: RegisterParams) => registerMutation.mutateAsync(params),
@@ -298,7 +276,8 @@ export const useAuth = () => {
     loginWithGoogle,
     loginWithGoogleCredential: (credential: string) =>
       loginWithGoogleCredentialMutation.mutateAsync({ credential }),
-    // Expose granular mutation hooks for direct use
+
+    // Direct Mutation Handles (for isPending, error, etc.)
     loginMutation,
     registerMutation,
     logoutMutation,
@@ -309,6 +288,5 @@ export const useAuth = () => {
     loginWithGoogleCredentialMutation,
   };
 };
-
 
 export default useAuth;

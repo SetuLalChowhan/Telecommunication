@@ -11,11 +11,13 @@ import {
 import { Button } from "@/components/ui/button";
 
 interface PatientDashboardViewProps {
-  patientName?: string;
+  patientName?: string | null;
+  isLoading?: boolean;
 }
 
 export const PatientDashboardView: React.FC<PatientDashboardViewProps> = ({
-  patientName = "Patient",
+  patientName,
+  isLoading = false,
 }) => {
   return (
     <div className="space-y-6">
@@ -25,9 +27,13 @@ export const PatientDashboardView: React.FC<PatientDashboardViewProps> = ({
             <span className="text-xs font-semibold text-primary uppercase tracking-wider">
               Patient Portal
             </span>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mt-1">
-              Hello, {patientName}
-            </h1>
+            {isLoading || !patientName ? (
+              <div className="h-8 sm:h-9 w-48 sm:w-64 bg-muted/70 animate-pulse rounded-lg mt-1" />
+            ) : (
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground mt-1">
+                Hello, {patientName}
+              </h1>
+            )}
             <p className="text-sm text-muted-foreground mt-1">
               Welcome to your personal telehealth dashboard.
             </p>

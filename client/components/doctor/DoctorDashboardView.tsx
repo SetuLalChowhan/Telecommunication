@@ -13,18 +13,20 @@ import {
 import { Button } from "@/components/ui/button";
 
 interface DoctorDashboardViewProps {
-  doctorName?: string;
+  doctorName?: string | null;
   isVerified?: boolean;
+  isLoading?: boolean;
 }
 
 export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
-  doctorName = "Doctor",
+  doctorName,
   isVerified = false,
+  isLoading = false,
 }) => {
   return (
     <div className="space-y-6">
       {/* Verification Notice */}
-      {!isVerified && (
+      {!isVerified && !isLoading && (
         <div className="rounded-2xl border border-amber-200/90 bg-amber-50/60 dark:border-amber-900/40 dark:bg-amber-950/20 p-4 sm:p-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
@@ -60,9 +62,13 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
             <span className="text-xs font-semibold text-primary uppercase tracking-wider">
               Doctor Workspace
             </span>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mt-1">
-              Welcome, Dr. {doctorName}
-            </h1>
+            {isLoading || !doctorName ? (
+              <div className="h-8 sm:h-9 w-48 sm:w-64 bg-muted/70 animate-pulse rounded-lg mt-1" />
+            ) : (
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground mt-1">
+                Welcome, Dr. {doctorName}
+              </h1>
+            )}
             <p className="text-sm text-muted-foreground mt-1">
               Manage your patient schedule, appointments, and consultation records.
             </p>

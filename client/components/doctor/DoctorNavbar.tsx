@@ -23,7 +23,7 @@ interface DoctorNavbarProps {
 export const DoctorNavbar: React.FC<DoctorNavbarProps> = ({ open, setOpen }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout, logoutMutation } = useAuth();
+  const { user, isSessionLoading, logout, logoutMutation } = useAuth();
   const isLoggingOut = logoutMutation.isPending;
 
   const handleLogout = async () => {
@@ -102,18 +102,34 @@ export const DoctorNavbar: React.FC<DoctorNavbarProps> = ({ open, setOpen }) => 
                 <Avatar className="h-9 w-9">
                   <AvatarImage src={user?.image || undefined} alt={user?.name || "Doctor"} />
                   <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                    {getInitials(user?.name)}
+                    {user?.name ? (
+                      getInitials(user.name)
+                    ) : (
+                      <div className="h-full w-full bg-muted/80 animate-pulse" />
+                    )}
                   </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 p-1">
-              <DropdownMenuLabel className="p-3.5 flex flex-col gap-0.5">
+              <DropdownMenuLabel className="p-3.5 flex flex-col gap-1">
                 <span className="font-semibold text-sm text-foreground leading-none">
-                  Dr. {user?.name || "Doctor"}
+                  {user?.name ? (
+                    `Dr. ${user.name}`
+                  ) : isSessionLoading ? (
+                    <div className="h-4 w-28 bg-muted/80 animate-pulse rounded" />
+                  ) : (
+                    "Doctor"
+                  )}
                 </span>
                 <span className="text-xs text-muted-foreground leading-none truncate">
-                  {user?.email || ""}
+                  {user?.email ? (
+                    user.email
+                  ) : isSessionLoading ? (
+                    <div className="h-3 w-32 bg-muted/80 animate-pulse rounded mt-0.5" />
+                  ) : (
+                    ""
+                  )}
                 </span>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
