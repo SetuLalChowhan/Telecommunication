@@ -179,12 +179,12 @@ const DoctorsContent: React.FC = () => {
               </>
             ) : (
               /* Empty State When No Doctors Match */
-              <div className="py-16 sm:py-20 flex flex-col items-center justify-center text-center rounded-3xl border border-border/80 bg-card p-8 space-y-4 shadow-xs">
-                <div className="h-16 w-16 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                  <Stethoscope className="h-8 w-8" />
+              <div className="py-16 sm:py-20 flex flex-col items-center justify-center text-center rounded-2xl border border-border bg-card p-8 space-y-4 shadow-xs">
+                <div className="h-14 w-14 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                  <Stethoscope className="h-7 w-7" />
                 </div>
                 <div className="space-y-1.5 max-w-md">
-                  <h3 className="text-xl font-bold text-foreground">
+                  <h3 className="text-lg font-bold text-foreground">
                     No Doctors Found
                   </h3>
                   <p className="text-xs sm:text-sm text-secondary-text leading-relaxed">
@@ -194,7 +194,7 @@ const DoctorsContent: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleResetFilters}
-                  className="mt-2 inline-flex items-center gap-2 rounded-full bg-primary hover:bg-primary-dark text-white px-6 py-2.5 text-xs sm:text-sm font-semibold transition-all shadow-xs"
+                  className="mt-2 inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary-dark text-white px-5 py-2.5 text-xs sm:text-sm font-semibold transition-all shadow-xs cursor-pointer"
                 >
                   <RotateCcw className="h-4 w-4" />
                   <span>Reset All Filters</span>

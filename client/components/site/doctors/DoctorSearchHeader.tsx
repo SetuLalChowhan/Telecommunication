@@ -2,6 +2,13 @@
 
 import React from "react";
 import { Search, SlidersHorizontal, ArrowUpDown, X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface DoctorSearchHeaderProps {
   search: string;
@@ -21,38 +28,48 @@ export const DoctorSearchHeader: React.FC<DoctorSearchHeaderProps> = ({
   onOpenMobileFilters,
 }) => {
   return (
-    <div className="w-full bg-slate-50/70 dark:bg-slate-900/30 border-b border-border/70 py-10 sm:py-14">
-      <div className="max-w-[1920px] mx-auto section-padding-x space-y-6">
-        {/* Title & Subtitle */}
-        <div className="space-y-2 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold">
-            <span>Verified Medical Specialists</span>
+    <div className="w-full bg-slate-50/60 dark:bg-slate-900/20 border-b border-border py-10 sm:py-14">
+      <div className="max-w-[1920px] mx-auto section-padding-x space-y-8">
+        {/* Header Title Section */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-4 sm:space-y-5 max-w-2xl">
+            <span className="text-xs font-semibold tracking-wider text-primary uppercase block">
+              Online Medical Consultations
+            </span>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground tracking-tight leading-tight">
+              Consult with Verified Doctors Online
+            </h1>
+            <p className="text-sm sm:text-[15px] text-secondary-text leading-relaxed">
+              Connect with top certified doctors across specialties for private, secure video consultations from anywhere.
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight">
-            Find the Best <span className="text-primary">Doctor</span> for You
-          </h1>
-          <p className="text-xs sm:text-sm text-secondary-text leading-relaxed">
-            Connect instantly with top certified doctors across Bangladesh for instant video consultation or clinic appointments.
-          </p>
+
+          {/* Results counter */}
+          <div className="hidden sm:block text-right">
+            <span className="text-xs text-secondary-text block mb-1">Available Doctors</span>
+            <span className="text-2xl font-bold text-foreground">
+              {totalResults} <span className="text-xs font-medium text-secondary-text">specialists</span>
+            </span>
+          </div>
         </div>
 
-        {/* Search Bar & Action Controls Bar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+        {/* Search & Sort Controls Bar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
           {/* Main Search Input */}
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search by doctor name, specialty, or condition..."
+              placeholder="Search by doctor name, medical specialty, or symptom..."
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full rounded-full border border-border/80 bg-card pl-11 pr-10 py-3 text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-xs transition-all"
+              className="w-full rounded-xl border border-border bg-card pl-11 pr-10 py-3 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-xs"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => onSearchChange("")}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 rounded-full hover:bg-muted transition-colors"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted transition-colors cursor-pointer"
                 title="Clear search"
               >
                 <X className="h-4 w-4" />
@@ -60,44 +77,46 @@ export const DoctorSearchHeader: React.FC<DoctorSearchHeaderProps> = ({
             )}
           </div>
 
-          {/* Sort & Mobile Filter Controls */}
+          {/* Select & Mobile Filter Actions */}
           <div className="flex items-center gap-3">
             {/* Sort Select */}
-            <div className="relative flex-1 sm:flex-initial">
-              <div className="flex items-center gap-2 rounded-full border border-border/80 bg-card px-4 py-3 text-xs sm:text-sm font-semibold text-foreground shadow-xs">
-                <ArrowUpDown className="h-3.5 w-3.5 text-primary" />
-                <select
-                  aria-label="Sort doctors by"
-                  value={sortBy}
-                  onChange={(e) =>
-                    onSortChange(e.target.value as "rating" | "fee" | "experience")
-                  }
-                  className="bg-transparent border-none outline-none cursor-pointer text-xs sm:text-sm font-semibold text-foreground pr-2"
-                >
-                  <option value="rating">Top Rated</option>
-                  <option value="fee">Lowest Fee</option>
-                  <option value="experience">Most Experienced</option>
-                </select>
-              </div>
+            <div className="w-48 sm:w-52">
+              <Select
+                value={sortBy}
+                onValueChange={(val) =>
+                  onSortChange(val as "rating" | "fee" | "experience")
+                }
+              >
+                <SelectTrigger className="h-11 rounded-xl border-border bg-card px-4 text-sm font-medium shadow-xs hover:border-primary/40 focus:ring-primary/20">
+                  <div className="flex items-center gap-2 truncate">
+                    <ArrowUpDown className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <SelectValue placeholder="Sort by" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent align="end" className="rounded-xl border-border bg-card shadow-lg">
+                  <SelectItem value="rating" className="text-sm font-medium">
+                    Top Rated
+                  </SelectItem>
+                  <SelectItem value="fee" className="text-sm font-medium">
+                    Fee: Low to High
+                  </SelectItem>
+                  <SelectItem value="experience" className="text-sm font-medium">
+                    Most Experienced
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Mobile Filters Toggle Button */}
             <button
               type="button"
               onClick={onOpenMobileFilters}
-              className="lg:hidden flex items-center gap-2 rounded-full border border-border/80 bg-card px-4 py-3 text-xs sm:text-sm font-semibold text-foreground shadow-xs hover:border-primary/40 transition-colors"
+              className="lg:hidden flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-border bg-card text-sm font-medium text-foreground shadow-xs hover:border-primary/40 transition-colors cursor-pointer"
             >
-              <SlidersHorizontal className="h-3.5 w-3.5 text-primary" />
+              <SlidersHorizontal className="h-4 w-4 text-primary" />
               <span>Filters</span>
             </button>
           </div>
-        </div>
-
-        {/* Results Counter Summary */}
-        <div className="flex items-center justify-between text-xs text-secondary-text pt-1">
-          <p>
-            Showing <span className="font-semibold text-foreground">{totalResults}</span> certified doctors available
-          </p>
         </div>
       </div>
     </div>

@@ -17,33 +17,33 @@ const BLOGS: BlogPost[] = [
   {
     id: "blog-1",
     slug: "improve-quickly-online-consultations",
-    title: "How To Improve Quickly With The Help Of Online Consultations",
-    author: "By Admin",
-    date: "16 - Sep - 2026",
+    title: "How to Prepare for Your Online Doctor Video Consultation",
+    author: "Medical Team",
+    date: "16 Sep, 2026",
     excerpt:
-      "Discover proven telemedicine routines and preparation steps to get the most effective diagnosis and treatment plan from your online doctor.",
+      "Discover proven preparation steps and symptom logging to get the most effective diagnosis and treatment plan from your virtual consultation.",
     image:
       "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80",
   },
   {
     id: "blog-2",
     slug: "preventive-care-healthy-heart-strategy",
-    title: "The Most Effective Preventive Care Habits For A Healthy Heart",
-    author: "By Dr. Sarah",
-    date: "12 - Sep - 2026",
+    title: "Essential Preventative Health Habits for Heart & Lifestyle Wellness",
+    author: "Dr. Sarah Jenkins",
+    date: "12 Sep, 2026",
     excerpt:
-      "Key lifestyle adjustments and routine cardiovascular screenings that can dramatically reduce health risks and improve vitality.",
+      "Key lifestyle habits, blood pressure monitoring, and routine cardiovascular screenings that can dramatically improve long-term vitality.",
     image:
       "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80",
   },
   {
     id: "blog-3",
     slug: "financial-audit-planning-family-treatment",
-    title: "Financial Audit And Planning For Quality Family Healthcare",
-    author: "By Admin",
-    date: "08 - Sep - 2026",
+    title: "Managing Family Healthcare: Telehealth Benefits & Quick Access",
+    author: "Health Advisory",
+    date: "08 Sep, 2026",
     excerpt:
-      "A complete guide on maximizing healthcare coverage, budget-friendly telemedicine plans, and preventive care savings for your family.",
+      "A complete overview of instant virtual appointments, pediatric triage, and regular health checkups from home for your entire family.",
     image:
       "https://images.unsplash.com/photo-1581056771107-24ca5f033842?auto=format&fit=crop&w=800&q=80",
   },
@@ -51,26 +51,28 @@ const BLOGS: BlogPost[] = [
 
 export const BlogSection: React.FC = () => {
   return (
-    <section className="w-full bg-surface py-14 sm:py-16 lg:py-20 border-b border-border/70 overflow-hidden">
+    <section className="w-full bg-slate-50/60 dark:bg-slate-900/20 py-14 sm:py-16 lg:py-20 border-b border-border overflow-hidden">
       <div className="max-w-[1920px] mx-auto section-padding-x">
         
         {/* Header Section */}
-        <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3.5 py-1.5 border border-primary/20 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
-            <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <span>Our Blog</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-[2.6rem] font-bold leading-tight tracking-tight text-foreground">
-            Our Latest & Most Popular Tips & Tricks
+        <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16 space-y-4 sm:space-y-5">
+          <span className="text-xs font-semibold tracking-wider text-primary uppercase block">
+            Health Insights & Articles
+          </span>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight tracking-tight text-foreground">
+            Latest Healthcare Articles & Tips
           </h2>
+          <p className="text-sm sm:text-[15px] text-secondary-text max-w-lg mx-auto leading-relaxed">
+            Stay informed with verified medical advice, preventative care tips, and telehealth guidance from certified doctors.
+          </p>
         </div>
 
         {/* 3 Blog Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 sm:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {BLOGS.map((blog) => (
             <article
               key={blog.id}
-              className="group flex flex-col rounded-tl-[32px] rounded-tr-[32px] rounded-bl-[16px] rounded-br-[16px] border border-border/80 bg-card overflow-hidden shadow-xs hover:shadow-xl hover:border-primary/40 transition-all duration-300"
+              className="group flex flex-col rounded-2xl border border-border bg-card overflow-hidden shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-200"
             >
               {/* Blog Image */}
               <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted/40">
@@ -79,23 +81,18 @@ export const BlogSection: React.FC = () => {
                   alt={blog.title}
                   fill
                   sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="object-cover transition-transform duration-300 group-hover:scale-102"
                 />
               </div>
 
               {/* Blog Body */}
               <div className="p-5 sm:p-6 flex flex-col flex-1 justify-between space-y-4">
-                <div className="space-y-3">
-                  {/* Meta Details: Author & Date */}
-                  <div className="flex items-center gap-4 text-xs font-medium text-primary">
-                    <div className="flex items-center gap-1.5">
-                      <User className="h-3.5 w-3.5" />
-                      <span>{blog.author}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="h-3.5 w-3.5" />
-                      <span>{blog.date}</span>
-                    </div>
+                <div className="space-y-2.5">
+                  {/* Meta */}
+                  <div className="flex items-center gap-3 text-xs text-secondary-text">
+                    <span className="font-medium text-primary">{blog.author}</span>
+                    <span>&bull;</span>
+                    <span>{blog.date}</span>
                   </div>
 
                   {/* Title */}
@@ -111,13 +108,13 @@ export const BlogSection: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Read More Trigger Link */}
-                <div className="pt-2">
+                {/* Read Link */}
+                <div className="pt-2 border-t border-border/60">
                   <Link
                     href={`/blogs`}
                     className="inline-flex items-center text-xs sm:text-sm font-semibold text-primary hover:text-primary-dark transition-colors group/link"
                   >
-                    <span>Read Article</span>
+                    <span>Read Full Article</span>
                     <ArrowRight className="ml-1.5 h-3.5 w-3.5 transition-transform group-hover/link:translate-x-1" />
                   </Link>
                 </div>

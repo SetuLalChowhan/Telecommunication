@@ -3,13 +3,13 @@
 import React, { useRef, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Star, Award, ChevronRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Star, ChevronRight, Video } from "lucide-react";
 
 interface Doctor {
   id: string;
+  slug: string;
   name: string;
   specialty: string;
-  hospital: string;
   rating: number;
   reviewsCount: number;
   image: string;
@@ -18,51 +18,51 @@ interface Doctor {
 const DOCTORS: Doctor[] = [
   {
     id: "doc-1",
-    name: "Dr. Fletcher Waelchi",
-    specialty: "General Medicine",
-    hospital: "Central Health Hospital",
-    rating: 4.9,
-    reviewsCount: 142,
-    image:
-      "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "doc-2",
-    name: "Dr. Fredrick Auer",
-    specialty: "Orthopedics",
-    hospital: "City Orthopedic Institute",
-    rating: 4.8,
-    reviewsCount: 98,
-    image:
-      "https://images.unsplash.com/photo-1594824813590-7892f3922f3f?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "doc-3",
+    slug: "dr-sarah-jenkins",
     name: "Dr. Sarah Jenkins",
     specialty: "Cardiology",
-    hospital: "Metropolitan Heart Center",
-    rating: 5.0,
+    rating: 4.9,
     reviewsCount: 215,
     image:
       "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=600&q=80",
   },
   {
+    id: "doc-2",
+    slug: "dr-fletcher-waelchi",
+    name: "Dr. Fletcher Waelchi",
+    specialty: "General Medicine",
+    rating: 4.9,
+    reviewsCount: 184,
+    image:
+      "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=600&q=80",
+  },
+  {
+    id: "doc-3",
+    slug: "dr-fredrick-auer",
+    name: "Dr. Fredrick Auer",
+    specialty: "Orthopedics",
+    rating: 4.8,
+    reviewsCount: 128,
+    image:
+      "https://images.unsplash.com/photo-1594824813590-7892f3922f3f?auto=format&fit=crop&w=600&q=80",
+  },
+  {
     id: "doc-4",
+    slug: "dr-michael-chen",
     name: "Dr. Michael Chen",
     specialty: "Neurology",
-    hospital: "Apex Neuro Care",
-    rating: 4.9,
-    reviewsCount: 167,
+    rating: 5.0,
+    reviewsCount: 190,
     image:
       "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=600&q=80",
   },
   {
     id: "doc-5",
+    slug: "dr-amanda-miller",
     name: "Dr. Amanda Miller",
     specialty: "Pediatrics",
-    hospital: "Sunshine Children's Clinic",
     rating: 4.9,
-    reviewsCount: 180,
+    reviewsCount: 172,
     image:
       "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=600&q=80",
   },
@@ -72,7 +72,7 @@ export const DoctorsSection: React.FC = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Auto-scroll every 3 seconds unless hovered
+  // Auto-scroll every 3.5 seconds unless hovered
   useEffect(() => {
     if (isHovered) return;
 
@@ -83,7 +83,7 @@ export const DoctorsSection: React.FC = () => {
         if (scrollLeft + clientWidth >= scrollWidth - 10) {
           scrollContainerRef.current.scrollTo({ left: 0, behavior: "smooth" });
         } else {
-          scrollContainerRef.current.scrollBy({ left: 320, behavior: "smooth" });
+          scrollContainerRef.current.scrollBy({ left: 300, behavior: "smooth" });
         }
       }
     }, 3500);
@@ -93,7 +93,7 @@ export const DoctorsSection: React.FC = () => {
 
   const handleScroll = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
-      const scrollAmount = direction === "left" ? -320 : 320;
+      const scrollAmount = direction === "left" ? -300 : 300;
       scrollContainerRef.current.scrollBy({
         left: scrollAmount,
         behavior: "smooth",
@@ -102,47 +102,44 @@ export const DoctorsSection: React.FC = () => {
   };
 
   return (
-    <section className="w-full bg-surface py-14 sm:py-16 lg:py-20 border-b border-border/70 overflow-hidden">
+    <section className="w-full bg-background py-14 sm:py-16 lg:py-20 border-b border-border overflow-hidden">
       <div className="max-w-[1920px] mx-auto section-padding-x">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           
           {/* LEFT COLUMN: Eyebrow, Heading, Description, CTA, Controls */}
           <div className="lg:col-span-4 flex flex-col justify-center space-y-6">
-            {/* Eyebrow */}
-            <div className="inline-flex items-center gap-2 self-start rounded-full bg-primary/10 px-3.5 py-1.5 border border-primary/20 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
-              <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <span>Our Doctors</span>
+            <div className="space-y-4 sm:space-y-5">
+              <span className="text-xs font-semibold tracking-wider text-primary uppercase block">
+                Top Specialists
+              </span>
+
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight tracking-tight text-foreground">
+                Consult with Verified Doctors
+              </h2>
+
+              <p className="text-sm sm:text-[15px] leading-relaxed text-secondary-text">
+                Connect directly with verified specialists across medical disciplines.
+                Get personalized video consultations, digital prescriptions, and expert care.
+              </p>
             </div>
-
-            {/* Heading */}
-            <h2 className="text-3xl sm:text-4xl lg:text-[2.6rem] font-bold leading-[1.18] tracking-tight text-foreground">
-              Our Best Doctor And{" "}
-              <span className="text-primary">Quite Popular Medicine</span>
-            </h2>
-
-            {/* Description */}
-            <p className="text-[15.5px] sm:text-base leading-relaxed text-secondary-text">
-              Connect directly with verified specialists across top medical disciplines.
-              Get personalized consultations, digital prescriptions, and expert care.
-            </p>
 
             {/* CTA + Navigation Arrows */}
             <div className="pt-2 flex flex-wrap items-center gap-4">
               <Link
-                href="/about"
-                className="inline-flex items-center justify-center rounded-full border-2 border-primary text-primary hover:bg-primary hover:text-white px-7 py-2.5 text-sm sm:text-[15px] font-semibold transition-all duration-200 shadow-xs hover:shadow-md hover:shadow-primary/20 group"
+                href="/doctors"
+                className="inline-flex items-center justify-center rounded-xl bg-primary hover:bg-primary-dark text-white px-5 py-2.5 text-sm font-semibold transition-all shadow-xs group"
               >
-                <span>More About Us</span>
+                <span>Browse All Doctors</span>
                 <ChevronRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
 
               {/* Prev / Next Buttons */}
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => handleScroll("left")}
                   aria-label="Scroll doctors left"
-                  className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card text-foreground hover:bg-primary hover:text-white hover:border-primary transition-all duration-200 shadow-xs active:scale-95"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-foreground hover:bg-primary hover:text-white hover:border-primary transition-all shadow-xs active:scale-95 cursor-pointer"
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </button>
@@ -150,7 +147,7 @@ export const DoctorsSection: React.FC = () => {
                   type="button"
                   onClick={() => handleScroll("right")}
                   aria-label="Scroll doctors right"
-                  className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card text-foreground hover:bg-primary hover:text-white hover:border-primary transition-all duration-200 shadow-xs active:scale-95"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-foreground hover:bg-primary hover:text-white hover:border-primary transition-all shadow-xs active:scale-95 cursor-pointer"
                 >
                   <ArrowRight className="h-4 w-4" />
                 </button>
@@ -158,7 +155,7 @@ export const DoctorsSection: React.FC = () => {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Asymmetric Curved Doctor Cards Carousel */}
+          {/* RIGHT COLUMN: Doctor Cards Carousel */}
           <div
             className="lg:col-span-8 overflow-hidden"
             onMouseEnter={() => setIsHovered(true)}
@@ -168,39 +165,47 @@ export const DoctorsSection: React.FC = () => {
           >
             <div
               ref={scrollContainerRef}
-              className="flex gap-5 sm:gap-6 overflow-x-auto scroll-smooth pb-4 pt-1 no-scrollbar"
+              className="flex gap-5 overflow-x-auto scroll-smooth pb-3 pt-1 no-scrollbar"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
               {DOCTORS.map((doctor) => (
                 <div
                   key={doctor.id}
-                  className="group shrink-0 w-[260px] sm:w-[280px] flex flex-col rounded-tl-[36px] rounded-br-[36px] rounded-tr-[16px] rounded-bl-[16px] border border-border/80 bg-card overflow-hidden shadow-sm hover:shadow-xl hover:border-primary/40 transition-all duration-300"
+                  className="group shrink-0 w-[250px] sm:w-[270px] flex flex-col rounded-2xl border border-border bg-card overflow-hidden shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-200"
                 >
                   {/* Doctor Image Container */}
-                  <div className="relative aspect-[4/4.5] w-full overflow-hidden bg-muted/40">
+                  <div className="relative aspect-[4/4.2] w-full overflow-hidden bg-muted/40">
                     <Image
                       src={doctor.image}
                       alt={doctor.name}
                       fill
-                      sizes="280px"
-                      className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                      sizes="270px"
+                      className="object-cover object-top transition-transform duration-300 group-hover:scale-102"
                     />
 
-                    {/* Verified Badge */}
-                    <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-card/90 backdrop-blur-md px-2.5 py-1 border border-border/60 shadow-xs">
+                    {/* Rating Chip */}
+                    <div className="absolute top-2.5 right-2.5 flex items-center gap-1 rounded-md bg-card/95 backdrop-blur-xs px-2 py-0.5 border border-border shadow-xs">
                       <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                      <span className="text-[11px] font-bold text-foreground">
+                      <span className="text-xs font-bold text-foreground">
                         {doctor.rating}
                       </span>
+                    </div>
+
+                    {/* Online Video Pill */}
+                    <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1 rounded-md bg-card/95 backdrop-blur-xs px-2 py-0.5 text-[10px] font-medium text-primary border border-border shadow-xs">
+                      <Video className="h-3 w-3" />
+                      <span>Online Video</span>
                     </div>
                   </div>
 
                   {/* Doctor Info Box */}
-                  <div className="p-4 sm:p-5 text-center flex flex-col items-center justify-center">
-                    <h3 className="text-base sm:text-[17px] font-bold text-foreground group-hover:text-primary transition-colors">
-                      {doctor.name}
+                  <div className="p-4 text-center flex flex-col items-center justify-center">
+                    <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
+                      <Link href={`/doctors/${doctor.slug}`}>
+                        {doctor.name}
+                      </Link>
                     </h3>
-                    <p className="text-xs sm:text-sm text-secondary-text font-medium mt-1">
+                    <p className="text-xs text-secondary-text font-medium mt-1">
                       {doctor.specialty}
                     </p>
                   </div>

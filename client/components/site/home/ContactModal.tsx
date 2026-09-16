@@ -205,7 +205,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full h-11 rounded-full bg-primary hover:bg-primary-dark text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-xs hover:shadow-md hover:shadow-primary/20 transition-all duration-200 disabled:opacity-70 active:scale-[0.99]"
+                  className="w-full h-11 rounded-xl bg-primary hover:bg-primary-dark text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-xs hover:shadow-md hover:shadow-primary/20 transition-all duration-200 disabled:opacity-70 active:scale-[0.99] cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>

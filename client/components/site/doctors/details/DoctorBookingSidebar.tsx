@@ -1,17 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { DoctorProfile, DoctorAvailability } from "@/types/doctor";
 import {
-  Calendar,
+  Calendar as CalendarIcon,
   Clock,
   Video,
-  Building2,
   ShieldCheck,
   CheckCircle2,
   ArrowRight,
-  Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  CalendarDays,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 interface DoctorBookingSidebarProps {
   doctor: DoctorProfile;
@@ -22,167 +25,254 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
   doctor,
   availabilities,
 }) => {
-  const [consultationType, setConsultationType] = useState<"VIDEO" | "IN_CLINIC">("VIDEO");
   const [selectedDayIdx, setSelectedDayIdx] = useState<number>(0);
-  const [selectedSlot, setSelectedSlot] = useState<string>("");
+  const [customDate, setCustomDate] = useState<Date | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<string>("10:00 AM");
   const [isBooked, setIsBooked] = useState<boolean>(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
 
-  // Generate next 7 days for selection
-  const days = Array.from({ length: 7 }, (_, i) => {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isDraggingRef = useRef<boolean>(false);
+  const startXRef = useRef<number>(0);
+  const scrollLeftRef = useRef<number>(0);
+
+  // Generate 14 days
+  const days = Array.from({ length: 14 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
+    d.setHours(0, 0, 0, 0);
     return {
       date: d,
-      dayName: d.toLocaleDateString("en-US", { weekday: "short" }),
+      dayName: i === 0 ? "Today" : d.toLocaleDateString("en-US", { weekday: "short" }),
       dayNum: d.getDate(),
       month: d.toLocaleDateString("en-US", { month: "short" }),
       dayOfWeek: d.getDay(),
     };
   });
 
-  const activeDay = days[selectedDayIdx];
+  const activeDate = customDate || days[selectedDayIdx].date;
+  const activeDayLabel = {
+    dayName: activeDate.toDateString() === new Date().toDateString() ? "Today" : activeDate.toLocaleDateString("en-US", { weekday: "short" }),
+    dayNum: activeDate.getDate(),
+    month: activeDate.toLocaleDateString("en-US", { month: "short" }),
+  };
 
-  // Derive time slots for the active day
-  const matchingAvailabilities = availabilities.filter(
-    (a) => a.dayOfWeek === activeDay.dayOfWeek && a.isActive
-  );
+  // Mouse drag-to-scroll implementation
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollContainerRef.current) return;
+    isDraggingRef.current = true;
+    startXRef.current = e.pageX - scrollContainerRef.current.offsetLeft;
+    scrollLeftRef.current = scrollContainerRef.current.scrollLeft;
+  };
 
-  // Generate sample slot pills for rich interactivity
-  const timeSlots = matchingAvailabilities.length > 0
-    ? matchingAvailabilities.map((a) => `${a.startTime} - ${a.endTime}`)
-    : ["10:00 AM", "11:30 AM", "03:00 PM", "05:30 PM", "07:00 PM"];
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingRef.current || !scrollContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollContainerRef.current.offsetLeft;
+    const walk = (x - startXRef.current) * 1.5;
+    scrollContainerRef.current.scrollLeft = scrollLeftRef.current - walk;
+  };
+
+  const handleMouseUpOrLeave = () => {
+    isDraggingRef.current = false;
+  };
+
+  // Wheel horizontal scroll
+  const handleWheel = (e: React.WheelEvent) => {
+    if (!scrollContainerRef.current) return;
+    if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
+      scrollContainerRef.current.scrollLeft += e.deltaY;
+    }
+  };
+
+  // Arrow button slide
+  const handleSlide = (direction: "left" | "right") => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = direction === "left" ? -180 : 180;
+      scrollContainerRef.current.scrollBy({
+        left: scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  // Calendar date select
+  const handleCalendarSelect = (date: Date) => {
+    setCustomDate(date);
+    setIsCalendarOpen(false);
+
+    // If selected date is in our 14-day list, sync active index
+    const matchIdx = days.findIndex(
+      (d) => d.date.toDateString() === date.toDateString()
+    );
+    if (matchIdx !== -1) {
+      setSelectedDayIdx(matchIdx);
+    }
+  };
+
+  // Available slots
+  const morningSlots = ["09:30 AM", "10:00 AM", "11:00 AM", "11:30 AM"];
+  const eveningSlots = ["04:30 PM", "05:00 PM", "06:30 PM", "07:00 PM"];
 
   const handleBookNow = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedSlot) {
-      setSelectedSlot(timeSlots[0]);
-    }
     setIsBooked(true);
   };
 
   return (
-    <div className="sticky top-24 rounded-tl-[32px] rounded-br-[32px] rounded-tr-[16px] rounded-bl-[16px] border border-border/80 bg-card p-6 sm:p-7 shadow-lg space-y-6">
+    <div className="sticky top-24 rounded-2xl border border-border bg-card p-6 shadow-md space-y-6">
       {/* Price Header */}
-      <div className="pb-4 border-b border-border/60 flex items-center justify-between">
+      <div className="pb-4 border-b border-border flex items-center justify-between">
         <div>
           <span className="text-xs text-secondary-text block font-medium">
             Consultation Fee
           </span>
           <div className="flex items-baseline gap-1 mt-0.5">
-            <span className="text-2xl sm:text-3xl font-black text-primary">
+            <span className="text-2xl sm:text-3xl font-bold text-foreground">
               ৳{doctor.fee || 500}
             </span>
-            <span className="text-xs text-secondary-text font-normal">/ session</span>
+            <span className="text-xs text-secondary-text">/ video session</span>
           </div>
         </div>
-        <div className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-600 px-3 py-1 text-xs font-semibold border border-emerald-500/20">
-          <Sparkles className="h-3 w-3" />
-          <span>Instant Slot</span>
+        <div className="flex items-center gap-1.5 rounded-lg bg-primary/10 text-primary px-2.5 py-1 text-xs font-semibold">
+          <Video className="h-3.5 w-3.5" />
+          <span>Live Video</span>
         </div>
       </div>
 
       {isBooked ? (
-        /* Booking Confirmation State */
-        <div className="text-center py-6 space-y-4 animate-in fade-in zoom-in duration-300">
-          <div className="h-14 w-14 rounded-full bg-emerald-500/10 text-emerald-600 mx-auto flex items-center justify-center">
-            <CheckCircle2 className="h-8 w-8" />
+        /* Confirmed Booking State */
+        <div className="text-center py-6 space-y-4 animate-in fade-in duration-200">
+          <div className="h-12 w-12 rounded-full bg-emerald-500/10 text-emerald-600 mx-auto flex items-center justify-center">
+            <CheckCircle2 className="h-6 w-6" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-lg font-bold text-foreground">Appointment Requested!</h3>
+            <h3 className="text-lg font-bold text-foreground">Consultation Booked</h3>
             <p className="text-xs text-secondary-text leading-relaxed">
-              You selected <span className="font-semibold text-foreground">{consultationType === "VIDEO" ? "Video Call" : "In-Clinic Visit"}</span> on{" "}
+              Your online video appointment with{" "}
               <span className="font-semibold text-foreground">
-                {activeDay.dayName}, {activeDay.month} {activeDay.dayNum}
+                {doctor.user.name || "Dr. Specialist"}
               </span>{" "}
-              at <span className="font-semibold text-foreground">{selectedSlot || timeSlots[0]}</span>.
+              is confirmed for:
             </p>
           </div>
-          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-border/60 text-xs text-left space-y-1.5">
+
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-border text-xs text-left space-y-2">
             <div className="flex justify-between text-secondary-text">
-              <span>Doctor:</span>
-              <span className="font-semibold text-foreground">{doctor.user.name || "Dr. Specialist"}</span>
+              <span>Date:</span>
+              <span className="font-semibold text-foreground">
+                {activeDayLabel.dayName}, {activeDayLabel.month} {activeDayLabel.dayNum}
+              </span>
             </div>
             <div className="flex justify-between text-secondary-text">
-              <span>Fee:</span>
-              <span className="font-semibold text-primary">৳{doctor.fee || 500}</span>
+              <span>Time Slot:</span>
+              <span className="font-semibold text-primary">{selectedSlot}</span>
+            </div>
+            <div className="flex justify-between text-secondary-text">
+              <span>Mode:</span>
+              <span className="font-semibold text-foreground">Encrypted HD Video</span>
             </div>
             <div className="flex justify-between text-secondary-text">
               <span>Status:</span>
               <span className="font-semibold text-emerald-600">Confirmed (Demo)</span>
             </div>
           </div>
+
           <button
             type="button"
             onClick={() => setIsBooked(false)}
-            className="w-full rounded-full border border-border/80 bg-card hover:bg-muted text-foreground py-2.5 text-xs font-semibold transition-all"
+            className="w-full rounded-xl border border-border bg-card hover:bg-muted text-foreground py-2.5 text-xs font-semibold transition-all cursor-pointer"
           >
-            Change Appointment
+            Select Another Slot
           </button>
         </div>
       ) : (
-        /* Interactive Booking Form */
+        /* Booking Form */
         <form onSubmit={handleBookNow} className="space-y-5">
-          {/* 1. Consultation Type Switcher */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-              <span>1. Consultation Mode</span>
-            </label>
-            <div className="grid grid-cols-2 gap-2.5">
-              <button
-                type="button"
-                onClick={() => setConsultationType("VIDEO")}
-                className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
-                  consultationType === "VIDEO"
-                    ? "border-primary bg-primary/10 text-primary shadow-2xs font-semibold"
-                    : "border-border/80 bg-card text-secondary-text hover:border-primary/40 hover:text-foreground"
-                }`}
-              >
-                <Video className="h-4 w-4 mb-1" />
-                <span className="text-xs">Video Call</span>
-              </button>
+          {/* 1. Date Selection with Mouse Drag Slide & Shadcn Calendar Popover */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <CalendarIcon className="h-3.5 w-3.5 text-primary" />
+                <span>Select Appointment Date</span>
+              </label>
 
-              <button
-                type="button"
-                onClick={() => setConsultationType("IN_CLINIC")}
-                className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
-                  consultationType === "IN_CLINIC"
-                    ? "border-primary bg-primary/10 text-primary shadow-2xs font-semibold"
-                    : "border-border/80 bg-card text-secondary-text hover:border-primary/40 hover:text-foreground"
-                }`}
-              >
-                <Building2 className="h-4 w-4 mb-1" />
-                <span className="text-xs">Hospital Visit</span>
-              </button>
+              {/* Shadcn Calendar Popover Button & Slide Controls */}
+              <div className="flex items-center gap-1.5">
+                {/* Shadcn UI Popover Calendar Trigger */}
+                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 text-[11px] font-semibold text-primary bg-primary/10 hover:bg-primary/20 px-2 py-1 rounded-lg border border-primary/20 transition-all cursor-pointer shadow-2xs"
+                      title="Open interactive calendar"
+                    >
+                      <CalendarDays className="h-3.5 w-3.5" />
+                      <span>{activeDayLabel.month} {activeDayLabel.dayNum}</span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-auto p-3 bg-card border-border shadow-2xl rounded-2xl">
+                    <Calendar
+                      selected={activeDate}
+                      onSelect={handleCalendarSelect}
+                      minDate={new Date()}
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                {/* Left / Right Slide Arrow Buttons */}
+                <button
+                  type="button"
+                  onClick={() => handleSlide("left")}
+                  className="h-6 w-6 rounded-md border border-border bg-card hover:border-primary hover:text-primary flex items-center justify-center text-secondary-text transition-all cursor-pointer"
+                  aria-label="Slide dates left"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSlide("right")}
+                  className="h-6 w-6 rounded-md border border-border bg-card hover:border-primary hover:text-primary flex items-center justify-center text-secondary-text transition-all cursor-pointer"
+                  aria-label="Slide dates right"
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* 2. Date Selection (Next 7 Days Carousel) */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5 text-primary" />
-              <span>2. Select Date</span>
-            </label>
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {/* Mouse-Drag & Scroll-friendly Date Carousel */}
+            <div
+              ref={scrollContainerRef}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUpOrLeave}
+              onMouseLeave={handleMouseUpOrLeave}
+              onWheel={handleWheel}
+              className="flex gap-2 overflow-x-auto pb-1 scroll-smooth select-none cursor-grab active:cursor-grabbing scrollbar-none no-scrollbar"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
               {days.map((day, idx) => {
-                const isSelected = selectedDayIdx === idx;
+                const isSelected =
+                  activeDate.toDateString() === day.date.toDateString();
+
                 return (
                   <button
-                    key={idx}
+                    key={day.date.toISOString()}
                     type="button"
                     onClick={() => {
+                      setCustomDate(null);
                       setSelectedDayIdx(idx);
-                      setSelectedSlot("");
                     }}
-                    className={`flex-shrink-0 flex flex-col items-center justify-center w-14 py-2.5 rounded-2xl border text-center transition-all ${
+                    className={`flex-shrink-0 flex flex-col items-center justify-center w-[58px] py-2 rounded-xl border text-center transition-all cursor-pointer ${
                       isSelected
-                        ? "border-primary bg-primary text-white shadow-xs"
-                        : "border-border/80 bg-card text-secondary-text hover:border-primary/40 hover:text-foreground"
+                        ? "border-primary bg-primary text-white shadow-xs font-bold ring-2 ring-primary/20"
+                        : "border-border bg-card text-secondary-text hover:border-primary/40 hover:text-foreground"
                     }`}
                   >
-                    <span className="text-[10px] uppercase font-bold tracking-wider">
+                    <span className="text-[10px] uppercase font-medium">
                       {day.dayName}
                     </span>
-                    <span className="text-sm font-black mt-0.5">{day.dayNum}</span>
+                    <span className="text-sm font-bold mt-0.5">{day.dayNum}</span>
                     <span className="text-[9px] opacity-80">{day.month}</span>
                   </button>
                 );
@@ -190,53 +280,82 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
             </div>
           </div>
 
-          {/* 3. Time Slots */}
+          {/* 2. Available Time Slots */}
           <div className="space-y-2">
-            <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+            <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 text-primary" />
-              <span>3. Available Time Slots</span>
+              <span>Available Time Slots</span>
             </label>
-            <div className="grid grid-cols-2 gap-2">
-              {timeSlots.map((slot, idx) => {
-                const isSelected = selectedSlot === slot || (!selectedSlot && idx === 0);
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setSelectedSlot(slot)}
-                    className={`p-2 rounded-xl text-xs font-semibold border text-center transition-all truncate ${
-                      isSelected
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border/80 bg-card text-secondary-text hover:border-primary/40 hover:text-foreground"
-                    }`}
-                  >
-                    {slot}
-                  </button>
-                );
-              })}
+
+            {/* Morning */}
+            <div className="space-y-1">
+              <span className="text-[11px] font-medium text-secondary-text">Morning</span>
+              <div className="grid grid-cols-2 gap-2">
+                {morningSlots.map((slot) => {
+                  const isSelected = selectedSlot === slot;
+                  return (
+                    <button
+                      key={slot}
+                      type="button"
+                      onClick={() => setSelectedSlot(slot)}
+                      className={`p-2 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
+                        isSelected
+                          ? "border-2 border-primary bg-primary/10 text-primary font-bold ring-2 ring-primary/20 shadow-2xs"
+                          : "border border-border bg-card text-secondary-text hover:border-primary/40 hover:text-foreground"
+                      }`}
+                    >
+                      {slot}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Evening */}
+            <div className="space-y-1 pt-1">
+              <span className="text-[11px] font-medium text-secondary-text">Evening</span>
+              <div className="grid grid-cols-2 gap-2">
+                {eveningSlots.map((slot) => {
+                  const isSelected = selectedSlot === slot;
+                  return (
+                    <button
+                      key={slot}
+                      type="button"
+                      onClick={() => setSelectedSlot(slot)}
+                      className={`p-2 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
+                        isSelected
+                          ? "border-2 border-primary bg-primary/10 text-primary font-bold ring-2 ring-primary/20 shadow-2xs"
+                          : "border border-border bg-card text-secondary-text hover:border-primary/40 hover:text-foreground"
+                      }`}
+                    >
+                      {slot}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* Submit CTA */}
+          {/* Book CTA */}
           <button
             type="submit"
-            className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-primary hover:bg-primary-dark text-white py-3.5 text-xs sm:text-sm font-bold shadow-md hover:shadow-primary/25 transition-all"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-dark text-white py-3 text-sm font-semibold shadow-xs transition-all cursor-pointer"
           >
-            <span>Proceed to Book</span>
+            <span>Book Video Consultation</span>
             <ArrowRight className="h-4 w-4" />
           </button>
         </form>
       )}
 
-      {/* Trust & Guarantee Badges */}
-      <div className="pt-3 border-t border-border/60 space-y-2 text-[11px] text-secondary-text">
+      {/* Trust Badges */}
+      <div className="pt-3 border-t border-border space-y-2 text-xs text-secondary-text">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-primary flex-shrink-0" />
-          <span>100% Encrypted Video & Patient Data</span>
+          <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
+          <span>Encrypted Video Call & Protected Medical Data</span>
         </div>
         <div className="flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-          <span>Free rescheduling up to 2 hours before</span>
+          <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+          <span>Reschedule anytime before 2 hours of session</span>
         </div>
       </div>
     </div>

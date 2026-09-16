@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import ReactPaginate from "react-paginate";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PaginationMeta } from "@/types/doctor";
 
@@ -13,110 +14,69 @@ export const DoctorPagination: React.FC<DoctorPaginationProps> = ({
   meta,
   onPageChange,
 }) => {
-  const { page, totalPages, hasNextPage, hasPrevPage, total } = meta;
+  const { page, totalPages, total, limit } = meta;
 
   if (totalPages <= 1) return null;
 
-  // Generate page numbers
-  const getPageNumbers = () => {
-    const pages: (number | string)[] = [];
-    const maxButtons = 5;
+  const startRecord = (page - 1) * limit + 1;
+  const endRecord = Math.min(page * limit, total);
 
-    if (totalPages <= maxButtons) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      pages.push(1);
-      if (page > 3) {
-        pages.push("...");
-      }
-
-      const start = Math.max(2, page - 1);
-      const end = Math.min(totalPages - 1, page + 1);
-
-      for (let i = start; i <= end; i++) {
-        if (!pages.includes(i)) {
-          pages.push(i);
-        }
-      }
-
-      if (page < totalPages - 2) {
-        pages.push("...");
-      }
-      if (!pages.includes(totalPages)) {
-        pages.push(totalPages);
-      }
-    }
-    return pages;
+  const handlePageClick = (event: { selected: number }) => {
+    onPageChange(event.selected + 1);
   };
 
-  const pages = getPageNumbers();
-
   return (
-    <div className="mt-10 pt-6 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-4">
-      {/* Total records counter */}
+    <div className="mt-10 pt-6 border-t border-border/70 flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* Information Counter */}
       <p className="text-xs text-secondary-text">
-        Showing page <span className="font-semibold text-foreground">{page}</span> of{" "}
-        <span className="font-semibold text-foreground">{totalPages}</span> ({total} total doctors)
+        Showing <span className="font-bold text-foreground">{startRecord}</span> -{" "}
+        <span className="font-bold text-foreground">{endRecord}</span> of{" "}
+        <span className="font-bold text-primary">{total}</span> certified doctors
       </p>
 
-      {/* Pagination controls */}
-      <div className="flex items-center gap-1.5">
-        {/* Previous Button */}
-        <button
-          type="button"
-          disabled={!hasPrevPage}
-          onClick={() => onPageChange(page - 1)}
-          className="inline-flex items-center justify-center h-9 w-9 rounded-full border border-border/80 bg-card text-foreground hover:bg-primary/10 hover:border-primary/40 hover:text-primary disabled:opacity-40 disabled:pointer-events-none transition-all"
-          aria-label="Previous Page"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-
-        {/* Number buttons */}
-        {pages.map((p, idx) => {
-          if (p === "...") {
-            return (
-              <span
-                key={`ellipsis-${idx}`}
-                className="inline-flex items-center justify-center h-9 w-8 text-xs text-muted-foreground"
-              >
-                ...
-              </span>
-            );
+      {/* ReactPaginate Component with custom Tailwind classes */}
+      <nav aria-label="Doctors pagination">
+        <ReactPaginate
+          breakLabel="..."
+          nextLabel={
+            <span className="flex items-center gap-1">
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRight className="h-4 w-4" />
+            </span>
           }
-
-          const pageNum = Number(p);
-          const isActive = pageNum === page;
-
-          return (
-            <button
-              key={`page-${pageNum}`}
-              type="button"
-              onClick={() => onPageChange(pageNum)}
-              className={`inline-flex items-center justify-center h-9 w-9 rounded-full text-xs font-semibold transition-all ${
-                isActive
-                  ? "bg-primary text-white shadow-xs font-bold"
-                  : "border border-border/80 bg-card text-foreground hover:bg-primary/10 hover:border-primary/40 hover:text-primary"
-              }`}
-            >
-              {pageNum}
-            </button>
-          );
-        })}
-
-        {/* Next Button */}
-        <button
-          type="button"
-          disabled={!hasNextPage}
-          onClick={() => onPageChange(page + 1)}
-          className="inline-flex items-center justify-center h-9 w-9 rounded-full border border-border/80 bg-card text-foreground hover:bg-primary/10 hover:border-primary/40 hover:text-primary disabled:opacity-40 disabled:pointer-events-none transition-all"
-          aria-label="Next Page"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      </div>
+          previousLabel={
+            <span className="flex items-center gap-1">
+              <ChevronLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Prev</span>
+            </span>
+          }
+          onPageChange={handlePageClick}
+          pageRangeDisplayed={3}
+          marginPagesDisplayed={1}
+          pageCount={totalPages}
+          forcePage={page - 1}
+          renderOnZeroPageCount={null}
+          // Container classes
+          containerClassName="flex items-center gap-1.5 list-none m-0 p-0 select-none"
+          // Page item classes
+          pageClassName="inline-block"
+          pageLinkClassName="inline-flex items-center justify-center min-w-[36px] h-9 px-2.5 rounded-xl border border-border/80 bg-card text-xs font-semibold text-foreground hover:border-primary/50 hover:text-primary transition-all cursor-pointer shadow-2xs"
+          // Active item classes
+          activeClassName="!border-primary"
+          activeLinkClassName="!bg-primary !border-primary !text-white !font-bold shadow-xs hover:!bg-primary-dark"
+          // Previous button classes
+          previousClassName="inline-block"
+          previousLinkClassName="inline-flex items-center justify-center h-9 px-3 rounded-xl border border-border/80 bg-card text-xs font-semibold text-foreground hover:border-primary/50 hover:text-primary transition-all cursor-pointer shadow-2xs"
+          // Next button classes
+          nextClassName="inline-block"
+          nextLinkClassName="inline-flex items-center justify-center h-9 px-3 rounded-xl border border-border/80 bg-card text-xs font-semibold text-foreground hover:border-primary/50 hover:text-primary transition-all cursor-pointer shadow-2xs"
+          // Break classes
+          breakClassName="inline-block"
+          breakLinkClassName="inline-flex items-center justify-center w-8 h-9 text-xs text-muted-foreground"
+          // Disabled state classes
+          disabledClassName="opacity-40 pointer-events-none cursor-not-allowed"
+        />
+      </nav>
     </div>
   );
 };

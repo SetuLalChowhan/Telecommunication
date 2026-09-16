@@ -2,7 +2,14 @@
 
 import React from "react";
 import { Specialty } from "@/types/doctor";
-import { Filter, X, RotateCcw, Check, Sparkles } from "lucide-react";
+import { Filter, X, RotateCcw, ShieldCheck, Stethoscope, Check } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface DoctorFiltersProps {
   specialties: Specialty[];
@@ -33,159 +40,185 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
   isMobileOpen = false,
   onMobileClose,
 }) => {
+  const hasActiveFilters = Boolean(selectedSpecialty || minFee || maxFee || experience);
+
   const filterContent = (
     <div className="space-y-6">
-      
       {/* Header & Reset */}
-      <div className="flex items-center justify-between pb-3 border-b border-border/70">
+      <div className="flex items-center justify-between pb-4 border-b border-border">
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-bold text-foreground">Filter Doctors</h3>
+          <h3 className="text-base font-semibold text-foreground">Filters</h3>
         </div>
-        <button
-          type="button"
-          onClick={onResetFilters}
-          className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-dark transition-colors cursor-pointer"
-        >
-          <RotateCcw className="h-3 w-3" />
-          <span>Reset</span>
-        </button>
-      </div>
 
-      {/* Specialty Filter */}
-      <div className="space-y-3">
-        <label className="text-xs font-bold uppercase tracking-wider text-foreground block">
-          Medical Specialties
-        </label>
-        <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+        {hasActiveFilters && (
           <button
             type="button"
-            onClick={() => onSpecialtyChange("")}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              selectedSpecialty === ""
-                ? "bg-primary text-white shadow-xs"
-                : "bg-muted/40 hover:bg-muted text-foreground"
-            }`}
+            onClick={onResetFilters}
+            className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-dark transition-colors cursor-pointer"
           >
-            <span>All Specialties</span>
-            {selectedSpecialty === "" && <Check className="h-3.5 w-3.5" />}
+            <RotateCcw className="h-3 w-3" />
+            <span>Reset</span>
           </button>
-          {specialties.map((spec) => (
-            <button
-              key={spec.id}
-              type="button"
-              onClick={() => onSpecialtyChange(spec.slug)}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                selectedSpecialty === spec.slug
-                  ? "bg-primary text-white shadow-xs"
-                  : "bg-muted/40 hover:bg-muted text-foreground"
-              }`}
-            >
-              <span>{spec.name}</span>
-              {selectedSpecialty === spec.slug && <Check className="h-3.5 w-3.5" />}
-            </button>
-          ))}
-        </div>
+        )}
       </div>
 
-      {/* Consultation Fee Range */}
-      <div className="space-y-3 pt-2 border-t border-border/60">
-        <label className="text-xs font-bold uppercase tracking-wider text-foreground block">
-          Consultation Fee (৳)
+      {/* 1. Specialty Dropdown with Active Selected Border */}
+      <div className="space-y-2">
+        <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+          <Stethoscope className="h-3.5 w-3.5 text-primary" />
+          <span>Medical Specialty</span>
         </label>
-        <div className="grid grid-cols-2 gap-2.5">
+        <Select
+          value={selectedSpecialty || "all"}
+          onValueChange={(val) => onSpecialtyChange(val === "all" ? "" : val)}
+        >
+          <SelectTrigger
+            className={`h-11 rounded-xl text-sm font-medium transition-all ${
+              selectedSpecialty
+                ? "border-2 border-primary bg-primary/5 text-primary font-semibold ring-2 ring-primary/20 shadow-xs"
+                : "border border-border bg-card text-foreground hover:border-primary/40 focus:ring-primary/20"
+            }`}
+          >
+            <SelectValue placeholder="All Specialties" />
+          </SelectTrigger>
+          <SelectContent className="rounded-xl border-border bg-card shadow-xl max-h-64">
+            <SelectItem value="all" className="text-sm font-medium">
+              All Specialties
+            </SelectItem>
+            {specialties.map((spec) => (
+              <SelectItem
+                key={spec.id}
+                value={spec.slug}
+                className="text-sm font-medium flex items-center justify-between"
+              >
+                <span>{spec.name}</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Selected Specialty Badge tag */}
+        {selectedSpecialty && (
+          <div className="pt-1 flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-primary/10 border border-primary/25 text-xs text-primary font-medium">
+            <span>Selected: {specialties.find((s) => s.slug === selectedSpecialty)?.name || selectedSpecialty}</span>
+            <button
+              type="button"
+              onClick={() => onSpecialtyChange("")}
+              className="text-primary hover:text-primary-dark p-0.5 rounded-md hover:bg-primary/20 transition-colors"
+              title="Clear specialty"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* 2. Fee Range */}
+      <div className="space-y-2 pt-2 border-t border-border">
+        <label className="text-xs font-semibold text-foreground block">
+          Consultation Fee (BDT)
+        </label>
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <span className="text-[10px] text-secondary-text mb-1 block">Min Fee</span>
+            <span className="text-[11px] text-secondary-text mb-1 block">Min (৳)</span>
             <input
               type="number"
               placeholder="0"
               value={minFee}
               onChange={(e) => onMinFeeChange(e.target.value)}
-              className="w-full h-9 px-3 rounded-lg border border-border bg-card text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-primary transition-all"
+              className={`w-full h-9 px-3 rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none transition-all ${
+                minFee
+                  ? "border-2 border-primary bg-primary/5 font-semibold ring-1 ring-primary/20"
+                  : "border border-border bg-card focus:border-primary"
+              }`}
             />
           </div>
           <div>
-            <span className="text-[10px] text-secondary-text mb-1 block">Max Fee</span>
+            <span className="text-[11px] text-secondary-text mb-1 block">Max (৳)</span>
             <input
               type="number"
               placeholder="2000"
               value={maxFee}
               onChange={(e) => onMaxFeeChange(e.target.value)}
-              className="w-full h-9 px-3 rounded-lg border border-border bg-card text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-primary transition-all"
+              className={`w-full h-9 px-3 rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none transition-all ${
+                maxFee
+                  ? "border-2 border-primary bg-primary/5 font-semibold ring-1 ring-primary/20"
+                  : "border border-border bg-card focus:border-primary"
+              }`}
             />
           </div>
         </div>
       </div>
 
-      {/* Experience Years */}
-      <div className="space-y-3 pt-2 border-t border-border/60">
-        <label className="text-xs font-bold uppercase tracking-wider text-foreground block">
+      {/* 3. Experience Level */}
+      <div className="space-y-2 pt-2 border-t border-border">
+        <label className="text-xs font-semibold text-foreground block">
           Experience Level
         </label>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: "Any", val: "" },
+            { label: "Any Experience", val: "" },
             { label: "5+ Years", val: "5" },
             { label: "10+ Years", val: "10" },
-            { label: "12+ Years", val: "12" },
-          ].map((item) => (
-            <button
-              key={item.val}
-              type="button"
-              onClick={() => onExperienceChange(item.val)}
-              className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                experience === item.val
-                  ? "bg-primary text-white shadow-xs"
-                  : "bg-muted/40 hover:bg-muted text-foreground"
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
+            { label: "15+ Years", val: "15" },
+          ].map((item) => {
+            const isSelected = experience === item.val;
+            return (
+              <button
+                key={item.val}
+                type="button"
+                onClick={() => onExperienceChange(item.val)}
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer text-center ${
+                  isSelected
+                    ? "border-2 border-primary bg-primary text-white shadow-xs font-bold ring-2 ring-primary/20"
+                    : "bg-slate-50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground border border-border"
+                }`}
+              >
+                {item.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Verified Telehealth Banner */}
-      <div className="rounded-2xl bg-primary/5 border border-primary/20 p-4 space-y-2">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
-          <Sparkles className="h-4 w-4" />
-          <span>Verified Healthcare</span>
-        </div>
-        <p className="text-[11px] text-secondary-text leading-relaxed">
-          All doctors undergo rigorous license verification before offering virtual appointments.
+      {/* Simple Verification Notice */}
+      <div className="rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-border p-3.5 flex items-start gap-2.5 text-xs text-secondary-text">
+        <ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+        <p className="leading-relaxed">
+          All registered doctors are BMDC-certified and verified for online practice.
         </p>
       </div>
-
     </div>
   );
 
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:block w-72 shrink-0">
-        <div className="sticky top-24 rounded-2xl sm:rounded-3xl border border-border/80 bg-card p-6 shadow-xs">
+      <aside className="hidden lg:block w-72 xl:w-80 shrink-0">
+        <div className="sticky top-24 rounded-2xl border border-border bg-card p-6 shadow-xs">
           {filterContent}
         </div>
       </aside>
 
-      {/* Mobile Filters Drawer Modal */}
+      {/* Mobile Drawer Modal */}
       {isMobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
             onClick={onMobileClose}
           />
 
-          {/* Drawer Panel */}
+          {/* Drawer Content */}
           <div className="relative ml-auto w-full max-w-xs h-full bg-card p-6 overflow-y-auto shadow-2xl z-10 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between pb-4 mb-4 border-b border-border">
-                <h3 className="text-base font-bold text-foreground">Filters</h3>
+                <h3 className="text-base font-semibold text-foreground">Filters</h3>
                 <button
                   type="button"
                   onClick={onMobileClose}
-                  className="rounded-full p-1 text-secondary-text hover:bg-muted cursor-pointer"
+                  className="rounded-lg p-1 text-secondary-text hover:bg-muted cursor-pointer"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -197,7 +230,7 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
               <button
                 type="button"
                 onClick={onMobileClose}
-                className="w-full h-11 rounded-full bg-primary text-white text-sm font-semibold shadow-xs cursor-pointer"
+                className="w-full h-11 rounded-xl bg-primary hover:bg-primary-dark text-white text-sm font-semibold shadow-xs transition-all cursor-pointer"
               >
                 Apply Filters
               </button>
