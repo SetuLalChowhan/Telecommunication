@@ -345,5 +345,5 @@
 
 
 .section-padding-x {
-  @apply px-4 sm:px-6 md:px-10 lg:px-16 w-full;
+  @apply px-4 sm:px-6 md:px-10 lg:px-16 2xl:px-24 w-full;
 }

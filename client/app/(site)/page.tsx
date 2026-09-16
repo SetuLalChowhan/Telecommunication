@@ -1,12 +1,24 @@
-import Banner from '@/components/site/home/Banner'
-import React from 'react'
+import React from "react";
+import Banner from "@/components/site/home/Banner";
+import SpecialtiesSection from "@/components/site/home/SpecialtiesSection";
+import HowItWorksSection from "@/components/site/home/HowItWorksSection";
+import DoctorsSection from "@/components/site/home/DoctorsSection";
+import AdviceSection from "@/components/site/home/AdviceSection";
+import TestimonialsSection from "@/components/site/home/TestimonialsSection";
+import BlogSection from "@/components/site/home/BlogSection";
 
-const page = () => {
+const HomePage = () => {
   return (
-    <div>
+    <main className="flex flex-col w-full">
       <Banner />
-    </div>
-  )
-}
+      <SpecialtiesSection />
+      <HowItWorksSection />
+      <DoctorsSection />
+      <AdviceSection />
+      <TestimonialsSection />
+      <BlogSection />
+    </main>
+  );
+};
 
-export default page
+export default HomePage;

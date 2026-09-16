@@ -2,8 +2,15 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // TODO: Replace with the specialties directory API (e.g. GET /specialties) once available.
 const SPECIALTIES = [
@@ -33,32 +40,31 @@ const SearchBar = () => {
 
   return (
     <form role="search" onSubmit={handleSubmit} className="w-full">
-      <div className="flex items-center gap-1.5 sm:gap-2 rounded-2xl border border-border/80 bg-card p-1.5 sm:p-2 shadow-md shadow-slate-900/[0.04] transition-all duration-200 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/15">
-        {/* Specialty selection — desktop only */}
-        <div className="relative hidden md:block shrink-0">
-          <select
-            aria-label="Select a specialty"
-            value={specialty}
-            onChange={(event) => setSpecialty(event.target.value)}
-            className="h-10 sm:h-11 w-[135px] cursor-pointer appearance-none rounded-xl bg-transparent pl-3 pr-7 text-sm font-medium text-foreground outline-none transition-colors hover:bg-muted/50"
+      <div className="flex items-center gap-1.5 sm:gap-2 rounded-2xl border border-border/80 bg-card/95 backdrop-blur-md p-1.5 sm:p-2 shadow-xl shadow-slate-900/[0.08] transition-all duration-200 focus-within:border-primary/60 focus-within:ring-3 focus-within:ring-primary/15">
+        {/* Specialty selection (shadcn UI Select) — visible on tablet & desktop */}
+        <div className="hidden sm:block shrink-0">
+          <Select
+            value={specialty || "all"}
+            onValueChange={(val) => setSpecialty(val === "all" ? "" : val)}
           >
-            <option value="">All Specialties</option>
-            {SPECIALTIES.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-          <ChevronDown
-            className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden="true"
-          />
+            <SelectTrigger className="h-10 sm:h-11 w-[145px] lg:w-[160px] border-none bg-transparent shadow-none hover:bg-muted/50 focus:ring-0 text-sm font-medium text-foreground px-3 rounded-xl gap-2">
+              <SelectValue placeholder="All Specialties" />
+            </SelectTrigger>
+            <SelectContent className="w-[200px] rounded-2xl border-border bg-popover/95 backdrop-blur-xl shadow-2xl">
+              <SelectItem value="all">All Specialties</SelectItem>
+              {SPECIALTIES.map((item) => (
+                <SelectItem key={item} value={item}>
+                  {item}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        <div className="hidden h-6 w-px shrink-0 bg-border md:block" aria-hidden="true" />
+        <div className="hidden h-6 w-px shrink-0 bg-border/80 sm:block" aria-hidden="true" />
 
         {/* Query input */}
-        <div className="flex h-10 sm:h-11 flex-1 items-center gap-2 rounded-xl px-2.5 sm:px-2 transition-colors min-w-0">
+        <div className="flex h-10 sm:h-11 flex-1 items-center gap-2.5 rounded-xl px-2.5 sm:px-2 transition-colors min-w-0">
           <Search className="h-4.5 w-4.5 shrink-0 text-muted-foreground" aria-hidden="true" />
           <label htmlFor="hero-doctor-search" className="sr-only">
             Search doctors or specialties

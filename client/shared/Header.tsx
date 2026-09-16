@@ -35,9 +35,8 @@ import { useAuth, getRoleDashboardRoute } from "@/lib/api";
 const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/doctors", label: "Doctors" },
-  { href: "/services", label: "Specialties" },
-  { href: "/about#how-it-works", label: "How it works" },
-  { href: "/about", label: "About" },
+  { href: "/blogs", label: "Blogs" },
+  { href: "/about", label: "About Us" },
 ];
 
 export const Header: React.FC = () => {
@@ -82,6 +81,8 @@ export const Header: React.FC = () => {
       .join("")
       .toUpperCase();
   };
+
+  const firstName = user?.name ? user.name.split(" ")[0] : "Account";
 
   const handleLogout = async () => {
     await logout();
@@ -130,20 +131,21 @@ export const Header: React.FC = () => {
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="relative h-9 w-9 rounded-full border border-border p-0 cursor-pointer overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="relative h-9.5 w-9.5 rounded-full border-2 border-primary/30 p-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:border-primary"
                     >
-                      <Avatar className="h-9 w-9">
+                      <Avatar className="h-full w-full">
                         <AvatarImage src={user?.image || undefined} alt={user?.name || "User"} referrerPolicy="no-referrer" />
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
                           {getInitials(user?.name)}
                         </AvatarFallback>
                       </Avatar>
+                      <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 p-1 rounded-xl shadow-lg border border-border">
-                    <DropdownMenuLabel className="p-3 flex flex-col gap-1">
+                  <DropdownMenuContent align="end" className="w-60 p-1.5 rounded-2xl shadow-xl border border-border">
+                    <DropdownMenuLabel className="p-3 flex flex-col gap-1.5">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-semibold text-sm text-foreground truncate">
+                        <span className="font-bold text-sm text-foreground truncate">
                           {user?.name || "User"}
                         </span>
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 uppercase">
@@ -153,15 +155,15 @@ export const Header: React.FC = () => {
                       <span className="text-xs text-muted-foreground truncate">{user?.email || ""}</span>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => router.push(dashboardRoute)} className="gap-2.5 p-2.5 rounded-lg cursor-pointer">
+                    <DropdownMenuItem onClick={() => router.push(dashboardRoute)} className="gap-2.5 p-2.5 rounded-xl cursor-pointer">
                       <LayoutDashboard className="h-4 w-4 text-primary" />
                       <span>Dashboard</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push(profileRoute)} className="gap-2.5 p-2.5 rounded-lg cursor-pointer">
+                    <DropdownMenuItem onClick={() => router.push(profileRoute)} className="gap-2.5 p-2.5 rounded-xl cursor-pointer">
                       <UserIcon className="h-4 w-4 text-muted-foreground" />
                       <span>Profile</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push(settingsRoute)} className="gap-2.5 p-2.5 rounded-lg cursor-pointer">
+                    <DropdownMenuItem onClick={() => router.push(settingsRoute)} className="gap-2.5 p-2.5 rounded-xl cursor-pointer">
                       <KeyRound className="h-4 w-4 text-muted-foreground" />
                       <span>Change password</span>
                     </DropdownMenuItem>
@@ -169,7 +171,7 @@ export const Header: React.FC = () => {
                     <DropdownMenuItem
                       onClick={handleLogout}
                       disabled={isLoggingOut}
-                      className="gap-2.5 p-2.5 rounded-lg text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
+                      className="gap-2.5 p-2.5 rounded-xl text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
                     >
                       <LogOut className="h-4 w-4" />
                       <span>Log out</span>
@@ -215,7 +217,7 @@ export const Header: React.FC = () => {
               })}
             </nav>
 
-            {/* Right: Desktop CTA / Avatar Dropdown */}
+            {/* Right: Desktop CTA / Humanized Avatar Dropdown */}
             <div className="flex items-center gap-3.5 min-w-[160px] justify-end">
               {!mounted || isSessionLoading ? (
                 <div className="flex items-center gap-2">
@@ -228,21 +230,24 @@ export const Header: React.FC = () => {
                     <DropdownMenuTrigger asChild>
                       <button
                         type="button"
-                        className="flex items-center gap-2.5 p-1 rounded-xl border border-border/80 hover:border-border hover:bg-muted/40 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="flex items-center gap-2.5 py-1 px-1.5 rounded-full border border-border/90 hover:border-primary/40 hover:bg-muted/40 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-xs"
                       >
-                        <Avatar className="h-9 w-9">
-                          <AvatarImage
-                            src={user?.image || undefined}
-                            alt={user?.name || "User"}
-                            referrerPolicy="no-referrer"
-                          />
-                          <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-                            {getInitials(user?.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="hidden xl:flex flex-col text-left pr-1.5">
-                          <span className="text-xs font-bold text-foreground leading-tight truncate max-w-[110px]">
-                            {user?.name || "Account"}
+                        <div className="relative">
+                          <Avatar className="h-9 w-9 ring-2 ring-primary/20">
+                            <AvatarImage
+                              src={user?.image || undefined}
+                              alt={user?.name || "User"}
+                              referrerPolicy="no-referrer"
+                            />
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                              {getInitials(user?.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
+                        </div>
+                        <div className="flex flex-col text-left pr-2">
+                          <span className="text-xs font-bold text-foreground leading-tight truncate max-w-[105px]">
+                            Hi, {firstName}
                           </span>
                           <span className="text-[10px] font-semibold text-primary uppercase leading-tight">
                             {role || "PATIENT"}
@@ -250,17 +255,29 @@ export const Header: React.FC = () => {
                         </div>
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-60 p-1.5 rounded-2xl shadow-xl border border-border">
-                      <DropdownMenuLabel className="p-3 flex flex-col gap-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-bold text-sm text-foreground truncate">
-                            {user?.name || "User"}
-                          </span>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 uppercase">
-                            {role || "PATIENT"}
-                          </span>
+                    <DropdownMenuContent align="end" className="w-64 p-2 rounded-2xl shadow-xl border border-border">
+                      <DropdownMenuLabel className="p-3 flex items-center gap-3">
+                        <div className="relative">
+                          <Avatar className="h-10 w-10 ring-2 ring-primary/30">
+                            <AvatarImage
+                              src={user?.image || undefined}
+                              alt={user?.name || "User"}
+                              referrerPolicy="no-referrer"
+                            />
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                              {getInitials(user?.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-card" />
                         </div>
-                        <span className="text-xs text-muted-foreground truncate">{user?.email || ""}</span>
+                        <div className="flex flex-col min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm text-foreground truncate">
+                              {user?.name || "User"}
+                            </span>
+                          </div>
+                          <span className="text-xs text-muted-foreground truncate">{user?.email || ""}</span>
+                        </div>
                       </DropdownMenuLabel>
 
                       <DropdownMenuSeparator />
@@ -270,7 +287,7 @@ export const Header: React.FC = () => {
                         className="flex items-center gap-2.5 p-2.5 rounded-xl cursor-pointer hover:bg-muted font-medium text-sm text-foreground"
                       >
                         <LayoutDashboard className="h-4 w-4 text-primary" />
-                        <span>Dashboard</span>
+                        <span>Dashboard ({role})</span>
                       </DropdownMenuItem>
 
                       <DropdownMenuItem
