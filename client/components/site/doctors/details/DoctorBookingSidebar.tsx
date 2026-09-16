@@ -13,7 +13,11 @@ import {
   ChevronRight,
   CalendarDays,
 } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 
 interface DoctorBookingSidebarProps {
@@ -43,7 +47,8 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
     d.setHours(0, 0, 0, 0);
     return {
       date: d,
-      dayName: i === 0 ? "Today" : d.toLocaleDateString("en-US", { weekday: "short" }),
+      dayName:
+        i === 0 ? "Today" : d.toLocaleDateString("en-US", { weekday: "short" }),
       dayNum: d.getDate(),
       month: d.toLocaleDateString("en-US", { month: "short" }),
       dayOfWeek: d.getDay(),
@@ -52,7 +57,10 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
 
   const activeDate = customDate || days[selectedDayIdx].date;
   const activeDayLabel = {
-    dayName: activeDate.toDateString() === new Date().toDateString() ? "Today" : activeDate.toLocaleDateString("en-US", { weekday: "short" }),
+    dayName:
+      activeDate.toDateString() === new Date().toDateString()
+        ? "Today"
+        : activeDate.toLocaleDateString("en-US", { weekday: "short" }),
     dayNum: activeDate.getDate(),
     month: activeDate.toLocaleDateString("en-US", { month: "short" }),
   };
@@ -103,7 +111,7 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
 
     // If selected date is in our 14-day list, sync active index
     const matchIdx = days.findIndex(
-      (d) => d.date.toDateString() === date.toDateString()
+      (d) => d.date.toDateString() === date.toDateString(),
     );
     if (matchIdx !== -1) {
       setSelectedDayIdx(matchIdx);
@@ -120,7 +128,7 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
   };
 
   return (
-    <div className="sticky top-24 rounded-2xl border border-border bg-card p-6 shadow-md space-y-6">
+    <div className="sticky top-24 rounded-2xl border border-border bg-card p-6 shadow-xs space-y-6">
       {/* Price Header */}
       <div className="pb-4 border-b border-border flex items-center justify-between">
         <div>
@@ -147,7 +155,9 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
             <CheckCircle2 className="h-6 w-6" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-lg font-bold text-foreground">Consultation Booked</h3>
+            <h3 className="text-lg font-bold text-foreground">
+              Consultation Booked
+            </h3>
             <p className="text-xs text-secondary-text leading-relaxed">
               Your online video appointment with{" "}
               <span className="font-semibold text-foreground">
@@ -161,7 +171,8 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
             <div className="flex justify-between text-secondary-text">
               <span>Date:</span>
               <span className="font-semibold text-foreground">
-                {activeDayLabel.dayName}, {activeDayLabel.month} {activeDayLabel.dayNum}
+                {activeDayLabel.dayName}, {activeDayLabel.month}{" "}
+                {activeDayLabel.dayNum}
               </span>
             </div>
             <div className="flex justify-between text-secondary-text">
@@ -170,11 +181,15 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
             </div>
             <div className="flex justify-between text-secondary-text">
               <span>Mode:</span>
-              <span className="font-semibold text-foreground">Encrypted HD Video</span>
+              <span className="font-semibold text-foreground">
+                Encrypted HD Video
+              </span>
             </div>
             <div className="flex justify-between text-secondary-text">
               <span>Status:</span>
-              <span className="font-semibold text-emerald-600">Confirmed (Demo)</span>
+              <span className="font-semibold text-emerald-600">
+                Confirmed (Demo)
+              </span>
             </div>
           </div>
 
@@ -208,10 +223,15 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
                       title="Open interactive calendar"
                     >
                       <CalendarDays className="h-3.5 w-3.5" />
-                      <span>{activeDayLabel.month} {activeDayLabel.dayNum}</span>
+                      <span>
+                        {activeDayLabel.month} {activeDayLabel.dayNum}
+                      </span>
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent align="end" className="w-auto p-3 bg-card border-border shadow-2xl rounded-2xl">
+                  <PopoverContent
+                    align="end"
+                    className="w-auto p-3 bg-card border-border shadow-2xl rounded-2xl"
+                  >
                     <Calendar
                       selected={activeDate}
                       onSelect={handleCalendarSelect}
@@ -272,7 +292,9 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
                     <span className="text-[10px] uppercase font-medium">
                       {day.dayName}
                     </span>
-                    <span className="text-sm font-bold mt-0.5">{day.dayNum}</span>
+                    <span className="text-sm font-bold mt-0.5">
+                      {day.dayNum}
+                    </span>
                     <span className="text-[9px] opacity-80">{day.month}</span>
                   </button>
                 );
@@ -289,7 +311,9 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
 
             {/* Morning */}
             <div className="space-y-1">
-              <span className="text-[11px] font-medium text-secondary-text">Morning</span>
+              <span className="text-[11px] font-medium text-secondary-text">
+                Morning
+              </span>
               <div className="grid grid-cols-2 gap-2">
                 {morningSlots.map((slot) => {
                   const isSelected = selectedSlot === slot;
@@ -313,7 +337,9 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
 
             {/* Evening */}
             <div className="space-y-1 pt-1">
-              <span className="text-[11px] font-medium text-secondary-text">Evening</span>
+              <span className="text-[11px] font-medium text-secondary-text">
+                Evening
+              </span>
               <div className="grid grid-cols-2 gap-2">
                 {eveningSlots.map((slot) => {
                   const isSelected = selectedSlot === slot;

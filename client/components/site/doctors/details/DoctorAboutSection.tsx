@@ -17,7 +17,9 @@ interface DoctorAboutSectionProps {
   doctor: DoctorProfile;
 }
 
-export const DoctorAboutSection: React.FC<DoctorAboutSectionProps> = ({ doctor }) => {
+export const DoctorAboutSection: React.FC<DoctorAboutSectionProps> = ({
+  doctor,
+}) => {
   return (
     <div className="space-y-6">
       {/* 1. About the Doctor Card */}
@@ -74,7 +76,9 @@ export const DoctorAboutSection: React.FC<DoctorAboutSectionProps> = ({ doctor }
               <span className="inline-flex items-center gap-1 text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
                 MBBS
               </span>
-              <span className="text-[11px] font-medium text-secondary-text">Graduated 2012</span>
+              <span className="text-[11px] font-medium text-secondary-text">
+                Graduated 2012
+              </span>
             </div>
             <h4 className="text-sm font-bold text-foreground">
               Bachelor of Medicine, Bachelor of Surgery
@@ -90,7 +94,9 @@ export const DoctorAboutSection: React.FC<DoctorAboutSectionProps> = ({ doctor }
               <span className="inline-flex items-center gap-1 text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
                 FCPS / MD
               </span>
-              <span className="text-[11px] font-medium text-secondary-text">Fellowship 2018</span>
+              <span className="text-[11px] font-medium text-secondary-text">
+                Fellowship 2018
+              </span>
             </div>
             <h4 className="text-sm font-bold text-foreground">
               Fellow of College of Physicians & Surgeons
@@ -108,9 +114,13 @@ export const DoctorAboutSection: React.FC<DoctorAboutSectionProps> = ({ doctor }
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs font-bold text-foreground">BMDC Authorized Medical License</p>
+              <p className="text-xs font-bold text-foreground">
+                BMDC Authorized Medical License
+              </p>
               <p className="text-[11px] text-secondary-text">
-                Reg No: <span className="font-semibold text-foreground">A-89412</span> &bull; Active & Authorized for Virtual Practice
+                Reg No:{" "}
+                <span className="font-semibold text-foreground">A-89412</span>{" "}
+                &bull; Active & Authorized for Virtual Practice
               </p>
             </div>
           </div>
@@ -128,7 +138,9 @@ export const DoctorAboutSection: React.FC<DoctorAboutSectionProps> = ({ doctor }
               <Globe className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs text-secondary-text font-medium">Languages Spoken</p>
+              <p className="text-xs text-secondary-text font-medium">
+                Languages Spoken
+              </p>
               <p className="text-sm font-semibold text-foreground">
                 English, Bengali
               </p>
@@ -140,7 +152,9 @@ export const DoctorAboutSection: React.FC<DoctorAboutSectionProps> = ({ doctor }
               <Clock className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs text-secondary-text font-medium">Consultation Duration</p>
+              <p className="text-xs text-secondary-text font-medium">
+                Consultation Duration
+              </p>
               <p className="text-sm font-semibold text-foreground">
                 20 &ndash; 30 Minutes
               </p>

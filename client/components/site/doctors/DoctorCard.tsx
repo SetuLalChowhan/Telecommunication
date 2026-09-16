@@ -4,13 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { DoctorProfile } from "@/types/doctor";
-import {
-  Star,
-  CheckCircle2,
-  Award,
-  ArrowRight,
-  Video,
-} from "lucide-react";
+import { Star, CheckCircle2, Award, ArrowRight, Video } from "lucide-react";
 
 interface DoctorCardProps {
   doctor: DoctorProfile;
@@ -89,7 +83,7 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor }) => {
             <h3 className="text-base sm:text-lg font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
               <Link href={profileUrl}>{doctorName}</Link>
             </h3>
-            
+
             {/* Experience */}
             <div className="flex items-center gap-1.5 mt-1 text-xs text-secondary-text">
               <Award className="h-3.5 w-3.5 text-primary shrink-0" />
@@ -108,7 +102,9 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor }) => {
         {/* Card Footer: Fee & Action Button */}
         <div className="pt-3 border-t border-border flex items-center justify-between gap-3">
           <div>
-            <span className="text-[10px] text-secondary-text block font-medium">Fee</span>
+            <span className="text-[10px] text-secondary-text block font-medium">
+              Fee
+            </span>
             <div className="flex items-baseline gap-0.5">
               <span className="text-base sm:text-lg font-bold text-foreground">
                 ৳{doctor.fee || 500}

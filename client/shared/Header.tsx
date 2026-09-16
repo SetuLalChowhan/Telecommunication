@@ -12,10 +12,6 @@ import {
   KeyRound,
   LogOut,
   ChevronRight,
-  Stethoscope,
-  Sparkles,
-  HelpCircle,
-  Info,
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -44,17 +40,12 @@ export const Header: React.FC = () => {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { user, role, isAuthenticated, isDoctor, isAdmin, isSessionLoading, logout, logoutMutation } = useAuth();
+  const { user, role, isAuthenticated, isDoctor, isSessionLoading, logout, logoutMutation } = useAuth();
   const isLoggingOut = logoutMutation.isPending;
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Close mobile drawer upon route change
-  useEffect(() => {
-    setMobileDrawerOpen(false);
-  }, [pathname]);
 
   // Lock body scroll when mobile drawer is open
   useEffect(() => {
@@ -101,8 +92,8 @@ export const Header: React.FC = () => {
         </div>
       )}
 
-      <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/90 backdrop-blur-md transition-colors">
-        <div className="max-w-[1920px] mx-auto section-padding-x flex h-18 sm:h-20 items-center justify-between">
+      <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/95 backdrop-blur-md transition-colors">
+        <div className="max-w-[1920px] mx-auto section-padding-x flex h-16 sm:h-18 items-center justify-between">
           
           {/* MOBILE HEADER (Left: Hamburger, Center: Logo, Right: Avatar / Login) */}
           <div className="flex items-center justify-between w-full md:hidden">
@@ -112,9 +103,9 @@ export const Header: React.FC = () => {
               size="icon"
               onClick={() => setMobileDrawerOpen(true)}
               aria-label="Open navigation menu"
-              className="h-10 w-10 rounded-xl text-foreground hover:bg-muted"
+              className="h-9.5 w-9.5 rounded-xl text-foreground hover:bg-muted"
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="h-5 w-5" />
             </Button>
 
             {/* 2. Center: Logo */}
@@ -131,7 +122,7 @@ export const Header: React.FC = () => {
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="relative h-9.5 w-9.5 rounded-full border-2 border-primary/30 p-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:border-primary"
+                      className="relative h-9 w-9 rounded-full border-2 border-primary/30 p-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:border-primary"
                     >
                       <Avatar className="h-full w-full">
                         <AvatarImage src={user?.image || undefined} alt={user?.name || "User"} referrerPolicy="no-referrer" />
@@ -180,7 +171,7 @@ export const Header: React.FC = () => {
                 </DropdownMenu>
               ) : (
                 <Link href="/login">
-                  <Button variant="ghost" size="sm" className="font-semibold text-xs sm:text-sm px-3 h-9 rounded-xl text-primary hover:bg-primary/10">
+                  <Button variant="ghost" size="sm" className="font-semibold text-xs sm:text-sm px-3 h-8.5 rounded-xl text-primary hover:bg-primary/10">
                     Log in
                   </Button>
                 </Link>
@@ -191,10 +182,10 @@ export const Header: React.FC = () => {
           {/* DESKTOP HEADER (Brand Logo, Nav Links, Right CTA / Avatar) */}
           <div className="hidden md:flex items-center justify-between w-full">
             {/* Left: Brand Logo */}
-            <BrandLogo iconSize={20} />
+            <BrandLogo iconSize={19} />
 
             {/* Middle: Prominent Desktop Navigation Links */}
-            <nav className="flex items-center gap-7 lg:gap-9">
+            <nav className="flex items-center gap-7 lg:gap-8">
               {NAV_LINKS.map((link) => {
                 const isActive = pathname === link.href;
                 return (
@@ -202,7 +193,7 @@ export const Header: React.FC = () => {
                     key={link.href}
                     href={link.href}
                     className={cn(
-                      "text-[15.5px] lg:text-base font-medium tracking-tight transition-colors py-1.5 relative",
+                      "text-sm font-medium tracking-tight transition-colors py-1.5 relative",
                       isActive
                         ? "text-primary font-semibold"
                         : "text-foreground/80 hover:text-primary"

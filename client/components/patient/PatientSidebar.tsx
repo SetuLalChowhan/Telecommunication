@@ -6,9 +6,9 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Calendar,
-  Stethoscope,
   FileText,
-  Settings,
+  Stethoscope,
+  User,
   LogOut,
   X,
   Loader2,
@@ -23,43 +23,31 @@ interface PatientSidebarProps {
   setOpen: (open: boolean) => void;
 }
 
-interface NavItem {
-  id: number;
-  text: string;
-  path: string;
-  icon: React.ReactNode;
-}
-
-const PATIENT_NAV_ITEMS: NavItem[] = [
+const NAV_ITEMS = [
   {
-    id: 1,
-    icon: <LayoutDashboard className="h-5 w-5" />,
-    text: "Patient Portal",
+    label: "Dashboard",
     path: "/patient/dashboard",
+    icon: LayoutDashboard,
   },
   {
-    id: 2,
-    icon: <Stethoscope className="h-5 w-5" />,
-    text: "Find a Doctor",
-    path: "/doctors",
-  },
-  {
-    id: 3,
-    icon: <Calendar className="h-5 w-5" />,
-    text: "My Appointments",
+    label: "My Bookings",
     path: "/patient/appointments",
+    icon: Calendar,
   },
   {
-    id: 4,
-    icon: <FileText className="h-5 w-5" />,
-    text: "Prescriptions & Reports",
+    label: "Medical Reports",
     path: "/patient/records",
+    icon: FileText,
   },
   {
-    id: 5,
-    icon: <Settings className="h-5 w-5" />,
-    text: "Settings",
-    path: "/patient/settings",
+    label: "Find Doctors",
+    path: "/doctors",
+    icon: Stethoscope,
+  },
+  {
+    label: "My Profile",
+    path: "/patient/profile",
+    icon: User,
   },
 ];
 
@@ -73,7 +61,7 @@ export const PatientSidebar: React.FC<PatientSidebarProps> = ({ open, setOpen })
       {/* Mobile Backdrop */}
       <div
         className={cn(
-          "fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300 xl:hidden",
+          "fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-xs transition-opacity duration-300 xl:hidden",
           open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
         onClick={() => setOpen(false)}
@@ -83,65 +71,67 @@ export const PatientSidebar: React.FC<PatientSidebarProps> = ({ open, setOpen })
       {/* Sidebar Container */}
       <aside
         className={cn(
-          "fixed top-0 bottom-0 left-0 z-50 flex flex-col w-72 bg-card border-r border-border transition-transform duration-300 ease-in-out",
+          "fixed top-0 bottom-0 left-0 z-50 flex flex-col w-64 bg-card border-r border-border transition-transform duration-300 ease-in-out select-none",
           "xl:static xl:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Brand Header */}
-        <div className="flex h-16 items-center justify-between px-6 border-b border-border shrink-0">
-          <BrandLogo iconSize={20} />
+        {/* Brand Header with top border/padding */}
+        <div className="flex h-16 items-center justify-between px-5 border-b border-border shrink-0">
+          <BrandLogo iconSize={19} />
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 xl:hidden text-muted-foreground hover:text-foreground"
+            className="h-8.5 w-8.5 xl:hidden text-muted-foreground hover:text-foreground rounded-xl"
             onClick={() => setOpen(false)}
+            aria-label="Close sidebar"
           >
             <X className="h-5 w-5" />
-            <span className="sr-only">Close sidebar</span>
           </Button>
         </div>
 
-        {/* Patient Navigation Links */}
-        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-1.5">
-          <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Healthcare Portal
-          </div>
-          {PATIENT_NAV_ITEMS.map((item) => {
+        {/* Navigation Links */}
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
             const isActive = pathname === item.path;
+
             return (
               <Link
-                key={item.id}
+                key={item.path}
                 href={item.path}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  "flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                  "flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    ? "bg-primary text-white font-semibold shadow-xs"
+                    : "text-secondary-text hover:text-foreground hover:bg-muted/60"
                 )}
               >
-                <span className={cn(isActive ? "text-primary-foreground" : "text-muted-foreground")}>
-                  {item.icon}
-                </span>
-                <span>{item.text}</span>
+                <Icon
+                  className={cn(
+                    "h-4.5 w-4.5 shrink-0",
+                    isActive ? "text-white" : "text-muted-foreground"
+                  )}
+                />
+                <span>{item.label}</span>
               </Link>
             );
           })}
         </div>
 
-        {/* Logout Footer */}
-        <div className="p-4 border-t border-border shrink-0">
+        {/* Bottom Sign Out Area with clean border-t */}
+        <div className="p-3 border-t border-border shrink-0">
           <Button
             variant="ghost"
             disabled={isLoggingOut}
             onClick={logout}
-            className="w-full justify-start gap-3.5 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl disabled:opacity-50"
+            className="w-full justify-start gap-2.5 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl h-10 px-3 text-sm font-semibold transition-colors disabled:opacity-50"
           >
             {isLoggingOut ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin shrink-0" />
             ) : (
-              <LogOut className="h-5 w-5" />
+              <LogOut className="h-4 w-4 shrink-0" />
             )}
             <span>{isLoggingOut ? "Signing out..." : "Sign Out"}</span>
           </Button>
