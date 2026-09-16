@@ -18,19 +18,19 @@ export default function BrandLogo({
     <Link
       href="/"
       className={cn(
-        "inline-flex items-center gap-2.5 group transition-opacity hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg",
+        "inline-flex items-center gap-2.5 group transition-all duration-200 hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl",
         className
       )}
     >
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-primary to-secondary text-white shadow-sm shadow-primary/20 transition-transform group-hover:scale-105">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-md shadow-primary/25 transition-transform duration-200 group-hover:scale-105">
         <Activity size={iconSize} className="stroke-[2.5]" />
       </div>
       <div className="flex flex-col">
-        <span className="text-[19px] font-bold tracking-tight text-foreground flex items-center gap-1">
-          Tele<span className="text-secondary font-extrabold">Health</span>
+        <span className="text-[21px] font-bold tracking-tight text-foreground flex items-center gap-1 leading-tight">
+          Tele<span className="text-primary font-extrabold">Health</span>
         </span>
         {showTagline && (
-          <span className="text-[11px] font-medium text-muted-foreground -mt-0.5 tracking-wide">
+          <span className="text-[11px] font-medium text-muted-foreground tracking-wide">
             Care Anytime, Anywhere
           </span>
         )}
