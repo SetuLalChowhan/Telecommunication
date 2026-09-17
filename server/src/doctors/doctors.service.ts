@@ -338,4 +338,61 @@ export class DoctorService {
       orderBy: { date: 'asc' },
     });
   }
+
+  async listMyPatients(userId: string, search?: string) {
+    const profile = await this.getOwnProfileOrThrow(userId);
+
+    const bookings = await this.prisma.booking.findMany({
+      where: { doctorId: profile.id },
+      include: {
+        patient: {
+          include: {
+            user: true,
+            medicalReports: true,
+          },
+        },
+      },
+      orderBy: { slotStart: 'desc' },
+    });
+
+    const patientMap = new Map<string, any>();
+
+    for (const b of bookings) {
+      if (!b.patient) continue;
+      const pid = b.patient.id;
+      if (!patientMap.has(pid)) {
+        patientMap.set(pid, {
+          patientId: b.patient.id,
+          name: b.patient.user.name || 'Patient',
+          email: b.patient.user.email,
+          phone: b.patient.user.phone || b.patient.emergencyContactPhone || 'N/A',
+          gender: b.patient.gender || 'OTHER',
+          bloodGroup: b.patient.bloodGroup || 'N/A',
+          image: b.patient.user.image,
+          address: b.patient.address,
+          emergencyContactName: b.patient.emergencyContactName,
+          lastConsultation: b.slotStart,
+          lastCondition: b.notes || 'Routine Consultation',
+          consultationCount: 1,
+          reportsCount: b.patient.medicalReports?.length || 0,
+        });
+      } else {
+        const existing = patientMap.get(pid);
+        existing.consultationCount += 1;
+      }
+    }
+
+    let result = Array.from(patientMap.values());
+    if (search && search.trim() !== '') {
+      const q = search.toLowerCase().trim();
+      result = result.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.phone.toLowerCase().includes(q) ||
+          p.lastCondition.toLowerCase().includes(q),
+      );
+    }
+
+    return result;
+  }
 }

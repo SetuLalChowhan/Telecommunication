@@ -141,6 +141,17 @@ export class DoctorController {
     return this.doctorService.deleteDayOff(userId, dayOffId);
   }
 
+  @Get('me/patients')
+  @Roles('DOCTOR')
+  @UseGuards(RolesGuard)
+  @ResponseMessage('Doctor patient registry fetched successfully')
+  listMyPatients(
+    @CurrentUser('id') userId: string,
+    @Query('search') search?: string,
+  ) {
+    return this.doctorService.listMyPatients(userId, search);
+  }
+
   @Get(':idOrSlug/availability')
   @AllowAnonymous()
   @ResponseMessage('Doctor availability fetched successfully')
