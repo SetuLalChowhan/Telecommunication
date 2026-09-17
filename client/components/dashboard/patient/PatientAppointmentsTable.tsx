@@ -27,13 +27,13 @@ export const PatientAppointmentsTable: React.FC<PatientAppointmentsTableProps> =
   showViewAllLink = true,
 }) => {
   return (
-    <section className="space-y-4">
+    <section className="space-y-3.5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg sm:text-xl font-bold text-foreground">
+          <h2 className="text-base sm:text-lg font-bold text-foreground">
             Consultation Appointments
           </h2>
-          <p className="text-xs sm:text-sm text-secondary-text mt-0.5">
+          <p className="text-xs text-muted-foreground">
             Review your scheduled video visits, past records, and booking status.
           </p>
         </div>
@@ -41,53 +41,55 @@ export const PatientAppointmentsTable: React.FC<PatientAppointmentsTableProps> =
         {showViewAllLink && (
           <Link
             href="/patient/appointments"
-            className="text-xs sm:text-sm font-semibold text-primary hover:text-primary-dark inline-flex items-center gap-1"
+            className="text-xs font-semibold text-primary hover:text-primary-dark inline-flex items-center gap-1 transition-colors"
           >
-            <span>All appointments</span>
-            <ArrowRight className="h-4 w-4" />
+            <span>View all</span>
+            <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         )}
       </div>
 
-      <div className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-xs">
+      <div className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-xs">
         {/* Desktop Table View */}
         <div className="hidden md:block">
           <Table>
-            <TableHeader className="bg-slate-50/70 dark:bg-slate-900/50">
-              <TableRow>
-                <TableHead className="py-3.5 px-5 font-semibold text-xs sm:text-sm">Doctor</TableHead>
-                <TableHead className="py-3.5 px-4 font-semibold text-xs sm:text-sm">Date & Time</TableHead>
-                <TableHead className="py-3.5 px-4 font-semibold text-xs sm:text-sm">Type</TableHead>
-                <TableHead className="py-3.5 px-4 font-semibold text-xs sm:text-sm">Status</TableHead>
-                <TableHead className="py-3.5 px-5 text-right font-semibold text-xs sm:text-sm">Action</TableHead>
+            <TableHeader className="bg-slate-50/60 dark:bg-slate-900/40 border-b border-border/60">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="py-3 px-6 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Doctor</TableHead>
+                <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Date & Time</TableHead>
+                <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Type</TableHead>
+                <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Status</TableHead>
+                <TableHead className="py-3 px-6 text-right font-semibold text-xs text-muted-foreground uppercase tracking-wider">Action</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="divide-y divide-border/40">
               {appointments.map((appt) => (
-                <TableRow key={appt.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
-                  <TableCell className="py-3.5 px-5">
-                    <div className="flex items-center gap-3.5">
-                      <Avatar className="h-10 w-10 ring-1 ring-primary/20 shrink-0">
+                <TableRow key={appt.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
+                  <TableCell className="py-3.5 px-6">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-9 w-9 ring-1 ring-primary/15 shrink-0">
                         <AvatarImage src={appt.doctorAvatar} alt={appt.doctorName} />
                         <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">
                           {appt.doctorName.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
-                        <p className="font-bold text-foreground text-xs sm:text-sm">{appt.doctorName}</p>
+                      <div className="min-w-0">
+                        <p className="font-bold text-foreground text-sm truncate">{appt.doctorName}</p>
                         <p className="text-xs text-muted-foreground">{appt.doctorSpecialty}</p>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="py-3.5 px-4 font-semibold text-foreground text-xs sm:text-sm">
+                  <TableCell className="py-3.5 px-4 font-medium text-foreground text-xs sm:text-sm">
                     {appt.dateFormatted} · {appt.timeFormatted}
                   </TableCell>
-                  <TableCell className="py-3.5 px-4 text-secondary-text font-medium text-xs sm:text-sm">
-                    {appt.consultationType}
+                  <TableCell className="py-3.5 px-4 text-xs sm:text-sm text-secondary-text">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-foreground font-medium text-xs">
+                      {appt.consultationType}
+                    </span>
                   </TableCell>
                   <TableCell className="py-3.5 px-4">
                     <span
-                      className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full border uppercase ${
+                      className={`inline-block text-[11px] font-semibold px-2.5 py-0.5 rounded-full border uppercase ${
                         appt.status === "CONFIRMED"
                           ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                           : appt.status === "PENDING"
@@ -100,11 +102,11 @@ export const PatientAppointmentsTable: React.FC<PatientAppointmentsTableProps> =
                       {appt.status}
                     </span>
                   </TableCell>
-                  <TableCell className="py-3.5 px-5 text-right">
+                  <TableCell className="py-3.5 px-6 text-right">
                     <div className="flex items-center justify-end gap-2">
                       {appt.meetLink && appt.status === "CONFIRMED" && (
                         <a href={appt.meetLink} target="_blank" rel="noopener noreferrer">
-                          <Button size="sm" className="h-8.5 px-3 rounded-xl text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs">
+                          <Button size="sm" className="h-8 px-3 rounded-lg text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs">
                             <Video className="h-3.5 w-3.5" />
                             <span>Join</span>
                           </Button>
@@ -114,7 +116,7 @@ export const PatientAppointmentsTable: React.FC<PatientAppointmentsTableProps> =
                         variant="outline"
                         size="sm"
                         onClick={() => onOpenDetails(appt)}
-                        className="h-8.5 px-3 rounded-xl text-xs font-medium border-border hover:border-primary/50"
+                        className="h-8 px-2.5 rounded-lg text-xs font-semibold border-border hover:border-primary hover:text-primary"
                       >
                         Details
                       </Button>

@@ -23,8 +23,8 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({
       {/* Main Content Area with balanced spacing */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <DashboardHeader role={role} />
-        <main className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 sm:py-7 bg-background">
-          <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">{children}</div>
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 bg-background">
+          <div className="w-full space-y-6 sm:space-y-8">{children}</div>
         </main>
       </div>
     </div>

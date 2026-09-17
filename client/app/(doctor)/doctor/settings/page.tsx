@@ -41,28 +41,27 @@ export default function DoctorSettingsPage() {
 
   return (
     <DoctorLayout>
-      <div className="space-y-6 max-w-4xl mx-auto">
+      <div className="w-full space-y-6 sm:space-y-7">
         {/* Header */}
-        <div className="pb-3.5 border-b border-border/70 space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-semibold text-primary uppercase tracking-wider">
-              Doctor Settings
-            </span>
-            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-              <ShieldCheck className="h-3 w-3" />
-              <span>BMDC Verified</span>
-            </span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-border/70">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+                Profile & Practice Details
+              </h1>
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>BMDC Verified</span>
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-secondary-text">
+              Manage your public biography, consultation fee, credentials, and chamber information.
+            </p>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
-            Profile & Practice Details
-          </h1>
-          <p className="text-xs sm:text-sm text-secondary-text">
-            Update your public doctor profile, consultation fee, medical degrees, and hospital affiliations.
-          </p>
         </div>
 
         {/* Doctor Settings Form */}
-        <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-7 shadow-xs">
+        <div className="rounded-2xl border border-border/70 bg-card p-5 sm:p-7 shadow-xs">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Full Name */}

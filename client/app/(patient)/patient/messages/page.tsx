@@ -10,12 +10,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 export default function PatientMessagesPage() {
   return (
     <PatientLayout>
-      <div className="space-y-6 max-w-5xl mx-auto">
-        <div className="pb-3.5 border-b border-border/60">
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+      <div className="w-full space-y-6 sm:space-y-7">
+        <div className="pb-4 border-b border-border/70 space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
             Consultation Messages
           </h1>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-secondary-text">
             Secure clinical messaging with your doctors regarding prescriptions and follow-ups.
           </p>
         </div>

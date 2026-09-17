@@ -40,7 +40,7 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = () => {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-5xl mx-auto">
+    <div className="w-full space-y-6 sm:space-y-8">
       {/* 1. Next Live Consultation Surface */}
       <DoctorNextConsultation
         appointment={nextAppointment}

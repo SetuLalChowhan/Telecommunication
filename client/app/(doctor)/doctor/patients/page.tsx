@@ -30,17 +30,14 @@ export default function DoctorPatientsPage() {
 
   return (
     <DoctorLayout>
-      <div className="space-y-5 sm:space-y-6 max-w-7xl mx-auto">
+      <div className="w-full space-y-6 sm:space-y-7">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3.5 border-b border-border">
-          <div className="space-y-1.5 max-w-2xl">
-            <span className="text-[11px] sm:text-xs font-bold text-primary uppercase tracking-wider block">
-              Clinical Registry
-            </span>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground tracking-tight leading-tight">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-border/70">
+          <div className="space-y-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
               My Patients
             </h1>
-            <p className="text-xs sm:text-sm text-secondary-text leading-relaxed">
+            <p className="text-xs sm:text-sm text-secondary-text">
               View your patient records, consultation histories, and clinical diagnoses.
             </p>
           </div>

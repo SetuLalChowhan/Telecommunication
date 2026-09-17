@@ -30,64 +30,58 @@ export const DoctorAvailabilityTable: React.FC<DoctorAvailabilityTableProps> = (
   onOpenAddModal,
 }) => {
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg sm:text-xl font-bold text-foreground">
-            Weekly Recurring Schedule
-          </h2>
-          <p className="text-xs sm:text-sm text-secondary-text mt-0.5">
-            Patients can only book consultations during your active days and hours.
-          </p>
-        </div>
+    <div className="space-y-3.5">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-base sm:text-lg font-bold text-foreground">
+          Weekly Recurring Schedule
+        </h2>
 
         {onOpenAddModal && (
           <Button
             size="sm"
             onClick={onOpenAddModal}
-            className="h-9 px-3.5 rounded-xl text-xs sm:text-sm font-semibold gap-1.5 self-start sm:self-auto shadow-xs"
+            className="h-8.5 px-3.5 rounded-xl text-xs font-semibold gap-1.5 shadow-xs"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3.5 w-3.5" />
             <span>Add Slot</span>
           </Button>
         )}
       </div>
 
-      <div className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-xs">
+      <div className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-xs">
         <Table>
-          <TableHeader className="bg-slate-50/70 dark:bg-slate-900/50">
-            <TableRow>
-              <TableHead className="py-3.5 px-5 font-semibold text-xs sm:text-sm">Day of Week</TableHead>
-              <TableHead className="py-3.5 px-4 font-semibold text-xs sm:text-sm">Consultation Hours</TableHead>
-              <TableHead className="py-3.5 px-4 font-semibold text-xs sm:text-sm">Slot Length</TableHead>
-              <TableHead className="py-3.5 px-4 font-semibold text-xs sm:text-sm">Availability Status</TableHead>
-              <TableHead className="py-3.5 px-5 text-right font-semibold text-xs sm:text-sm">Actions</TableHead>
+          <TableHeader className="bg-slate-50/60 dark:bg-slate-900/40 border-b border-border/60">
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="py-3 px-6 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Day of Week</TableHead>
+              <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Consultation Hours</TableHead>
+              <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Slot Length</TableHead>
+              <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Availability Status</TableHead>
+              <TableHead className="py-3 px-6 text-right font-semibold text-xs text-muted-foreground uppercase tracking-wider">Actions</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="divide-y divide-border/40">
             {slots.map((slot) => (
               <TableRow
                 key={slot.id}
-                className={`transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-900/30 ${
-                  !slot.isActive ? "opacity-60 bg-muted/20" : ""
-                }`}
+                className={`transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-900/30 ${!slot.isActive ? "opacity-60 bg-muted/20" : ""
+                  }`}
               >
-                <TableCell className="py-4 px-5 font-bold text-sm text-foreground">
+                <TableCell className="py-3.5 px-6 font-bold text-sm text-foreground">
                   <span className="text-primary font-bold">{slot.dayOfWeek}</span>
                 </TableCell>
 
-                <TableCell className="py-4 px-4 font-semibold text-sm text-foreground">
+                <TableCell className="py-3.5 px-4 font-semibold text-sm text-foreground">
                   {slot.startTime} – {slot.endTime}
                 </TableCell>
 
-                <TableCell className="py-4 px-4 text-xs sm:text-sm text-secondary-text">
+                <TableCell className="py-3.5 px-4 text-xs sm:text-sm text-secondary-text">
                   <span className="flex items-center gap-1.5">
                     <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                     {slot.consultationDuration} mins / visit
                   </span>
                 </TableCell>
 
-                <TableCell className="py-4 px-4">
+                <TableCell className="py-3.5 px-4">
                   <div className="flex items-center gap-3">
                     <Switch
                       checked={slot.isActive}
@@ -95,18 +89,17 @@ export const DoctorAvailabilityTable: React.FC<DoctorAvailabilityTableProps> = (
                       aria-label={`Toggle availability for ${slot.dayOfWeek}`}
                     />
                     <span
-                      className={`text-xs font-semibold px-2 py-0.5 rounded-full border uppercase ${
-                        slot.isActive
+                      className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border uppercase ${slot.isActive
                           ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                           : "bg-muted text-muted-foreground border-border"
-                      }`}
+                        }`}
                     >
                       {slot.isActive ? "Active" : "Disabled"}
                     </span>
                   </div>
                 </TableCell>
 
-                <TableCell className="py-4 px-5 text-right">
+                <TableCell className="py-3.5 px-6 text-right">
                   <div className="flex items-center justify-end gap-1">
                     {onEditSlot && (
                       <Button

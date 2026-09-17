@@ -105,13 +105,13 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
       </div>
 
       {/* 2. Fee Range */}
-      <div className="space-y-2 pt-2 border-t border-border">
+      <div className="space-y-2 pt-3 border-t border-border/70">
         <label className="text-xs font-semibold text-foreground block">
           Consultation Fee (BDT)
         </label>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <span className="text-[11px] text-secondary-text mb-1 block">Min (৳)</span>
+            <span className="text-[11px] text-muted-foreground mb-1 block font-medium">Min (৳)</span>
             <input
               type="number"
               placeholder="0"
@@ -120,15 +120,15 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
               onKeyDown={(e) => {
                 if (e.key === "Enter") onApplyFilters();
               }}
-              className={`w-full h-9 px-3 rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none transition-all ${
+              className={`w-full h-10 px-3.5 rounded-xl text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none transition-all ${
                 minFee
                   ? "border-2 border-primary bg-primary/5 font-semibold ring-1 ring-primary/20"
-                  : "border border-border bg-card focus:border-primary"
+                  : "border border-border/80 bg-card hover:border-primary/40 focus:border-primary"
               }`}
             />
           </div>
           <div>
-            <span className="text-[11px] text-secondary-text mb-1 block">Max (৳)</span>
+            <span className="text-[11px] text-muted-foreground mb-1 block font-medium">Max (৳)</span>
             <input
               type="number"
               placeholder="2000"
@@ -137,10 +137,10 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
               onKeyDown={(e) => {
                 if (e.key === "Enter") onApplyFilters();
               }}
-              className={`w-full h-9 px-3 rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none transition-all ${
+              className={`w-full h-10 px-3.5 rounded-xl text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none transition-all ${
                 maxFee
                   ? "border-2 border-primary bg-primary/5 font-semibold ring-1 ring-primary/20"
-                  : "border border-border bg-card focus:border-primary"
+                  : "border border-border/80 bg-card hover:border-primary/40 focus:border-primary"
               }`}
             />
           </div>
@@ -148,11 +148,11 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
       </div>
 
       {/* 3. Experience Level */}
-      <div className="space-y-2 pt-2 border-t border-border">
+      <div className="space-y-2 pt-3 border-t border-border/70">
         <label className="text-xs font-semibold text-foreground block">
           Experience Level
         </label>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2.5">
           {[
             { label: "Any Experience", val: "" },
             { label: "5+ Years", val: "5" },
@@ -165,10 +165,10 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
                 key={item.val}
                 type="button"
                 onClick={() => onExperienceChange(item.val)}
-                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer text-center ${
+                className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer text-center ${
                   isSelected
                     ? "border-2 border-primary bg-primary text-white shadow-xs font-bold ring-2 ring-primary/20"
-                    : "bg-slate-50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground border border-border"
+                    : "bg-slate-50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground border border-border/80 hover:border-primary/40"
                 }`}
               >
                 {item.label}
@@ -179,12 +179,12 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
       </div>
 
       {/* Apply Filters Action Button */}
-      <div className="pt-2 border-t border-border space-y-2">
+      <div className="pt-3 border-t border-border/70 space-y-2">
         <Button
           type="button"
           disabled={isApplying}
           onClick={onApplyFilters}
-          className="w-full h-10 rounded-xl font-semibold text-sm shadow-xs flex items-center justify-center gap-2"
+          className="w-full h-10.5 rounded-xl font-semibold text-xs sm:text-sm shadow-xs flex items-center justify-center gap-2"
         >
           {isApplying ? (
             <>
@@ -198,8 +198,8 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
       </div>
 
       {/* Verification Notice */}
-      <div className="rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-border p-3.5 flex items-start gap-2.5 text-xs text-secondary-text">
-        <ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+      <div className="rounded-xl bg-slate-50/80 dark:bg-slate-900/40 border border-border/70 p-3.5 flex items-start gap-2.5 text-xs text-secondary-text">
+        <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
         <p className="leading-relaxed">
           All registered doctors are BMDC-certified and verified for online practice.
         </p>
@@ -210,8 +210,8 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:block w-72 xl:w-80 shrink-0">
-        <div className="sticky top-24 rounded-2xl border border-border bg-card p-6 shadow-xs">
+      <aside className="hidden lg:block w-80 xl:w-[340px] shrink-0">
+        <div className="sticky top-24 rounded-2xl border border-border/70 bg-card p-6 sm:p-7 shadow-xs">
           {filterContent}
         </div>
       </aside>

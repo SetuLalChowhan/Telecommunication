@@ -54,20 +54,20 @@ export default function PatientAppointmentsPage() {
 
   return (
     <PatientLayout>
-      <div className="space-y-6 sm:space-y-8 max-w-6xl mx-auto">
+      <div className="w-full space-y-6 sm:space-y-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/70">
-          <div className="space-y-1 max-w-2xl">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-border/70">
+          <div className="space-y-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
               My Appointments
             </h1>
-            <p className="text-sm text-secondary-text">
+            <p className="text-xs sm:text-sm text-secondary-text">
               View your consultation schedule, join video appointments, or schedule new doctor visits.
             </p>
           </div>
 
           <Link href="/doctors">
-            <Button className="h-10 sm:h-11 px-5 rounded-xl text-sm font-semibold gap-2 shadow-xs">
+            <Button className="h-10 px-4 sm:px-5 rounded-xl text-xs sm:text-sm font-semibold gap-2 shadow-xs">
               <Plus className="h-4 w-4" />
               <span>Book Appointment</span>
             </Button>
@@ -75,9 +75,9 @@ export default function PatientAppointmentsPage() {
         </div>
 
         {/* Filter Pills & Search */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5">
           {/* Status Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
             {(["ALL", "CONFIRMED", "PENDING", "COMPLETED", "CANCELLED"] as const).map((status) => {
               const count =
                 status === "ALL"
@@ -114,48 +114,50 @@ export default function PatientAppointmentsPage() {
           </div>
         </div>
 
-        {/* Bookings Table (shadcn Table) */}
-        <div className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-xs">
+        {/* Bookings Table */}
+        <div className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-xs">
           {filteredBookings.length > 0 ? (
             <>
               {/* Desktop Table View */}
               <div className="hidden md:block">
                 <Table>
-                  <TableHeader className="bg-slate-50/70 dark:bg-slate-900/50">
-                    <TableRow>
-                      <TableHead className="py-3.5 px-5">Doctor</TableHead>
-                      <TableHead className="py-3.5 px-4">Date & Time</TableHead>
-                      <TableHead className="py-3.5 px-4">Type</TableHead>
-                      <TableHead className="py-3.5 px-4">Status</TableHead>
-                      <TableHead className="py-3.5 px-5 text-right">Actions</TableHead>
+                  <TableHeader className="bg-slate-50/60 dark:bg-slate-900/40 border-b border-border/60">
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="py-3 px-6 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Doctor</TableHead>
+                      <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Date & Time</TableHead>
+                      <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Type</TableHead>
+                      <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Status</TableHead>
+                      <TableHead className="py-3 px-6 text-right font-semibold text-xs text-muted-foreground uppercase tracking-wider">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
+                  <TableBody className="divide-y divide-border/40">
                     {filteredBookings.map((booking) => (
-                      <TableRow key={booking.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
-                        <TableCell className="py-4 px-5">
-                          <div className="flex items-center gap-3.5">
-                            <Avatar className="h-10 w-10 ring-1 ring-primary/20">
+                      <TableRow key={booking.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
+                        <TableCell className="py-3.5 px-6">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-9 w-9 ring-1 ring-primary/15 shrink-0">
                               <AvatarImage src={booking.doctorAvatar} alt={booking.doctorName} />
                               <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">
                                 {booking.doctorName.slice(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
-                            <div>
-                              <p className="font-bold text-foreground text-sm">{booking.doctorName}</p>
+                            <div className="min-w-0">
+                              <p className="font-bold text-foreground text-sm truncate">{booking.doctorName}</p>
                               <p className="text-xs text-muted-foreground">{booking.doctorSpecialty}</p>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="py-4 px-4 font-semibold text-foreground text-sm">
+                        <TableCell className="py-3.5 px-4 font-medium text-foreground text-xs sm:text-sm">
                           {booking.dateFormatted} · {booking.timeFormatted}
                         </TableCell>
-                        <TableCell className="py-4 px-4 text-secondary-text font-medium text-sm">
-                          {booking.consultationType}
+                        <TableCell className="py-3.5 px-4 text-xs sm:text-sm text-secondary-text">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-foreground font-medium text-xs">
+                            {booking.consultationType}
+                          </span>
                         </TableCell>
-                        <TableCell className="py-4 px-4">
+                        <TableCell className="py-3.5 px-4">
                           <span
-                            className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full border uppercase ${
+                            className={`inline-block text-[11px] font-semibold px-2.5 py-0.5 rounded-full border uppercase ${
                               booking.status === "CONFIRMED"
                                 ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                                 : booking.status === "PENDING"
@@ -168,7 +170,7 @@ export default function PatientAppointmentsPage() {
                             {booking.status}
                           </span>
                         </TableCell>
-                        <TableCell className="py-4 px-5 text-right">
+                        <TableCell className="py-3.5 px-6 text-right">
                           <div className="flex items-center justify-end gap-2">
                             {booking.meetLink && booking.status === "CONFIRMED" && (
                               <a
@@ -176,7 +178,7 @@ export default function PatientAppointmentsPage() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                               >
-                                <Button size="sm" className="h-8.5 px-3 rounded-lg text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white">
+                                <Button size="sm" className="h-8 px-3 rounded-lg text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white">
                                   <Video className="h-3.5 w-3.5" />
                                   <span>Join Call</span>
                                 </Button>
@@ -186,7 +188,7 @@ export default function PatientAppointmentsPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => handleOpenDetails(booking)}
-                              className="h-8.5 px-3 rounded-lg text-xs font-semibold hover:border-primary hover:text-primary"
+                              className="h-8 px-2.5 rounded-lg text-xs font-semibold border-border hover:border-primary hover:text-primary"
                             >
                               Details
                             </Button>

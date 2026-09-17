@@ -256,21 +256,21 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
   };
 
   return (
-    <div className="sticky top-24 rounded-2xl border border-border bg-card p-6 shadow-xs space-y-6">
+    <div className="sticky top-24 rounded-2xl border border-border/70 bg-card p-6 sm:p-7 shadow-xs space-y-6">
       {/* Price Header */}
-      <div className="pb-4 border-b border-border flex items-center justify-between">
+      <div className="pb-4 border-b border-border/60 flex items-center justify-between">
         <div>
-          <span className="text-xs text-secondary-text block font-medium">
+          <span className="text-xs text-muted-foreground block font-medium">
             Consultation Fee
           </span>
           <div className="flex items-baseline gap-1 mt-0.5">
             <span className="text-2xl sm:text-3xl font-bold text-foreground">
               ৳{Number(doctor.fee ?? 0).toLocaleString()}
             </span>
-            <span className="text-xs text-secondary-text">/ video session</span>
+            <span className="text-xs text-muted-foreground">/ session</span>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 rounded-lg bg-primary/10 text-primary px-2.5 py-1 text-xs font-semibold">
+        <div className="flex items-center gap-1.5 rounded-lg bg-primary/10 text-primary px-3 py-1 text-xs font-semibold">
           <Video className="h-3.5 w-3.5" />
           <span>Live Video</span>
         </div>
@@ -295,7 +295,7 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-border text-xs text-left space-y-2">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-border/70 text-xs text-left space-y-2">
             <div className="flex justify-between text-secondary-text">
               <span>Date:</span>
               <span className="font-semibold text-foreground">
@@ -518,14 +518,14 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
       )}
 
       {/* Trust Badges */}
-      <div className="pt-3 border-t border-border space-y-2 text-xs text-secondary-text">
+      <div className="pt-3.5 border-t border-border/60 space-y-2 text-xs text-secondary-text">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
-          <span>Encrypted Video Call & Protected Medical Data</span>
+          <span>Encrypted Video Call & Protected Health Data</span>
         </div>
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-          <span>Reschedule anytime before 2 hours of session</span>
+          <span>Free cancellation up to 2 hours before session</span>
         </div>
       </div>
     </div>

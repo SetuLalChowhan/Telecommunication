@@ -37,9 +37,9 @@ export default function PatientProfilePage() {
 
   return (
     <PatientLayout>
-      <div className="space-y-6 max-w-4xl mx-auto">
+      <div className="w-full space-y-6 sm:space-y-7">
         {/* Header */}
-        <div className="pb-4 border-b border-border/70 space-y-1">
+        <div className="pb-5 border-b border-border/70 space-y-1">
           <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
             My Profile
           </h1>
@@ -49,7 +49,7 @@ export default function PatientProfilePage() {
         </div>
 
         {/* Profile Form Card */}
-        <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-7 shadow-xs">
+        <div className="rounded-2xl border border-border/70 bg-card p-5 sm:p-7 shadow-xs">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Full Name */}

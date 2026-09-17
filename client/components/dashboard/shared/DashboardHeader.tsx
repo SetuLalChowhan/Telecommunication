@@ -51,15 +51,15 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-16 sm:h-18 items-center justify-between px-4 sm:px-8 bg-background/95 backdrop-blur-md border-b border-border/40">
+      <header className="sticky top-0 z-30 flex h-14 sm:h-15 items-center justify-between px-4 sm:px-8 bg-background/95 backdrop-blur-md border-b border-border/40">
         {/* Left: Mobile Drawer Trigger & Greeting */}
-        <div className="flex items-center gap-3.5 min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 xl:hidden rounded-xl text-muted-foreground hover:text-foreground"
+                className="h-9 w-9 xl:hidden rounded-xl text-muted-foreground hover:text-foreground"
                 aria-label="Open navigation menu"
               >
                 <Menu className="h-5 w-5" />
@@ -73,15 +73,10 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             </SheetContent>
           </Sheet>
 
-          <div className="min-w-0">
-            <h1 className="text-base sm:text-xl font-bold text-foreground tracking-tight truncate">
+          <div className="flex items-center gap-2">
+            <span className="text-sm sm:text-base font-semibold text-foreground tracking-tight">
               {getGreeting()}, {firstName}
-            </h1>
-            <p className="text-xs text-secondary-text truncate hidden sm:block">
-              {isDoctor
-                ? "Here’s an overview of your clinical consultations and schedule."
-                : "Here’s an overview of your appointments and healthcare activity."}
-            </p>
+            </span>
           </div>
         </div>
 

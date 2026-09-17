@@ -6,9 +6,9 @@ import {
   GraduationCap,
   Stethoscope,
   Building2,
-  Video,
   ShieldCheck,
   CheckCircle2,
+  Award,
 } from "lucide-react";
 
 interface DoctorAboutSectionProps {
@@ -27,32 +27,36 @@ export const DoctorAboutSection: React.FC<DoctorAboutSectionProps> = ({
     doctor.designation || doctor.hospitalAffiliation || doctor.clinicAddress
   );
 
+  const qualifications = doctor.qualifications || [];
+  const specialties = doctor.specialties || [];
+
   return (
     <div className="space-y-6">
-      {/* 1. About Narrative Card */}
-      <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-7 shadow-xs space-y-4">
+      {/* 1. About & Biography Card */}
+      <div className="rounded-2xl border border-border/70 bg-card p-6 sm:p-7 shadow-xs space-y-4">
         <h2 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
           <Stethoscope className="h-5 w-5 text-primary" />
-          <span>About {doctorName}</span>
+          <span>Biography</span>
         </h2>
-        <p className="text-sm text-secondary-text leading-relaxed">
+        
+        <p className="text-sm text-secondary-text leading-relaxed whitespace-pre-line">
           {doctor.bio ||
-            `${doctorName} is a certified medical specialist available for online telemedicine consultations.`}
+            `${doctorName} is an experienced medical specialist offering verified telemedicine consultations. Dedicated to providing patient-centered care and evidence-based clinical treatments.`}
         </p>
 
-        {/* Clinical Specializations */}
-        {doctor.specialties && doctor.specialties.length > 0 && (
-          <div className="pt-2 space-y-2.5">
-            <h3 className="text-xs uppercase font-bold text-muted-foreground tracking-wider">
-              Specializations & Focus Areas
+        {/* Specializations & Clinical Focus */}
+        {specialties.length > 0 && (
+          <div className="pt-3 border-t border-border/60 space-y-2.5">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Specialized Care & Treatments
             </h3>
             <div className="flex flex-wrap gap-2">
-              {doctor.specialties.map((s) => (
+              {specialties.map((s) => (
                 <span
                   key={s.specialtyId || s.specialty?.id}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-border/70 text-foreground px-3 py-1 text-xs font-medium"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 text-foreground px-3 py-1.5 text-xs font-medium"
                 >
-                  <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                  <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
                   <span>{s.specialty?.name}</span>
                 </span>
               ))}
@@ -61,118 +65,84 @@ export const DoctorAboutSection: React.FC<DoctorAboutSectionProps> = ({
         )}
       </div>
 
-      {/* 2. Verified Education & Hospital Credentials */}
-      <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-7 shadow-xs space-y-5">
-        <div className="flex items-center justify-between pb-3 border-b border-border/70">
+      {/* 2. Education, Credentials & Hospital Affiliation */}
+      <div className="rounded-2xl border border-border/70 bg-card p-6 sm:p-7 shadow-xs space-y-5">
+        <div className="flex items-center justify-between pb-3 border-b border-border/60">
           <div className="flex items-center gap-2">
             <GraduationCap className="h-5 w-5 text-primary" />
             <h3 className="text-base sm:text-lg font-bold text-foreground">
-              Education & Medical Credentials
+              Education & Qualifications
             </h3>
           </div>
           {doctor.verified && (
             <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
               <ShieldCheck className="h-3.5 w-3.5" />
-              <span>{doctor.bmdcNumber ? `BMDC: ${doctor.bmdcNumber}` : "Verified Credentials"}</span>
+              <span>{doctor.bmdcNumber ? `BMDC: ${doctor.bmdcNumber}` : "Verified Doctor"}</span>
             </span>
           )}
         </div>
 
-        {/* Credentials Grid */}
-        {doctor.qualifications && doctor.qualifications.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {doctor.qualifications.map((q, idx) => (
+        {/* Qualifications List */}
+        {qualifications.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {qualifications.map((q, idx) => (
               <div
                 key={q.id || idx}
-                className="p-4 rounded-xl border border-border/80 bg-slate-50/70 dark:bg-slate-900/30 space-y-2"
+                className="p-4 rounded-xl border border-border/70 bg-slate-50/60 dark:bg-slate-900/30 space-y-1.5"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="inline-flex items-center text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">
+                  <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">
                     {q.degree}
                   </span>
                   {q.passingYear && (
                     <span className="text-xs text-muted-foreground font-medium">
-                      Graduated {q.passingYear}
+                      {q.passingYear}
                     </span>
                   )}
                 </div>
                 {q.field && (
-                  <h4 className="text-sm font-bold text-foreground">
+                  <h4 className="text-sm font-semibold text-foreground">
                     {q.field}
                   </h4>
                 )}
                 <p className="text-xs text-secondary-text">
-                  {q.institute} {q.result ? `· ${q.result}` : ""}
+                  {q.institute}
+                  {q.result ? ` · ${q.result}` : ""}
                 </p>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground py-2 italic">
-            No specific qualification records submitted yet.
+          <p className="text-xs text-muted-foreground italic">
+            Medical qualifications are verified by our clinical verification board.
           </p>
         )}
 
-        {/* Current Clinic / Hospital Affiliation */}
+        {/* Current Hospital / Workplace */}
         {hasAffiliation && (
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/5 border border-primary/15">
-            <Building2 className="h-5 w-5 text-primary shrink-0" />
-            <div className="text-xs">
-              {doctor.designation && (
-                <span className="font-bold text-foreground block">
+          <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50/70 dark:bg-slate-900/40 border border-border/70">
+            <Building2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+            <div className="space-y-0.5 text-xs">
+              <span className="font-bold text-foreground block text-sm">
+                {doctor.hospitalAffiliation || doctor.designation || "Primary Practice"}
+              </span>
+              {doctor.designation && doctor.hospitalAffiliation && (
+                <span className="text-muted-foreground font-medium block">
                   {doctor.designation}
                 </span>
               )}
-              <span className="text-secondary-text">
-                {doctor.hospitalAffiliation || ""}
-                {doctor.clinicAddress ? ` · ${doctor.clinicAddress}` : ""}
-              </span>
+              {doctor.clinicAddress && (
+                <span className="text-secondary-text block pt-0.5">
+                  {doctor.clinicAddress}
+                </span>
+              )}
             </div>
           </div>
         )}
-      </div>
-
-      {/* 3. Consultation Flow */}
-      <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-7 shadow-xs space-y-4">
-        <h3 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
-          <Video className="h-5 w-5 text-primary" />
-          <span>How Your Video Consultation Works</span>
-        </h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-1">
-          <div className="p-4 rounded-xl border border-border/70 bg-slate-50/60 dark:bg-slate-900/30 space-y-1.5">
-            <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">
-              1
-            </span>
-            <h4 className="text-xs sm:text-sm font-bold text-foreground">Select a Slot</h4>
-            <p className="text-xs text-secondary-text leading-relaxed">
-              Choose your preferred date and time from the live schedule sidebar.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-xl border border-border/70 bg-slate-50/60 dark:bg-slate-900/30 space-y-1.5">
-            <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">
-              2
-            </span>
-            <h4 className="text-xs sm:text-sm font-bold text-foreground">Join Video Call</h4>
-            <p className="text-xs text-secondary-text leading-relaxed">
-              Connect via high-definition encrypted video from your browser or phone.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-xl border border-border/70 bg-slate-50/60 dark:bg-slate-900/30 space-y-1.5">
-            <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">
-              3
-            </span>
-            <h4 className="text-xs sm:text-sm font-bold text-foreground">Get Prescription</h4>
-            <p className="text-xs text-secondary-text leading-relaxed">
-              Receive BMDC-signed digital prescription and lab guidance instantly.
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );
 };
 
 export default DoctorAboutSection;
+

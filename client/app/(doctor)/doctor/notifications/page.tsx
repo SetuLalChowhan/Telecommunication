@@ -35,17 +35,17 @@ export default function DoctorNotificationsPage() {
 
   return (
     <DoctorLayout>
-      <div className="space-y-6 max-w-4xl mx-auto">
-        <div className="flex items-center justify-between pb-3.5 border-b border-border/60">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+      <div className="w-full space-y-6 sm:space-y-7">
+        <div className="flex items-center justify-between pb-4 border-b border-border/70">
+          <div className="space-y-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
               Clinical Notifications
             </h1>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-secondary-text">
               Patient booking updates, consultation requests, and verification alerts.
             </p>
           </div>
-          <Button variant="outline" size="sm" className="h-8 text-xs rounded-xl">
+          <Button variant="outline" size="sm" className="h-9 px-3.5 text-xs font-semibold rounded-xl">
             Mark all as read
           </Button>
         </div>

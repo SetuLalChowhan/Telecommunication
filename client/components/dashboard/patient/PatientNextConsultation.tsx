@@ -17,23 +17,21 @@ export const PatientNextConsultation: React.FC<PatientNextConsultationProps> = (
   onOpenDetails,
 }) => {
   return (
-    <section className="space-y-3.5">
+    <section className="space-y-3">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
           <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-muted-foreground">
-            Upcoming Consultation
+            Next Up
           </h2>
-          {appointment?.isToday && (
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-ping" />
-              <span>Today</span>
-            </span>
-          )}
         </div>
 
-        <span className="text-xs sm:text-sm text-secondary-text font-medium">
+        <span className="text-xs text-muted-foreground font-medium">
           {new Date().toLocaleDateString("en-US", {
-            weekday: "long",
+            weekday: "short",
             month: "short",
             day: "numeric",
           })}
@@ -41,13 +39,13 @@ export const PatientNextConsultation: React.FC<PatientNextConsultationProps> = (
       </div>
 
       {appointment ? (
-        <div className="rounded-2xl bg-card border border-border/80 p-5 sm:p-6 shadow-xs">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div className="rounded-2xl bg-card border border-border/70 p-5 sm:p-6 shadow-xs transition-all hover:border-primary/30">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             {/* Doctor and Schedule info */}
-            <div className="flex items-start sm:items-center gap-4 min-w-0">
-              <Avatar className="h-14 w-14 ring-2 ring-primary/20 shrink-0">
+            <div className="flex items-center gap-4 min-w-0">
+              <Avatar className="h-13 w-13 sm:h-14 sm:w-14 ring-1 ring-primary/20 shrink-0">
                 <AvatarImage src={appointment.doctorAvatar} alt={appointment.doctorName} />
-                <AvatarFallback className="bg-primary/10 text-primary font-bold text-base">
+                <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
                   {appointment.doctorName.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -58,7 +56,7 @@ export const PatientNextConsultation: React.FC<PatientNextConsultationProps> = (
                     {appointment.doctorName}
                   </h3>
                   <span
-                    className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border uppercase ${
+                    className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border uppercase ${
                       appointment.status === "CONFIRMED"
                         ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                         : "bg-amber-500/10 text-amber-600 border-amber-500/20"
@@ -68,63 +66,54 @@ export const PatientNextConsultation: React.FC<PatientNextConsultationProps> = (
                   </span>
                 </div>
 
-                <p className="text-xs sm:text-sm text-primary font-medium truncate">
-                  {appointment.doctorSpecialty}
-                  {appointment.doctorHospital && (
-                    <span className="text-secondary-text"> · {appointment.doctorHospital}</span>
-                  )}
-                </p>
-
-                <div className="flex items-center gap-3 text-xs sm:text-sm text-secondary-text pt-0.5">
-                  <span className="flex items-center gap-1.5 font-bold text-foreground">
-                    <Calendar className="h-4 w-4 text-primary" />
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-secondary-text flex-wrap">
+                  <span className="font-medium text-foreground">{appointment.doctorSpecialty}</span>
+                  <span>&bull;</span>
+                  <span className="flex items-center gap-1 font-semibold text-primary">
+                    <Calendar className="h-3.5 w-3.5" />
                     {appointment.dateFormatted} · {appointment.timeFormatted}
                   </span>
                   <span>&bull;</span>
-                  <span className="text-muted-foreground font-medium">{appointment.consultationType}</span>
+                  <span className="text-muted-foreground">{appointment.consultationType}</span>
                 </div>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-3 self-start md:self-auto shrink-0 flex-wrap">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onOpenDetails(appointment)}
-                className="h-10 px-4 rounded-xl text-xs sm:text-sm font-medium border-border hover:border-primary/50"
-              >
-                View Details
-              </Button>
-
+            <div className="flex items-center gap-2.5 self-start lg:self-auto shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-border/50 w-full lg:w-auto justify-end">
               {appointment.meetLink && appointment.status === "CONFIRMED" && (
                 <a
                   href={appointment.meetLink}
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="flex-1 sm:flex-initial"
                 >
-                  <Button className="h-10 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold gap-2 shadow-xs">
+                  <Button className="w-full sm:w-auto h-9 sm:h-10 px-4 sm:px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold gap-2 shadow-xs">
                     <Video className="h-4 w-4" />
                     <span>Join Consultation</span>
                   </Button>
                 </a>
               )}
+
+              <Button
+                variant="outline"
+                onClick={() => onOpenDetails(appointment)}
+                className="h-9 sm:h-10 px-3.5 sm:px-4 rounded-xl text-xs sm:text-sm font-medium border-border hover:border-primary/50"
+              >
+                Details
+              </Button>
             </div>
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-border bg-card/60 p-7 text-center space-y-3">
-          <div className="h-11 w-11 rounded-xl bg-muted text-muted-foreground flex items-center justify-center mx-auto">
-            <Stethoscope className="h-5 w-5" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-sm font-bold text-foreground">No upcoming consultations</h3>
-            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-              You do not have any scheduled appointments for today. Book a doctor when you need clinical guidance.
-            </p>
-          </div>
+        <div className="rounded-2xl border border-dashed border-border p-6 text-center space-y-2 bg-card/50">
+          <Stethoscope className="h-8 w-8 text-muted-foreground mx-auto" />
+          <h3 className="text-sm font-bold text-foreground">No upcoming consultations</h3>
+          <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+            You do not have any scheduled appointments. Book a doctor when you need clinical guidance.
+          </p>
           <Link href="/doctors" className="inline-block pt-1">
-            <Button size="sm" className="h-9 px-4 rounded-xl text-xs font-semibold gap-1.5">
+            <Button size="sm" className="h-8.5 px-4 rounded-xl text-xs font-semibold gap-1.5 shadow-xs">
               <span>Find a Doctor</span>
             </Button>
           </Link>

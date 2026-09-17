@@ -23,9 +23,9 @@ export default function PatientSettingsPage() {
 
   return (
     <PatientLayout>
-      <div className="space-y-6 max-w-4xl mx-auto">
+      <div className="w-full space-y-6 sm:space-y-7">
         {/* Header */}
-        <div className="pb-3.5 border-b border-border/70 space-y-1">
+        <div className="pb-5 border-b border-border/70 space-y-1">
           <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
             Account Settings
           </h1>
@@ -35,7 +35,7 @@ export default function PatientSettingsPage() {
         </div>
 
         {/* Change Password Card */}
-        <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-7 shadow-xs space-y-4">
+        <div className="rounded-2xl border border-border/70 bg-card p-5 sm:p-7 shadow-xs space-y-4">
           <div className="flex items-center gap-2 pb-2.5 border-b border-border/70">
             <KeyRound className="h-4 w-4 text-primary" />
             <h2 className="text-sm sm:text-base font-semibold text-foreground">

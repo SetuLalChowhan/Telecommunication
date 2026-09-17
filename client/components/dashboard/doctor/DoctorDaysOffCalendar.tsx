@@ -36,14 +36,11 @@ export const DoctorDaysOffCalendar: React.FC<DoctorDaysOffCalendarProps> = ({
   };
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-3.5 pt-2">
       <div>
-        <h2 className="text-lg sm:text-xl font-bold text-foreground">
+        <h2 className="text-base sm:text-lg font-bold text-foreground">
           Planned Days Off & Vacation
         </h2>
-        <p className="text-xs sm:text-sm text-secondary-text mt-0.5">
-          Select any future date on the calendar to mark yourself as unavailable.
-        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
