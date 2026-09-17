@@ -48,15 +48,18 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
   };
 
   return (
-    <Dialog open={open} onOpenChange={(val) => {
-      setConfirmCancel(false);
-      onOpenChange(val);
-    }}>
-      <DialogContent className="sm:max-w-lg rounded-2xl p-6 space-y-4">
+    <Dialog
+      open={open}
+      onOpenChange={(val) => {
+        setConfirmCancel(false);
+        onOpenChange(val);
+      }}
+    >
+      <DialogContent className="max-w-[480px]">
         <DialogHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-1">
             <span
-              className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border uppercase ${
+              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border uppercase ${
                 appointment.status === "CONFIRMED"
                   ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                   : appointment.status === "PENDING"
@@ -68,128 +71,125 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
             >
               {appointment.status}
             </span>
-            <span className="text-xs text-muted-foreground font-mono">
-              ID: {appointment.id}
+            <span className="text-[11px] text-muted-foreground font-mono">
+              #{appointment.id}
             </span>
           </div>
-          <DialogTitle className="text-lg font-bold text-foreground pt-1">
-            Consultation Details
-          </DialogTitle>
-          <DialogDescription className="text-xs">
-            Review appointment timing, medical symptoms, and secure consultation credentials.
+          <DialogTitle>Consultation Details</DialogTitle>
+          <DialogDescription>
+            Appointment schedule, patient notes, and video visit credentials.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Doctor or Patient Profile Banner */}
-        <div className="rounded-xl border border-border bg-slate-50/70 dark:bg-slate-900/30 p-4 flex items-center gap-3.5">
-          <Avatar className="h-12 w-12 ring-2 ring-primary/20 shrink-0">
-            <AvatarImage
-              src={isDoctorView ? appointment.patientAvatar : appointment.doctorAvatar}
-              alt={isDoctorView ? appointment.patientName : appointment.doctorName}
-            />
-            <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
-              {(isDoctorView ? appointment.patientName : appointment.doctorName).slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="space-y-0.5 min-w-0">
-            <h3 className="text-sm font-bold text-foreground truncate">
-              {isDoctorView ? appointment.patientName : appointment.doctorName}
-            </h3>
-            <p className="text-xs text-primary font-medium">
-              {isDoctorView ? `Patient (${appointment.patientAge || 30} yrs, ${appointment.patientGender || "Male"})` : appointment.doctorSpecialty}
-            </p>
-            {appointment.doctorHospital && !isDoctorView && (
-              <p className="text-[11px] text-muted-foreground truncate">
-                {appointment.doctorHospital}
+        <div className="space-y-3 pt-1">
+          {/* Doctor or Patient Profile Banner */}
+          <div className="rounded-lg border border-border/70 p-3 flex items-center gap-3 bg-muted/20">
+            <Avatar className="h-10 w-10 shrink-0">
+              <AvatarImage
+                src={isDoctorView ? appointment.patientAvatar : appointment.doctorAvatar}
+                alt={isDoctorView ? appointment.patientName : appointment.doctorName}
+              />
+              <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
+                {(isDoctorView ? appointment.patientName : appointment.doctorName).slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="space-y-0.5 min-w-0">
+              <p className="text-xs font-semibold text-foreground truncate">
+                {isDoctorView ? appointment.patientName : appointment.doctorName}
               </p>
-            )}
-          </div>
-        </div>
-
-        {/* Timing & Fee Grid */}
-        <div className="grid grid-cols-2 gap-3 text-xs">
-          <div className="rounded-xl border border-border p-3 space-y-1">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Calendar className="h-3.5 w-3.5 text-primary" />
-              <span>Date & Time</span>
-            </div>
-            <p className="font-semibold text-foreground">
-              {appointment.dateFormatted} · {appointment.timeFormatted}
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-border p-3 space-y-1">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Clock className="h-3.5 w-3.5 text-primary" />
-              <span>Consultation Fee</span>
-            </div>
-            <p className="font-semibold text-foreground">
-              ৳{appointment.fee} (Paid)
-            </p>
-          </div>
-        </div>
-
-        {/* Symptoms & Medical Notes */}
-        {appointment.symptoms && (
-          <div className="rounded-xl border border-border p-3.5 space-y-1 text-xs">
-            <div className="flex items-center gap-1.5 font-semibold text-foreground">
-              <FileText className="h-3.5 w-3.5 text-primary" />
-              <span>Reported Symptoms / Reason:</span>
-            </div>
-            <p className="text-secondary-text leading-relaxed">
-              {appointment.symptoms}
-            </p>
-          </div>
-        )}
-
-        {/* Cancel Confirmation Prompt */}
-        {confirmCancel && (
-          <div className="rounded-xl bg-destructive/10 border border-destructive/20 p-3.5 space-y-2 text-xs">
-            <div className="flex items-center gap-1.5 font-bold text-destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <span>Are you sure you want to cancel this appointment?</span>
-            </div>
-            <p className="text-secondary-text">
-              Cancellation is permanent. If you paid online, our refund policy applies.
-            </p>
-            <div className="flex items-center gap-2 pt-1">
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleCancel}
-                className="h-8 px-3 text-xs"
-              >
-                Yes, Cancel Appointment
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setConfirmCancel(false)}
-                className="h-8 px-3 text-xs"
-              >
-                Keep Appointment
-              </Button>
+              <p className="text-[11px] text-primary font-medium">
+                {isDoctorView
+                  ? `Patient (${appointment.patientAge || 30}y, ${appointment.patientGender || "Male"})`
+                  : appointment.doctorSpecialty}
+              </p>
             </div>
           </div>
-        )}
 
-        <DialogFooter className="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          {appointment.status !== "CANCELLED" && appointment.status !== "COMPLETED" && !confirmCancel && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setConfirmCancel(true)}
-              className="text-destructive hover:bg-destructive/10 text-xs font-semibold h-9 px-3 self-start"
-            >
-              Cancel Appointment
-            </Button>
+          {/* Timing & Fee Grid */}
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="rounded-lg border border-border/70 p-2.5 space-y-1">
+              <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                <Calendar className="h-3 w-3 text-primary" />
+                Schedule
+              </span>
+              <p className="font-semibold text-foreground text-xs">
+                {appointment.dateFormatted} · {appointment.timeFormatted}
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-border/70 p-2.5 space-y-1">
+              <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3 text-primary" />
+                Fee Paid
+              </span>
+              <p className="font-semibold text-foreground text-xs">
+                ৳{appointment.fee}
+              </p>
+            </div>
+          </div>
+
+          {/* Symptoms & Notes */}
+          {appointment.symptoms && (
+            <div className="rounded-lg border border-border/70 p-2.5 space-y-1 text-xs">
+              <span className="text-[11px] text-muted-foreground flex items-center gap-1 font-medium">
+                <FileText className="h-3 w-3 text-primary" />
+                Reason / Reported Symptoms
+              </span>
+              <p className="text-foreground text-xs leading-relaxed">
+                {appointment.symptoms}
+              </p>
+            </div>
           )}
 
-          <div className="flex items-center gap-2 self-end">
+          {/* Cancel Confirmation Prompt */}
+          {confirmCancel && (
+            <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 space-y-2 text-xs">
+              <div className="flex items-center gap-1.5 font-semibold text-destructive">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                <span>Confirm appointment cancellation?</span>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleCancel}
+                  className="h-7.5 px-3 text-xs"
+                >
+                  Confirm Cancel
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setConfirmCancel(false)}
+                  className="h-7.5 px-3 text-xs"
+                >
+                  Keep
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="flex items-center justify-between">
+          <div>
+            {appointment.status !== "CANCELLED" && appointment.status !== "COMPLETED" && !confirmCancel && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setConfirmCancel(true)}
+                className="text-destructive hover:bg-destructive/10 text-xs h-8 px-2"
+              >
+                Cancel Visit
+              </Button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
+              size="sm"
               onClick={() => onOpenChange(false)}
-              className="h-9 px-4 rounded-xl text-xs"
+              className="h-8.5 px-3 text-xs"
             >
               Close
             </Button>
@@ -200,9 +200,9 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Button className="h-9 px-4 rounded-xl text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs">
+                <Button size="sm" className="h-8.5 px-3.5 text-xs font-medium gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white">
                   <Video className="h-3.5 w-3.5" />
-                  <span>Join Consultation</span>
+                  <span>Join Call</span>
                 </Button>
               </a>
             )}

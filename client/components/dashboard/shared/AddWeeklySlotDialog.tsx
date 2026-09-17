@@ -10,7 +10,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -19,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Clock } from "lucide-react";
 import { AvailabilitySlot } from "@/lib/doctor-mock-data";
 
 interface AddWeeklySlotDialogProps {
@@ -103,32 +101,27 @@ export const AddWeeklySlotDialog: React.FC<AddWeeklySlotDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-2xl p-6">
-        <DialogHeader className="space-y-1.5 pb-2">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-1">
-            <Clock className="h-5 w-5" />
-          </div>
+      <DialogContent className="max-w-[450px] p-6 sm:p-7">
+        <DialogHeader className="mb-5">
           <DialogTitle className="text-lg font-bold text-foreground">
-            Add Weekly Consultation Slot
+            Add Weekly Slot
           </DialogTitle>
-          <DialogDescription className="text-xs text-secondary-text">
-            Configure active hours for patient appointments.
+          <DialogDescription className="text-xs text-secondary-text mt-1">
+            Configure active hours for recurring patient consultations.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Day of Week */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-foreground">
-              Day of Week
-            </Label>
+          <div>
+            <Label htmlFor="day-select">Day of Week</Label>
             <Select value={day} onValueChange={setDay}>
-              <SelectTrigger className="h-10 rounded-xl">
+              <SelectTrigger id="day-select" className="h-10 text-xs sm:text-sm rounded-xl">
                 <SelectValue placeholder="Select day" />
               </SelectTrigger>
               <SelectContent className="max-h-56">
                 {DAYS_OF_WEEK.map((d) => (
-                  <SelectItem key={d} value={d} className="text-xs font-medium">
+                  <SelectItem key={d} value={d} className="text-xs">
                     {d}
                   </SelectItem>
                 ))}
@@ -137,18 +130,16 @@ export const AddWeeklySlotDialog: React.FC<AddWeeklySlotDialogProps> = ({
           </div>
 
           {/* Start & End Times */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-foreground">
-                Start Time
-              </Label>
+          <div className="grid grid-cols-2 gap-3.5">
+            <div>
+              <Label htmlFor="start-time">Start Time</Label>
               <Select value={startTime} onValueChange={setStartTime}>
-                <SelectTrigger className="h-10 rounded-xl">
+                <SelectTrigger id="start-time" className="h-10 text-xs sm:text-sm rounded-xl">
                   <SelectValue placeholder="Start Time" />
                 </SelectTrigger>
                 <SelectContent className="max-h-56">
                   {TIME_OPTIONS.map((t) => (
-                    <SelectItem key={t} value={t} className="text-xs font-medium">
+                    <SelectItem key={t} value={t} className="text-xs">
                       {t}
                     </SelectItem>
                   ))}
@@ -156,17 +147,15 @@ export const AddWeeklySlotDialog: React.FC<AddWeeklySlotDialogProps> = ({
               </Select>
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-foreground">
-                End Time
-              </Label>
+            <div>
+              <Label htmlFor="end-time">End Time</Label>
               <Select value={endTime} onValueChange={setEndTime}>
-                <SelectTrigger className="h-10 rounded-xl">
+                <SelectTrigger id="end-time" className="h-10 text-xs sm:text-sm rounded-xl">
                   <SelectValue placeholder="End Time" />
                 </SelectTrigger>
                 <SelectContent className="max-h-56">
                   {TIME_OPTIONS.map((t) => (
-                    <SelectItem key={t} value={t} className="text-xs font-medium">
+                    <SelectItem key={t} value={t} className="text-xs">
                       {t}
                     </SelectItem>
                   ))}
@@ -176,17 +165,15 @@ export const AddWeeklySlotDialog: React.FC<AddWeeklySlotDialogProps> = ({
           </div>
 
           {/* Duration */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-foreground">
-              Duration per Patient (mins)
-            </Label>
+          <div>
+            <Label htmlFor="duration-select">Duration per Patient</Label>
             <Select value={duration} onValueChange={setDuration}>
-              <SelectTrigger className="h-10 rounded-xl">
+              <SelectTrigger id="duration-select" className="h-10 text-xs sm:text-sm rounded-xl">
                 <SelectValue placeholder="Select duration" />
               </SelectTrigger>
               <SelectContent>
                 {["15", "20", "30", "45", "60"].map((mins) => (
-                  <SelectItem key={mins} value={mins} className="text-xs font-medium">
+                  <SelectItem key={mins} value={mins} className="text-xs">
                     {mins} mins per visit
                   </SelectItem>
                 ))}
@@ -194,18 +181,20 @@ export const AddWeeklySlotDialog: React.FC<AddWeeklySlotDialogProps> = ({
             </Select>
           </div>
 
-          <DialogFooter className="pt-3 gap-2 flex items-center justify-end">
+          <DialogFooter className="mt-6 pt-4 border-t border-border/60">
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={() => onOpenChange(false)}
-              className="h-9.5 px-4 rounded-xl text-xs"
+              className="h-9 px-4 text-xs rounded-xl"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="h-9.5 px-5 rounded-xl text-xs font-semibold shadow-xs"
+              size="sm"
+              className="h-9 px-5 text-xs font-semibold rounded-xl shadow-xs"
             >
               Save Slot
             </Button>

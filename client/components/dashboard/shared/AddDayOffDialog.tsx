@@ -12,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CalendarOff } from "lucide-react";
 
 interface AddDayOffDialogProps {
   open: boolean;
@@ -45,30 +44,31 @@ export const AddDayOffDialog: React.FC<AddDayOffDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-2xl p-6">
-        <DialogHeader className="space-y-1.5 pb-2">
-          <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center mb-1">
-            <CalendarOff className="h-5 w-5" />
-          </div>
-          <DialogTitle className="text-lg font-bold text-foreground">Schedule Day Off</DialogTitle>
-          <DialogDescription className="text-xs text-secondary-text">
+      <DialogContent className="max-w-[440px] p-6 sm:p-7">
+        <DialogHeader className="mb-5">
+          <DialogTitle className="text-lg font-bold text-foreground">
+            Schedule Day Off
+          </DialogTitle>
+          <DialogDescription className="text-xs text-secondary-text mt-1">
             Mark this date as unavailable for patient bookings.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 pt-1">
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-foreground">Selected Date</Label>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="day-off-date">Selected Date</Label>
             <Input
+              id="day-off-date"
               disabled
               value={formattedDate}
-              className="h-10 text-xs sm:text-sm rounded-xl bg-muted/40 font-medium border-border/70"
+              className="h-10 text-xs sm:text-sm bg-muted/40 font-medium rounded-xl"
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-foreground">Reason for Absence</Label>
+          <div>
+            <Label htmlFor="day-off-reason">Reason for Absence</Label>
             <Input
+              id="day-off-reason"
               placeholder="e.g. Clinical Conference, Vacation, Personal Leave"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
@@ -76,16 +76,21 @@ export const AddDayOffDialog: React.FC<AddDayOffDialogProps> = ({
             />
           </div>
 
-          <DialogFooter className="pt-3 gap-2 flex items-center justify-end">
+          <DialogFooter className="mt-6 pt-4 border-t border-border/60">
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={() => onOpenChange(false)}
-              className="h-9.5 px-4 rounded-xl text-xs"
+              className="h-9 px-4 text-xs rounded-xl"
             >
               Cancel
             </Button>
-            <Button type="submit" className="h-9.5 px-5 rounded-xl text-xs font-semibold shadow-xs">
+            <Button
+              type="submit"
+              size="sm"
+              className="h-9 px-5 text-xs font-semibold rounded-xl shadow-xs"
+            >
               Confirm Day Off
             </Button>
           </DialogFooter>

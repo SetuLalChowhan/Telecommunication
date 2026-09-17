@@ -39,128 +39,107 @@ export default function PatientProfilePage() {
     <PatientLayout>
       <div className="space-y-6 max-w-4xl mx-auto">
         {/* Header */}
-        <div className="pb-4 border-b border-border space-y-2 max-w-xl">
-          <span className="text-xs font-bold text-primary uppercase tracking-wider block">
-            Account Management
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight leading-tight">
+        <div className="pb-4 border-b border-border/70 space-y-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
             My Profile
           </h1>
-          <p className="text-xs sm:text-sm text-secondary-text leading-relaxed">
+          <p className="text-xs sm:text-sm text-secondary-text">
             Update your personal contact details, residential address, and emergency information.
           </p>
         </div>
 
         {/* Profile Form Card */}
-        <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-xs">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+        <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-7 shadow-xs">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Full Name */}
-              <div className="flex flex-col gap-2 sm:gap-2.5">
-                <Label htmlFor="name" className="text-sm font-semibold text-foreground">
-                  Full Name
-                </Label>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="name">Full Name</Label>
                 <Input
                   id="name"
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Enter your full name"
-                  className="h-11 sm:h-12 rounded-xl text-sm"
+                  className="h-10 text-xs sm:text-sm rounded-xl"
                 />
               </div>
 
               {/* Email Address */}
-              <div className="flex flex-col gap-2 sm:gap-2.5">
-                <Label htmlFor="email" className="text-sm font-semibold text-foreground">
-                  Email Address
-                </Label>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="email">Email Address</Label>
                 <Input
                   id="email"
                   type="email"
                   disabled
                   value={formData.email}
-                  className="h-11 sm:h-12 rounded-xl text-sm bg-muted/50 cursor-not-allowed opacity-80"
+                  className="h-10 text-xs sm:text-sm rounded-xl bg-muted/40 cursor-not-allowed opacity-80"
                 />
               </div>
 
-              {/* Gender (shadcn Select) */}
-              <div className="flex flex-col gap-2 sm:gap-2.5">
-                <Label htmlFor="gender" className="text-sm font-semibold text-foreground">
-                  Gender
-                </Label>
+              {/* Gender */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="gender">Gender</Label>
                 <Select
                   value={formData.gender}
                   onValueChange={(val) => setFormData({ ...formData, gender: val })}
                 >
-                  <SelectTrigger
-                    id="gender"
-                    className="h-11 sm:h-12 w-full rounded-xl border border-border bg-card px-3.5 sm:px-4 text-sm font-medium text-foreground shadow-subtle focus:ring-2 focus:ring-primary/20"
-                  >
+                  <SelectTrigger id="gender" className="h-10 text-xs sm:text-sm rounded-xl">
                     <SelectValue placeholder="Select gender" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-2xl border border-border bg-popover p-1.5 shadow-xl">
-                    <SelectItem value="MALE" className="rounded-xl text-sm cursor-pointer">
+                  <SelectContent>
+                    <SelectItem value="MALE" className="text-xs">
                       Male
                     </SelectItem>
-                    <SelectItem value="FEMALE" className="rounded-xl text-sm cursor-pointer">
+                    <SelectItem value="FEMALE" className="text-xs">
                       Female
                     </SelectItem>
-                    <SelectItem value="OTHER" className="rounded-xl text-sm cursor-pointer">
+                    <SelectItem value="OTHER" className="text-xs">
                       Other
                     </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Blood Group (shadcn Select) */}
-              <div className="flex flex-col gap-2 sm:gap-2.5">
-                <Label htmlFor="bloodGroup" className="text-sm font-semibold text-foreground">
-                  Blood Group
-                </Label>
+              {/* Blood Group */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="bloodGroup">Blood Group</Label>
                 <Select
                   value={formData.bloodGroup}
                   onValueChange={(val) => setFormData({ ...formData, bloodGroup: val })}
                 >
-                  <SelectTrigger
-                    id="bloodGroup"
-                    className="h-11 sm:h-12 w-full rounded-xl border border-border bg-card px-3.5 sm:px-4 text-sm font-medium text-foreground shadow-subtle focus:ring-2 focus:ring-primary/20"
-                  >
+                  <SelectTrigger id="bloodGroup" className="h-10 text-xs sm:text-sm rounded-xl">
                     <SelectValue placeholder="Select blood group" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-2xl border border-border bg-popover p-1.5 shadow-xl">
-                    <SelectItem value="A_POSITIVE" className="rounded-xl text-sm cursor-pointer">A+</SelectItem>
-                    <SelectItem value="A_NEGATIVE" className="rounded-xl text-sm cursor-pointer">A-</SelectItem>
-                    <SelectItem value="B_POSITIVE" className="rounded-xl text-sm cursor-pointer">B+</SelectItem>
-                    <SelectItem value="B_NEGATIVE" className="rounded-xl text-sm cursor-pointer">B-</SelectItem>
-                    <SelectItem value="AB_POSITIVE" className="rounded-xl text-sm cursor-pointer">AB+</SelectItem>
-                    <SelectItem value="AB_NEGATIVE" className="rounded-xl text-sm cursor-pointer">AB-</SelectItem>
-                    <SelectItem value="O_POSITIVE" className="rounded-xl text-sm cursor-pointer">O+</SelectItem>
-                    <SelectItem value="O_NEGATIVE" className="rounded-xl text-sm cursor-pointer">O-</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="A_POSITIVE" className="text-xs">A+</SelectItem>
+                    <SelectItem value="A_NEGATIVE" className="text-xs">A-</SelectItem>
+                    <SelectItem value="B_POSITIVE" className="text-xs">B+</SelectItem>
+                    <SelectItem value="B_NEGATIVE" className="text-xs">B-</SelectItem>
+                    <SelectItem value="AB_POSITIVE" className="text-xs">AB+</SelectItem>
+                    <SelectItem value="AB_NEGATIVE" className="text-xs">AB-</SelectItem>
+                    <SelectItem value="O_POSITIVE" className="text-xs">O+</SelectItem>
+                    <SelectItem value="O_NEGATIVE" className="text-xs">O-</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Residential Address */}
-              <div className="flex flex-col gap-2 sm:gap-2.5 sm:col-span-2">
-                <Label htmlFor="address" className="text-sm font-semibold text-foreground">
-                  Residential Address
-                </Label>
+              <div className="flex flex-col gap-1.5 sm:col-span-2">
+                <Label htmlFor="address">Residential Address</Label>
                 <Input
                   id="address"
                   type="text"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   placeholder="Street address, apartment, city"
-                  className="h-11 sm:h-12 rounded-xl text-sm"
+                  className="h-10 text-xs sm:text-sm rounded-xl"
                 />
               </div>
 
               {/* Emergency Contact Name */}
-              <div className="flex flex-col gap-2 sm:gap-2.5">
-                <Label htmlFor="emergencyContactName" className="text-sm font-semibold text-foreground">
-                  Emergency Contact Name
-                </Label>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="emergencyContactName">Emergency Contact Name</Label>
                 <Input
                   id="emergencyContactName"
                   type="text"
@@ -169,15 +148,13 @@ export default function PatientProfilePage() {
                     setFormData({ ...formData, emergencyContactName: e.target.value })
                   }
                   placeholder="e.g. Nusrat Jahan"
-                  className="h-11 sm:h-12 rounded-xl text-sm"
+                  className="h-10 text-xs sm:text-sm rounded-xl"
                 />
               </div>
 
               {/* Emergency Contact Phone */}
-              <div className="flex flex-col gap-2 sm:gap-2.5">
-                <Label htmlFor="emergencyContactPhone" className="text-sm font-semibold text-foreground">
-                  Emergency Contact Phone
-                </Label>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="emergencyContactPhone">Emergency Contact Phone</Label>
                 <Input
                   id="emergencyContactPhone"
                   type="text"
@@ -186,13 +163,13 @@ export default function PatientProfilePage() {
                     setFormData({ ...formData, emergencyContactPhone: e.target.value })
                   }
                   placeholder="+880 1819-765432"
-                  className="h-11 sm:h-12 rounded-xl text-sm"
+                  className="h-10 text-xs sm:text-sm rounded-xl"
                 />
               </div>
             </div>
 
-            <div className="pt-4 border-t border-border flex items-center justify-between gap-4">
-              <Button type="submit" className="h-10.5 px-5 rounded-xl text-xs sm:text-sm font-semibold gap-2 shadow-xs">
+            <div className="pt-4 border-t border-border/70 flex items-center justify-between gap-4">
+              <Button type="submit" className="h-9.5 px-4 rounded-xl text-xs sm:text-sm font-semibold gap-2 shadow-xs">
                 <Save className="h-4 w-4" />
                 <span>Save Profile Changes</span>
               </Button>
