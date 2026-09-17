@@ -36,7 +36,7 @@ export const PatientDashboardView: React.FC<PatientDashboardViewProps> = () => {
   };
 
   return (
-    <div className="space-y-8 sm:space-y-10 max-w-6xl mx-auto">
+    <div className="space-y-6 sm:space-y-8 max-w-5xl mx-auto">
       {/* 1. Upcoming Consultation Surface */}
       <PatientNextConsultation
         appointment={upcoming}

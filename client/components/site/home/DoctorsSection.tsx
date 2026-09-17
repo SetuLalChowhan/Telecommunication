@@ -171,43 +171,40 @@ export const DoctorsSection: React.FC = () => {
               {DOCTORS.map((doctor) => (
                 <div
                   key={doctor.id}
-                  className="group shrink-0 w-[250px] sm:w-[270px] flex flex-col rounded-2xl border border-border bg-card overflow-hidden shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-200"
+                  className="group shrink-0 w-[250px] sm:w-[270px] flex flex-col rounded-2xl border border-border/80 bg-card overflow-hidden shadow-xs hover:border-primary/50 hover:shadow-subtle transition-all duration-200"
                 >
                   {/* Doctor Image Container */}
-                  <div className="relative aspect-[4/4.2] w-full overflow-hidden bg-muted/40">
+                  <div className="relative aspect-[4/4.2] w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
                     <Image
                       src={doctor.image}
                       alt={doctor.name}
                       fill
                       sizes="270px"
-                      className="object-cover object-top transition-transform duration-300 group-hover:scale-102"
+                      className="object-cover object-top transition-transform duration-300 group-hover:scale-103"
                     />
 
-                    {/* Rating Chip */}
-                    <div className="absolute top-2.5 right-2.5 flex items-center gap-1 rounded-md bg-card/95 backdrop-blur-xs px-2 py-0.5 border border-border shadow-xs">
+                    {/* Minimal Rating Chip */}
+                    <div className="absolute top-2.5 right-2.5 flex items-center gap-1 rounded-full bg-card/95 backdrop-blur-md px-2.5 py-0.5 border border-border shadow-xs">
                       <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                       <span className="text-xs font-bold text-foreground">
                         {doctor.rating}
                       </span>
-                    </div>
-
-                    {/* Online Video Pill */}
-                    <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1 rounded-md bg-card/95 backdrop-blur-xs px-2 py-0.5 text-[10px] font-medium text-primary border border-border shadow-xs">
-                      <Video className="h-3 w-3" />
-                      <span>Online Video</span>
+                      <span className="text-[10px] text-muted-foreground font-medium">
+                        ({doctor.reviewsCount})
+                      </span>
                     </div>
                   </div>
 
                   {/* Doctor Info Box */}
-                  <div className="p-4 text-center flex flex-col items-center justify-center">
-                    <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
+                  <div className="p-4 text-center flex flex-col items-center justify-center space-y-1">
+                    <span className="text-xs font-semibold text-primary">
+                      {doctor.specialty}
+                    </span>
+                    <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
                       <Link href={`/doctors/${doctor.slug}`}>
                         {doctor.name}
                       </Link>
                     </h3>
-                    <p className="text-xs text-secondary-text font-medium mt-1">
-                      {doctor.specialty}
-                    </p>
                   </div>
                 </div>
               ))}

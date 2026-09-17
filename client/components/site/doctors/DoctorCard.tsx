@@ -4,7 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { DoctorProfile } from "@/types/doctor";
-import { Star, CheckCircle2, Award, ArrowRight, Video } from "lucide-react";
+import { Star, ShieldCheck, Award, ArrowRight, Video } from "lucide-react";
 
 interface DoctorCardProps {
   doctor: DoctorProfile;
@@ -23,75 +23,71 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor }) => {
   const primarySpecialty =
     doctor.specialties?.[0]?.specialty?.name || "General Physician";
 
+  const ratingValue = doctor.rating ? Number(doctor.rating).toFixed(1) : "5.0";
+  const reviewsCount = doctor.totalReviews || 0;
+  const experience = doctor.experienceYears || 5;
+
   return (
-    <div className="group relative flex flex-col justify-between rounded-2xl border border-border bg-card overflow-hidden shadow-xs hover:shadow-md hover:border-primary/40 transition-all duration-200">
-      {/* Doctor Image Header */}
-      <div className="relative aspect-[4/3.2] w-full overflow-hidden bg-muted/40">
+    <div className="group relative flex flex-col justify-between rounded-2xl border border-border/80 bg-card overflow-hidden shadow-xs hover:border-primary/50 hover:shadow-subtle transition-all duration-200">
+      {/* 1. Clean Doctor Image Header */}
+      <div className="relative aspect-[4/3.2] w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
         <Image
           src={doctor.user.image || fallbackImage}
           alt={doctorName}
           fill
           sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-          className="object-cover object-top transition-transform duration-300 group-hover:scale-102"
+          className="object-cover object-top transition-transform duration-300 group-hover:scale-103"
         />
 
-        {/* Rating Floating Chip */}
-        <div className="absolute top-3 right-3 flex items-center gap-1 rounded-lg bg-card/95 backdrop-blur-xs px-2.5 py-1 border border-border shadow-xs">
-          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-          <span className="text-xs font-bold text-foreground">
-            {doctor.rating ? Number(doctor.rating).toFixed(1) : "5.0"}
-          </span>
-          <span className="text-[10px] text-secondary-text">
-            ({doctor.totalReviews || 0})
-          </span>
-        </div>
+        {/* Top Badges (Clean, Minimal, Non-Intrusive) */}
+        <div className="absolute top-3 inset-x-3 flex items-center justify-between pointer-events-none">
+          {/* Verified Badge */}
+          {doctor.verified ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-card/95 backdrop-blur-md px-2.5 py-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-xs">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Verified</span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full bg-card/95 backdrop-blur-md px-2.5 py-1 text-[11px] font-medium text-primary border border-border shadow-xs">
+              <Video className="h-3 w-3" />
+              <span>Video Consult</span>
+            </span>
+          )}
 
-        {/* Verified Icon Badge */}
-        {doctor.verified && (
-          <div
-            title="Verified Specialist"
-            className="absolute top-3 left-3 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white shadow-xs"
-          >
-            <CheckCircle2 className="h-3.5 w-3.5" />
+          {/* Rating Badge */}
+          <div className="flex items-center gap-1 rounded-full bg-card/95 backdrop-blur-md px-2.5 py-1 border border-border shadow-xs">
+            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+            <span className="text-xs font-bold text-foreground">
+              {ratingValue}
+            </span>
+            <span className="text-[10px] text-muted-foreground font-medium">
+              ({reviewsCount})
+            </span>
           </div>
-        )}
-
-        {/* Online Video Pill */}
-        <div className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-lg bg-card/95 backdrop-blur-xs px-2.5 py-1 text-[11px] font-medium text-primary border border-border shadow-xs">
-          <Video className="h-3.5 w-3.5" />
-          <span>Online Video Consult</span>
         </div>
       </div>
 
-      {/* Card Body */}
-      <div className="p-5 flex flex-col flex-1 justify-between space-y-4">
+      {/* 2. Crisp, Legible Card Body */}
+      <div className="p-4 sm:p-5 flex flex-col flex-1 justify-between space-y-4">
         <div className="space-y-2">
-          {/* Specialty tag */}
-          <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+          {/* Specialty & Experience Metadata Row */}
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
               {primarySpecialty}
             </span>
-            {doctor.specialties && doctor.specialties.length > 1 && (
-              <span className="inline-flex items-center rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-secondary-text">
-                +{doctor.specialties.length - 1}
-              </span>
-            )}
-          </div>
 
-          {/* Doctor Name */}
-          <div>
-            <h3 className="text-base sm:text-lg font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
-              <Link href={profileUrl}>{doctorName}</Link>
-            </h3>
-
-            {/* Experience */}
-            <div className="flex items-center gap-1.5 mt-1 text-xs text-secondary-text">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground font-medium">
               <Award className="h-3.5 w-3.5 text-primary shrink-0" />
-              <span>{doctor.experienceYears || 5}+ Years Experience</span>
+              <span>{experience}+ yrs exp</span>
             </div>
           </div>
 
-          {/* Short Bio snippet */}
+          {/* Doctor Name */}
+          <h3 className="text-base sm:text-lg font-bold text-foreground group-hover:text-primary transition-colors tracking-tight line-clamp-1 pt-0.5">
+            <Link href={profileUrl}>{doctorName}</Link>
+          </h3>
+
+          {/* Clean Description */}
           {doctor.bio && (
             <p className="text-xs text-secondary-text line-clamp-2 leading-relaxed">
               {doctor.bio}
@@ -99,17 +95,17 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor }) => {
           )}
         </div>
 
-        {/* Card Footer: Fee & Action Button */}
-        <div className="pt-3 border-t border-border flex items-center justify-between gap-3">
+        {/* 3. Card Footer: High-Contrast Fee & Booking Button */}
+        <div className="pt-3.5 border-t border-border/70 flex items-center justify-between gap-3">
           <div>
-            <span className="text-[10px] text-secondary-text block font-medium">
+            <span className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider block">
               Fee
             </span>
-            <div className="flex items-baseline gap-0.5">
+            <div className="flex items-baseline gap-1">
               <span className="text-base sm:text-lg font-bold text-foreground">
                 ৳{doctor.fee || 500}
               </span>
-              <span className="text-[11px] text-secondary-text">/consult</span>
+              <span className="text-[11px] text-muted-foreground">/ consult</span>
             </div>
           </div>
 
@@ -127,3 +123,4 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor }) => {
 };
 
 export default DoctorCard;
+

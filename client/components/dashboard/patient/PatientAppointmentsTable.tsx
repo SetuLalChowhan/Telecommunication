@@ -43,7 +43,7 @@ export const PatientAppointmentsTable: React.FC<PatientAppointmentsTableProps> =
             href="/patient/appointments"
             className="text-xs sm:text-sm font-semibold text-primary hover:text-primary-dark inline-flex items-center gap-1"
           >
-            <span>View all</span>
+            <span>All appointments</span>
             <ArrowRight className="h-4 w-4" />
           </Link>
         )}
@@ -65,27 +65,27 @@ export const PatientAppointmentsTable: React.FC<PatientAppointmentsTableProps> =
             <TableBody>
               {appointments.map((appt) => (
                 <TableRow key={appt.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
-                  <TableCell className="py-4 px-5">
+                  <TableCell className="py-3.5 px-5">
                     <div className="flex items-center gap-3.5">
-                      <Avatar className="h-10 w-10 ring-1 ring-primary/20">
+                      <Avatar className="h-10 w-10 ring-1 ring-primary/20 shrink-0">
                         <AvatarImage src={appt.doctorAvatar} alt={appt.doctorName} />
                         <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">
                           {appt.doctorName.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-bold text-foreground text-sm">{appt.doctorName}</p>
+                        <p className="font-bold text-foreground text-xs sm:text-sm">{appt.doctorName}</p>
                         <p className="text-xs text-muted-foreground">{appt.doctorSpecialty}</p>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="py-4 px-4 font-semibold text-foreground text-sm">
+                  <TableCell className="py-3.5 px-4 font-semibold text-foreground text-xs sm:text-sm">
                     {appt.dateFormatted} · {appt.timeFormatted}
                   </TableCell>
-                  <TableCell className="py-4 px-4 text-secondary-text font-medium text-sm">
+                  <TableCell className="py-3.5 px-4 text-secondary-text font-medium text-xs sm:text-sm">
                     {appt.consultationType}
                   </TableCell>
-                  <TableCell className="py-4 px-4">
+                  <TableCell className="py-3.5 px-4">
                     <span
                       className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full border uppercase ${
                         appt.status === "CONFIRMED"
@@ -100,11 +100,11 @@ export const PatientAppointmentsTable: React.FC<PatientAppointmentsTableProps> =
                       {appt.status}
                     </span>
                   </TableCell>
-                  <TableCell className="py-4 px-5 text-right">
+                  <TableCell className="py-3.5 px-5 text-right">
                     <div className="flex items-center justify-end gap-2">
                       {appt.meetLink && appt.status === "CONFIRMED" && (
                         <a href={appt.meetLink} target="_blank" rel="noopener noreferrer">
-                          <Button size="sm" className="h-8 px-3 rounded-lg text-xs font-semibold gap-1 bg-emerald-600 hover:bg-emerald-700 text-white">
+                          <Button size="sm" className="h-8.5 px-3 rounded-xl text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs">
                             <Video className="h-3.5 w-3.5" />
                             <span>Join</span>
                           </Button>
@@ -114,7 +114,7 @@ export const PatientAppointmentsTable: React.FC<PatientAppointmentsTableProps> =
                         variant="outline"
                         size="sm"
                         onClick={() => onOpenDetails(appt)}
-                        className="h-8 px-3 rounded-lg text-xs font-semibold hover:border-primary hover:text-primary"
+                        className="h-8.5 px-3 rounded-xl text-xs font-medium border-border hover:border-primary/50"
                       >
                         Details
                       </Button>
@@ -132,19 +132,19 @@ export const PatientAppointmentsTable: React.FC<PatientAppointmentsTableProps> =
             <div key={appt.id} className="p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
+                  <Avatar className="h-10 w-10 shrink-0 ring-1 ring-primary/20">
                     <AvatarImage src={appt.doctorAvatar} alt={appt.doctorName} />
                     <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">
                       {appt.doctorName.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-sm font-bold text-foreground">{appt.doctorName}</p>
+                    <p className="text-xs sm:text-sm font-bold text-foreground">{appt.doctorName}</p>
                     <p className="text-xs text-muted-foreground">{appt.doctorSpecialty}</p>
                   </div>
                 </div>
                 <span
-                  className={`text-xs font-semibold px-2 py-0.5 rounded-full border uppercase ${
+                  className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border uppercase ${
                     appt.status === "CONFIRMED"
                       ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                       : appt.status === "PENDING"
@@ -156,13 +156,13 @@ export const PatientAppointmentsTable: React.FC<PatientAppointmentsTableProps> =
                 </span>
               </div>
 
-              <div className="flex items-center justify-between text-xs text-secondary-text pt-1">
+              <div className="flex items-center justify-between text-xs text-secondary-text pt-0.5">
                 <span className="font-semibold text-foreground">{appt.dateFormatted} · {appt.timeFormatted}</span>
                 <div className="flex items-center gap-2">
                   {appt.meetLink && appt.status === "CONFIRMED" && (
                     <a href={appt.meetLink} target="_blank" rel="noopener noreferrer">
-                      <Button size="sm" className="h-8 px-2.5 text-xs font-semibold gap-1 bg-emerald-600 text-white">
-                        <Video className="h-3.5 w-3.5" />
+                      <Button size="sm" className="h-8.5 px-3 rounded-xl text-xs font-semibold gap-1 bg-emerald-600 text-white">
+                        <Video className="h-3 w-3" />
                         <span>Join</span>
                       </Button>
                     </a>
@@ -171,7 +171,7 @@ export const PatientAppointmentsTable: React.FC<PatientAppointmentsTableProps> =
                     variant="outline"
                     size="sm"
                     onClick={() => onOpenDetails(appt)}
-                    className="h-8 px-2.5 text-xs font-semibold"
+                    className="h-8.5 px-3 rounded-xl text-xs font-medium border-border hover:border-primary/50"
                   >
                     Details
                   </Button>
