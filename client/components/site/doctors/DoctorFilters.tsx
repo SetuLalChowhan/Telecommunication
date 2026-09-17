@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Specialty } from "@/types/doctor";
-import { Filter, X, RotateCcw, ShieldCheck, Stethoscope, Check } from "lucide-react";
+import { Filter, RotateCcw, ShieldCheck, Stethoscope } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -24,6 +24,7 @@ interface DoctorFiltersProps {
   onExperienceChange: (val: string) => void;
   onApplyFilters: () => void;
   onResetFilters: () => void;
+  isApplying?: boolean;
   isMobileOpen?: boolean;
   onMobileClose?: () => void;
 }
@@ -40,6 +41,7 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
   onExperienceChange,
   onApplyFilters,
   onResetFilters,
+  isApplying = false,
   isMobileOpen = false,
   onMobileClose,
 }) => {
@@ -100,21 +102,6 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
             ))}
           </SelectContent>
         </Select>
-
-        {/* Selected Specialty Badge tag */}
-        {selectedSpecialty && (
-          <div className="pt-1 flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-primary/10 border border-primary/25 text-xs text-primary font-medium">
-            <span>Selected: {specialties.find((s) => s.slug === selectedSpecialty)?.name || selectedSpecialty}</span>
-            <button
-              type="button"
-              onClick={() => onSpecialtyChange("")}
-              className="text-primary hover:text-primary-dark p-0.5 rounded-md hover:bg-primary/20 transition-colors"
-              title="Clear specialty"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        )}
       </div>
 
       {/* 2. Fee Range */}
@@ -195,10 +182,18 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
       <div className="pt-2 border-t border-border space-y-2">
         <Button
           type="button"
+          disabled={isApplying}
           onClick={onApplyFilters}
-          className="w-full h-10 rounded-xl font-semibold text-sm shadow-xs"
+          className="w-full h-10 rounded-xl font-semibold text-sm shadow-xs flex items-center justify-center gap-2"
         >
-          Apply Filters
+          {isApplying ? (
+            <>
+              <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+              <span>Applying...</span>
+            </>
+          ) : (
+            <span>Apply Filters</span>
+          )}
         </Button>
       </div>
 
@@ -240,7 +235,7 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
                   onClick={onMobileClose}
                   className="rounded-lg p-1 text-secondary-text hover:bg-muted cursor-pointer"
                 >
-                  <X className="h-5 w-5" />
+                  <RotateCcw className="h-5 w-5" />
                 </button>
               </div>
               {filterContent}
@@ -249,13 +244,21 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
             <div className="pt-6 border-t border-border mt-6">
               <Button
                 type="button"
+                disabled={isApplying}
                 onClick={() => {
                   onApplyFilters();
                   onMobileClose?.();
                 }}
-                className="w-full h-11 rounded-xl font-semibold text-sm shadow-xs"
+                className="w-full h-11 rounded-xl font-semibold text-sm shadow-xs flex items-center justify-center gap-2"
               >
-                Apply Filters
+                {isApplying ? (
+                  <>
+                    <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                    <span>Applying...</span>
+                  </>
+                ) : (
+                  <span>Apply Filters</span>
+                )}
               </Button>
             </div>
           </div>

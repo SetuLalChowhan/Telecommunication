@@ -19,6 +19,10 @@ interface DoctorHeroCardProps {
 }
 
 export const DoctorHeroCard: React.FC<DoctorHeroCardProps> = ({ doctor }) => {
+  const [imgSrc, setImgSrc] = React.useState<string>(
+    doctor.user?.image || "/images/doctor-placeholder.jpg"
+  );
+
   const doctorName =
     doctor.user?.name ||
     `${doctor.user?.firstName || ""} ${doctor.user?.lastName || ""}`.trim() ||
@@ -47,38 +51,19 @@ export const DoctorHeroCard: React.FC<DoctorHeroCardProps> = ({ doctor }) => {
       ?.map((s) => s.specialty)
       ?.filter(Boolean) || [];
 
-  const initials = doctorName
-    .replace(/^Dr\.\s*/i, "")
-    .split(" ")
-    .map((n) => n[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase() || "DR";
-
   return (
     <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-7 shadow-xs">
       <div className="flex flex-col sm:flex-row gap-5 sm:gap-6 items-start">
-        {/* Doctor Photo or Dummy Avatar */}
+        {/* Doctor Photo */}
         <div className="relative h-28 w-28 sm:h-36 sm:w-36 shrink-0 rounded-2xl overflow-hidden border border-border/80 bg-slate-100 dark:bg-slate-900 shadow-xs flex items-center justify-center">
-          {doctor.user?.image ? (
-            <Image
-              src={doctor.user.image}
-              alt={doctorName}
-              fill
-              sizes="150px"
-              className="object-cover object-top"
-            />
-          ) : (
-            <div className="h-full w-full flex flex-col items-center justify-center bg-gradient-to-br from-primary/15 via-slate-100 to-slate-200 dark:from-primary/20 dark:via-slate-800 dark:to-slate-900 text-primary p-2 text-center select-none">
-              <div className="h-12 w-12 rounded-xl bg-card border border-primary/25 shadow-xs flex items-center justify-center text-primary mb-1">
-                <Stethoscope className="h-6 w-6 stroke-[1.75]" />
-              </div>
-              <span className="text-xs font-bold text-foreground tracking-tight">
-                {initials}
-              </span>
-            </div>
-          )}
+          <Image
+            src={imgSrc}
+            alt={doctorName}
+            fill
+            sizes="150px"
+            className="object-cover object-top"
+            onError={() => setImgSrc("/images/doctor-placeholder.jpg")}
+          />
         </div>
 
         {/* Doctor Main Details */}

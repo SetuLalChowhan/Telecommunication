@@ -11,6 +11,10 @@ interface DoctorCardProps {
 }
 
 export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor }) => {
+  const [imgSrc, setImgSrc] = React.useState<string>(
+    doctor.user?.image || "/images/doctor-placeholder.jpg"
+  );
+
   const profileUrl = `/doctors/${doctor.slug || doctor.id}`;
   const doctorName =
     doctor.user?.name ||
@@ -30,41 +34,18 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor }) => {
   const experience = doctor.experienceYears ?? 0;
   const feeFormatted = Number(doctor.fee ?? 0).toLocaleString();
 
-  // Extract initials
-  const initials = doctorName
-    .replace(/^Dr\.\s*/i, "")
-    .split(" ")
-    .map((n) => n[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase() || "DR";
-
   return (
     <div className="group relative flex flex-col justify-between rounded-2xl border border-border/80 bg-card overflow-hidden shadow-xs hover:border-primary/50 hover:shadow-subtle transition-all duration-200">
-      {/* 1. Doctor Image or Dummy Avatar Header */}
+      {/* 1. Doctor Image Header */}
       <div className="relative aspect-[4/3.2] w-full overflow-hidden bg-slate-100 dark:bg-slate-900 flex items-center justify-center">
-        {doctor.user?.image ? (
-          <Image
-            src={doctor.user.image}
-            alt={doctorName}
-            fill
-            sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-            className="object-cover object-top transition-transform duration-300 group-hover:scale-103"
-          />
-        ) : (
-          <div className="h-full w-full flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 via-slate-100 to-slate-200 dark:from-primary/15 dark:via-slate-800 dark:to-slate-900 transition-transform duration-300 group-hover:scale-103 p-4 text-center select-none">
-            <div className="h-16 w-16 rounded-2xl bg-card/90 dark:bg-card/70 border border-primary/20 shadow-xs flex items-center justify-center text-primary mb-2">
-              <Stethoscope className="h-8 w-8 stroke-[1.75]" />
-            </div>
-            <span className="text-sm font-bold text-foreground tracking-tight">
-              {initials}
-            </span>
-            <span className="text-[11px] font-medium text-muted-foreground line-clamp-1 mt-0.5">
-              {doctor.designation || primarySpecialty}
-            </span>
-          </div>
-        )}
+        <Image
+          src={imgSrc}
+          alt={doctorName}
+          fill
+          sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+          className="object-cover object-top transition-transform duration-300 group-hover:scale-103"
+          onError={() => setImgSrc("/images/doctor-placeholder.jpg")}
+        />
 
         {/* Top Badges */}
         <div className="absolute top-3 inset-x-3 flex items-center justify-between pointer-events-none">

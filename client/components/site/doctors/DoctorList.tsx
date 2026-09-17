@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useDoctors, useSpecialties } from "@/features/doctors";
 import { DoctorProfile } from "@/types/doctor";
 import { DoctorCard } from "@/components/site/doctors/DoctorCard";
+import { DoctorCardSkeleton } from "@/components/site/doctors/DoctorCardSkeleton";
 import { DoctorFilters } from "@/components/site/doctors/DoctorFilters";
 import { DoctorSearchHeader, DoctorSortOption } from "@/components/site/doctors/DoctorSearchHeader";
 import { DoctorPagination } from "@/components/site/doctors/DoctorPagination";
@@ -23,7 +24,7 @@ export const DoctorList: React.FC = () => {
     (searchParams.get("sortBy") as DoctorSortOption) || "latest";
   const initialPage = Number(searchParams.get("page")) || 1;
 
-  // Staged / Draft filter inputs (controlled before clicking Apply or submitting search)
+  // Staged / Draft filter inputs
   const [draftSearch, setDraftSearch] = useState(initialSearch);
   const [draftSpecialty, setDraftSpecialty] = useState(initialSpecialty);
   const [draftMinFee, setDraftMinFee] = useState("");
@@ -43,11 +44,27 @@ export const DoctorList: React.FC = () => {
   const [page, setPage] = useState(initialPage);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
+  // Debounced search effect (350ms)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setAppliedFilters((prev) => {
+        if (prev.search === draftSearch.trim()) return prev;
+        return {
+          ...prev,
+          search: draftSearch.trim(),
+        };
+      });
+      setPage(1);
+    }, 350);
+
+    return () => clearTimeout(handler);
+  }, [draftSearch]);
+
   // Fetch real specialties from backend API
   const { data: specialties = [] } = useSpecialties();
 
   // TanStack Query (hydrates instantly from Server Prefetch, and executes queries when applied)
-  const { data: apiResponse, isLoading } = useDoctors({
+  const { data: apiResponse, isLoading, isFetching } = useDoctors({
     search: appliedFilters.search.trim() || undefined,
     specialtySlug: appliedFilters.specialty || undefined,
     minFee:
@@ -74,15 +91,6 @@ export const DoctorList: React.FC = () => {
     totalPages: Math.max(1, Math.ceil(totalResults / ITEMS_PER_PAGE)),
     hasNextPage: false,
     hasPrevPage: false,
-  };
-
-  // Submit search
-  const handleSearchSubmit = () => {
-    setAppliedFilters((prev) => ({
-      ...prev,
-      search: draftSearch.trim(),
-    }));
-    setPage(1);
   };
 
   // Apply filters from sidebar / mobile
@@ -115,22 +123,15 @@ export const DoctorList: React.FC = () => {
     setPage(1);
   };
 
-  const showSkeleton = isLoading && !apiResponse;
+  // Show skeleton whenever initial loading OR refetching filters occurs
+  const showSkeleton = isLoading || isFetching;
 
   return (
     <div className="w-full bg-background min-h-screen">
       {/* Top Search & Controls Header */}
       <DoctorSearchHeader
         search={draftSearch}
-        onSearchChange={(val) => {
-          setDraftSearch(val);
-          if (!val) {
-            // Auto clear applied search if empty
-            setAppliedFilters((prev) => ({ ...prev, search: "" }));
-            setPage(1);
-          }
-        }}
-        onSearchSubmit={handleSearchSubmit}
+        onSearchChange={(val) => setDraftSearch(val)}
         sortBy={sortBy}
         onSortChange={(val) => {
           setSortBy(val);
@@ -138,6 +139,7 @@ export const DoctorList: React.FC = () => {
         }}
         totalResults={totalResults}
         onOpenMobileFilters={() => setIsMobileFiltersOpen(true)}
+        isSearching={isFetching}
       />
 
       {/* Main Content Layout */}
@@ -156,6 +158,7 @@ export const DoctorList: React.FC = () => {
             onExperienceChange={(val) => setDraftExperience(val)}
             onApplyFilters={handleApplyFilters}
             onResetFilters={handleResetFilters}
+            isApplying={isFetching}
             isMobileOpen={isMobileFiltersOpen}
             onMobileClose={() => setIsMobileFiltersOpen(false)}
           />
@@ -165,23 +168,7 @@ export const DoctorList: React.FC = () => {
             {showSkeleton ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div
-                    key={i}
-                    className="h-96 rounded-2xl border border-border/80 bg-card p-5 animate-pulse flex flex-col justify-between"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="h-16 w-16 rounded-xl bg-slate-200 dark:bg-slate-800" />
-                      <div className="space-y-2 flex-1">
-                        <div className="h-4 w-3/4 rounded bg-slate-200 dark:bg-slate-800" />
-                        <div className="h-3 w-1/2 rounded bg-slate-200 dark:bg-slate-800" />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="h-3 w-full rounded bg-slate-200 dark:bg-slate-800" />
-                      <div className="h-3 w-5/6 rounded bg-slate-200 dark:bg-slate-800" />
-                    </div>
-                    <div className="h-10 w-full rounded-xl bg-slate-200 dark:bg-slate-800" />
-                  </div>
+                  <DoctorCardSkeleton key={i} />
                 ))}
               </div>
             ) : doctorsList.length > 0 ? (

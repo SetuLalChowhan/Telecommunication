@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Search, SlidersHorizontal, ArrowUpDown, X } from "lucide-react";
+import { Search, SlidersHorizontal, ArrowUpDown, X, Loader2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -9,36 +9,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 
 export type DoctorSortOption = "latest" | "rating" | "fee" | "experience";
 
 interface DoctorSearchHeaderProps {
   search: string;
   onSearchChange: (val: string) => void;
-  onSearchSubmit: () => void;
   sortBy: DoctorSortOption;
   onSortChange: (val: DoctorSortOption) => void;
   totalResults: number;
   onOpenMobileFilters: () => void;
+  isSearching?: boolean;
 }
 
 export const DoctorSearchHeader: React.FC<DoctorSearchHeaderProps> = ({
   search,
   onSearchChange,
-  onSearchSubmit,
   sortBy,
   onSortChange,
   totalResults,
   onOpenMobileFilters,
+  isSearching = false,
 }) => {
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      onSearchSubmit();
-    }
-  };
-
   return (
     <div className="w-full bg-slate-50/60 dark:bg-slate-900/20 border-b border-border py-10 sm:py-14">
       <div className="max-w-[1920px] mx-auto section-padding-x space-y-8">
@@ -59,47 +51,44 @@ export const DoctorSearchHeader: React.FC<DoctorSearchHeaderProps> = ({
           {/* Results counter */}
           <div className="hidden sm:block text-right">
             <span className="text-xs text-secondary-text block mb-1">Available Doctors</span>
-            <span className="text-2xl font-bold text-foreground">
-              {totalResults} <span className="text-xs font-medium text-secondary-text">specialists</span>
+            <span className="text-2xl font-bold text-foreground flex items-center justify-end gap-2">
+              {isSearching ? (
+                <span className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin inline-block" />
+              ) : (
+                <>
+                  {totalResults} <span className="text-xs font-medium text-secondary-text">specialists</span>
+                </>
+              )}
             </span>
           </div>
         </div>
 
         {/* Search & Sort Controls Bar */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-          {/* Main Search Input with Submit button */}
-          <div className="relative flex-1 flex items-center">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          {/* Main Search Input (Debounced) */}
+          <div className="relative flex-1">
+            {isSearching ? (
+              <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary animate-spin" />
+            ) : (
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            )}
             <input
               type="text"
               placeholder="Search by doctor name, medical specialty, or symptom..."
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="w-full rounded-xl border border-border bg-card pl-11 pr-24 py-3 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-xs"
+              className="w-full rounded-xl border border-border bg-card pl-11 pr-10 py-3 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-xs"
             />
-            <div className="absolute right-2 flex items-center gap-1">
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onSearchChange("");
-                  }}
-                  className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted transition-colors cursor-pointer"
-                  title="Clear search"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-              <Button
+            {search && (
+              <button
                 type="button"
-                size="sm"
-                onClick={onSearchSubmit}
-                className="h-8 px-3 rounded-lg text-xs font-semibold"
+                onClick={() => onSearchChange("")}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted transition-colors cursor-pointer"
+                title="Clear search"
               >
-                Search
-              </Button>
-            </div>
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
           {/* Select & Mobile Filter Actions */}
