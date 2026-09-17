@@ -1,0 +1,219 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Clock } from "lucide-react";
+import { AvailabilitySlot } from "@/lib/doctor-mock-data";
+
+interface AddWeeklySlotDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onAddSlot: (slot: AvailabilitySlot) => void;
+}
+
+const DAYS_OF_WEEK = [
+  "MONDAY",
+  "TUESDAY",
+  "WEDNESDAY",
+  "THURSDAY",
+  "FRIDAY",
+  "SATURDAY",
+  "SUNDAY",
+];
+
+const TIME_OPTIONS = [
+  "08:00 AM",
+  "08:30 AM",
+  "09:00 AM",
+  "09:30 AM",
+  "10:00 AM",
+  "10:30 AM",
+  "11:00 AM",
+  "11:30 AM",
+  "12:00 PM",
+  "12:30 PM",
+  "01:00 PM",
+  "01:30 PM",
+  "02:00 PM",
+  "02:30 PM",
+  "03:00 PM",
+  "03:30 PM",
+  "04:00 PM",
+  "04:30 PM",
+  "05:00 PM",
+  "05:30 PM",
+  "06:00 PM",
+  "06:30 PM",
+  "07:00 PM",
+  "07:30 PM",
+  "08:00 PM",
+  "08:30 PM",
+  "09:00 PM",
+];
+
+export const AddWeeklySlotDialog: React.FC<AddWeeklySlotDialogProps> = ({
+  open,
+  onOpenChange,
+  onAddSlot,
+}) => {
+  const [day, setDay] = useState("MONDAY");
+  const [startTime, setStartTime] = useState("09:00 AM");
+  const [endTime, setEndTime] = useState("01:00 PM");
+  const [duration, setDuration] = useState("30");
+
+  useEffect(() => {
+    if (open) {
+      setDay("MONDAY");
+      setStartTime("09:00 AM");
+      setEndTime("01:00 PM");
+      setDuration("30");
+    }
+  }, [open]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newSlot: AvailabilitySlot = {
+      id: `slot-${Date.now()}`,
+      dayOfWeek: day,
+      startTime,
+      endTime,
+      consultationDuration: parseInt(duration, 10) || 30,
+      isActive: true,
+    };
+    onAddSlot(newSlot);
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md rounded-2xl p-6">
+        <DialogHeader className="space-y-1.5 pb-2">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-1">
+            <Clock className="h-5 w-5" />
+          </div>
+          <DialogTitle className="text-lg font-bold text-foreground">
+            Add Weekly Consultation Slot
+          </DialogTitle>
+          <DialogDescription className="text-xs text-secondary-text">
+            Configure active hours for patient appointments.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+          {/* Day of Week */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-foreground">
+              Day of Week
+            </Label>
+            <Select value={day} onValueChange={setDay}>
+              <SelectTrigger className="h-10 rounded-xl">
+                <SelectValue placeholder="Select day" />
+              </SelectTrigger>
+              <SelectContent className="max-h-56">
+                {DAYS_OF_WEEK.map((d) => (
+                  <SelectItem key={d} value={d} className="text-xs font-medium">
+                    {d}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Start & End Times */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-foreground">
+                Start Time
+              </Label>
+              <Select value={startTime} onValueChange={setStartTime}>
+                <SelectTrigger className="h-10 rounded-xl">
+                  <SelectValue placeholder="Start Time" />
+                </SelectTrigger>
+                <SelectContent className="max-h-56">
+                  {TIME_OPTIONS.map((t) => (
+                    <SelectItem key={t} value={t} className="text-xs font-medium">
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-foreground">
+                End Time
+              </Label>
+              <Select value={endTime} onValueChange={setEndTime}>
+                <SelectTrigger className="h-10 rounded-xl">
+                  <SelectValue placeholder="End Time" />
+                </SelectTrigger>
+                <SelectContent className="max-h-56">
+                  {TIME_OPTIONS.map((t) => (
+                    <SelectItem key={t} value={t} className="text-xs font-medium">
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Duration */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-foreground">
+              Duration per Patient (mins)
+            </Label>
+            <Select value={duration} onValueChange={setDuration}>
+              <SelectTrigger className="h-10 rounded-xl">
+                <SelectValue placeholder="Select duration" />
+              </SelectTrigger>
+              <SelectContent>
+                {["15", "20", "30", "45", "60"].map((mins) => (
+                  <SelectItem key={mins} value={mins} className="text-xs font-medium">
+                    {mins} mins per visit
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <DialogFooter className="pt-3 gap-2 flex items-center justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="h-9.5 px-4 rounded-xl text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="h-9.5 px-5 rounded-xl text-xs font-semibold shadow-xs"
+            >
+              Save Slot
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default AddWeeklySlotDialog;

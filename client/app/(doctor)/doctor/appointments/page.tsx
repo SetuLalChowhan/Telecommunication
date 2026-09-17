@@ -4,11 +4,13 @@ import React, { useState } from "react";
 import Link from "next/link";
 import {
   Calendar,
+  Clock,
   Video,
-  Plus,
+  Check,
   Search,
+  CheckCircle2,
 } from "lucide-react";
-import PatientLayout from "@/layouts/PatientLayout";
+import DoctorLayout from "@/layouts/DoctorLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,29 +23,33 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  PATIENT_RECENT_APPOINTMENTS,
+  DOCTOR_TODAY_SCHEDULE,
+  DoctorScheduleItem,
   DashboardAppointment,
 } from "@/lib/dashboard-mock-data";
 import { AppointmentDetailsDialog } from "@/components/dashboard/shared/AppointmentDetailsDialog";
 
-export default function PatientAppointmentsPage() {
-  const [appointments, setAppointments] = useState<DashboardAppointment[]>(PATIENT_RECENT_APPOINTMENTS);
+export default function DoctorAppointmentsPage() {
+  const [appointments, setAppointments] = useState<DoctorScheduleItem[]>(DOCTOR_TODAY_SCHEDULE);
   const [filter, setFilter] = useState<"ALL" | "CONFIRMED" | "PENDING" | "COMPLETED" | "CANCELLED">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAppt, setSelectedAppt] = useState<DashboardAppointment | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const filteredBookings = appointments.filter((booking) => {
-    const matchesFilter = filter === "ALL" || booking.status === filter;
+  const filteredAppointments = appointments.filter((appt) => {
+    const matchesFilter = filter === "ALL" || appt.status === filter;
     const matchesSearch =
-      booking.doctorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      booking.doctorSpecialty.toLowerCase().includes(searchQuery.toLowerCase());
+      appt.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      appt.symptoms.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
-  const handleOpenDetails = (appt: DashboardAppointment) => {
-    setSelectedAppt(appt);
-    setDialogOpen(true);
+  const handleMarkComplete = (id: string) => {
+    setAppointments((prev) =>
+      prev.map((appt) =>
+        appt.id === id ? { ...appt, status: "COMPLETED" as const } : appt
+      )
+    );
   };
 
   const handleCancelAppointment = (id: string) => {
@@ -52,32 +58,59 @@ export default function PatientAppointmentsPage() {
     );
   };
 
+  const handleOpenDetails = (item: DoctorScheduleItem) => {
+    const adapted: DashboardAppointment = {
+      id: item.id,
+      doctorName: "Dr. Sarah Ahmed",
+      doctorSpecialty: "Cardiology",
+      doctorAvatar: "https://images.unsplash.com/photo-1594824813515-7798c1995815?auto=format&fit=crop&w=400&q=80",
+      patientName: item.patientName,
+      patientAge: item.patientAge,
+      patientGender: item.patientGender,
+      patientAvatar: item.patientAvatar,
+      dateFormatted: "Today",
+      timeFormatted: item.time,
+      consultationType: "Video Consultation",
+      status: item.status,
+      meetLink: item.meetLink,
+      symptoms: item.symptoms,
+      fee: item.fee,
+    };
+    setSelectedAppt(adapted);
+    setDialogOpen(true);
+  };
+
   return (
-    <PatientLayout>
+    <DoctorLayout>
       <div className="space-y-6 sm:space-y-8 max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/70">
           <div className="space-y-1 max-w-2xl">
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-              My Appointments
+              Consultation Queue
             </h1>
             <p className="text-sm text-secondary-text">
-              View your consultation schedule, join video appointments, or schedule new doctor visits.
+              Manage scheduled patient consultations, launch video visits, and complete clinical reviews.
             </p>
           </div>
 
-          <Link href="/doctors">
-            <Button className="h-10 sm:h-11 px-5 rounded-xl text-sm font-semibold gap-2 shadow-xs">
-              <Plus className="h-4 w-4" />
-              <span>Book Appointment</span>
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/doctor/schedule">
+              <Button
+                variant="outline"
+                className="h-10 px-4 rounded-xl text-sm font-semibold gap-2 border-border hover:border-primary/50"
+              >
+                <Clock className="h-4 w-4 text-primary" />
+                <span>Manage Availability</span>
+              </Button>
+            </Link>
+          </div>
         </div>
 
-        {/* Filter Pills & Search */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Status Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        {/* Controls: Filter Pills & Search */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5">
+          {/* Status Filter Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
             {(["ALL", "CONFIRMED", "PENDING", "COMPLETED", "CANCELLED"] as const).map((status) => {
               const count =
                 status === "ALL"
@@ -95,18 +128,18 @@ export default function PatientAppointmentsPage() {
                       : "bg-card text-secondary-text border-border/80 hover:border-primary/40 hover:text-foreground"
                   }`}
                 >
-                  {status === "ALL" ? "All Bookings" : status.charAt(0) + status.slice(1).toLowerCase()} ({count})
+                  {status === "ALL" ? "All Consultations" : status.charAt(0) + status.slice(1).toLowerCase()} ({count})
                 </button>
               );
             })}
           </div>
 
-          {/* Search Box */}
+          {/* Search Box with clean icon positioning */}
           <div className="relative w-full md:w-72 shrink-0">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Search by doctor or specialty..."
+              placeholder="Search by patient or symptom..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-10 text-xs sm:text-sm rounded-xl border-border/80 bg-card hover:border-primary/40 focus:border-primary shadow-xs"
@@ -114,79 +147,89 @@ export default function PatientAppointmentsPage() {
           </div>
         </div>
 
-        {/* Bookings Table (shadcn Table) */}
+        {/* Consultations Table (shadcn Table) */}
         <div className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-xs">
-          {filteredBookings.length > 0 ? (
+          {filteredAppointments.length > 0 ? (
             <>
               {/* Desktop Table View */}
               <div className="hidden md:block">
                 <Table>
                   <TableHeader className="bg-slate-50/70 dark:bg-slate-900/50">
                     <TableRow>
-                      <TableHead className="py-3.5 px-5">Doctor</TableHead>
-                      <TableHead className="py-3.5 px-4">Date & Time</TableHead>
-                      <TableHead className="py-3.5 px-4">Type</TableHead>
+                      <TableHead className="py-3.5 px-5">Patient</TableHead>
+                      <TableHead className="py-3.5 px-4">Time</TableHead>
+                      <TableHead className="py-3.5 px-4">Consultation Reason</TableHead>
                       <TableHead className="py-3.5 px-4">Status</TableHead>
                       <TableHead className="py-3.5 px-5 text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredBookings.map((booking) => (
-                      <TableRow key={booking.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
+                    {filteredAppointments.map((item) => (
+                      <TableRow key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
                         <TableCell className="py-4 px-5">
                           <div className="flex items-center gap-3.5">
                             <Avatar className="h-10 w-10 ring-1 ring-primary/20">
-                              <AvatarImage src={booking.doctorAvatar} alt={booking.doctorName} />
+                              <AvatarImage src={item.patientAvatar} alt={item.patientName} />
                               <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">
-                                {booking.doctorName.slice(0, 2).toUpperCase()}
+                                {item.patientName.slice(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="font-bold text-foreground text-sm">{booking.doctorName}</p>
-                              <p className="text-xs text-muted-foreground">{booking.doctorSpecialty}</p>
+                              <p className="font-bold text-foreground text-sm">{item.patientName}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {item.patientAge} yrs, {item.patientGender}
+                              </p>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="py-4 px-4 font-semibold text-foreground text-sm">
-                          {booking.dateFormatted} · {booking.timeFormatted}
+                        <TableCell className="py-4 px-4 font-bold text-foreground text-sm font-mono">
+                          {item.time}
                         </TableCell>
-                        <TableCell className="py-4 px-4 text-secondary-text font-medium text-sm">
-                          {booking.consultationType}
+                        <TableCell className="py-4 px-4 text-sm text-secondary-text">
+                          <p className="font-medium text-foreground">{item.consultationType}</p>
+                          <p className="text-xs text-muted-foreground truncate max-w-xs">{item.symptoms}</p>
                         </TableCell>
                         <TableCell className="py-4 px-4">
                           <span
                             className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full border uppercase ${
-                              booking.status === "CONFIRMED"
+                              item.status === "CONFIRMED"
                                 ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                                : booking.status === "PENDING"
+                                : item.status === "PENDING"
                                 ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                                : booking.status === "COMPLETED"
+                                : item.status === "COMPLETED"
                                 ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
                                 : "bg-muted text-muted-foreground border-border"
                             }`}
                           >
-                            {booking.status}
+                            {item.status}
                           </span>
                         </TableCell>
                         <TableCell className="py-4 px-5 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {booking.meetLink && booking.status === "CONFIRMED" && (
-                              <a
-                                href={booking.meetLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
+                            {item.meetLink && item.status === "CONFIRMED" && (
+                              <a href={item.meetLink} target="_blank" rel="noopener noreferrer">
                                 <Button size="sm" className="h-8.5 px-3 rounded-lg text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white">
                                   <Video className="h-3.5 w-3.5" />
-                                  <span>Join Call</span>
+                                  <span>Call</span>
                                 </Button>
                               </a>
                             )}
+                            {item.status === "CONFIRMED" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleMarkComplete(item.id)}
+                                className="h-8.5 px-2.5 rounded-lg text-xs font-semibold border-border hover:border-emerald-500 hover:text-emerald-600"
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                                <span>Done</span>
+                              </Button>
+                            )}
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="sm"
-                              onClick={() => handleOpenDetails(booking)}
-                              className="h-8.5 px-3 rounded-lg text-xs font-semibold hover:border-primary hover:text-primary"
+                              onClick={() => handleOpenDetails(item)}
+                              className="h-8.5 px-2.5 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10"
                             >
                               Details
                             </Button>
@@ -200,54 +243,60 @@ export default function PatientAppointmentsPage() {
 
               {/* Mobile Stacked Responsive Cards */}
               <div className="md:hidden divide-y divide-border/60">
-                {filteredBookings.map((booking) => (
-                  <div key={booking.id} className="p-4 space-y-3">
+                {filteredAppointments.map((item) => (
+                  <div key={item.id} className="p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10">
-                          <AvatarImage src={booking.doctorAvatar} alt={booking.doctorName} />
+                          <AvatarImage src={item.patientAvatar} alt={item.patientName} />
                           <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">
-                            {booking.doctorName.slice(0, 2).toUpperCase()}
+                            {item.patientName.slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="text-sm font-bold text-foreground">{booking.doctorName}</p>
-                          <p className="text-xs text-muted-foreground">{booking.doctorSpecialty}</p>
+                          <p className="text-sm font-bold text-foreground">{item.patientName}</p>
+                          <p className="text-xs text-muted-foreground">{item.time} · {item.consultationType}</p>
                         </div>
                       </div>
                       <span
                         className={`text-xs font-semibold px-2 py-0.5 rounded-full border uppercase ${
-                          booking.status === "CONFIRMED"
+                          item.status === "CONFIRMED"
                             ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                            : booking.status === "PENDING"
-                            ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                            : "bg-muted text-muted-foreground border-border"
+                            : "bg-amber-500/10 text-amber-600 border-amber-500/20"
                         }`}
                       >
-                        {booking.status}
+                        {item.status}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-xs text-secondary-text pt-1">
-                      <span className="font-semibold text-foreground">{booking.dateFormatted} · {booking.timeFormatted}</span>
-                      <div className="flex items-center gap-2">
-                        {booking.meetLink && booking.status === "CONFIRMED" && (
-                          <a href={booking.meetLink} target="_blank" rel="noopener noreferrer">
-                            <Button size="sm" className="h-8 px-2.5 text-xs font-semibold gap-1 bg-emerald-600 text-white">
-                              <Video className="h-3.5 w-3.5" />
-                              <span>Join</span>
-                            </Button>
-                          </a>
-                        )}
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                      {item.meetLink && item.status === "CONFIRMED" && (
+                        <a href={item.meetLink} target="_blank" rel="noopener noreferrer">
+                          <Button size="sm" className="h-8 px-3 rounded-lg text-xs font-semibold gap-1 bg-emerald-600 text-white">
+                            <Video className="h-3.5 w-3.5" />
+                            <span>Join Call</span>
+                          </Button>
+                        </a>
+                      )}
+                      {item.status === "CONFIRMED" && (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleOpenDetails(booking)}
-                          className="h-8 px-2.5 text-xs font-semibold"
+                          onClick={() => handleMarkComplete(item.id)}
+                          className="h-8 px-2.5 rounded-lg text-xs font-semibold"
                         >
-                          Details
+                          <Check className="h-3.5 w-3.5" />
+                          <span>Complete</span>
                         </Button>
-                      </div>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenDetails(item)}
+                        className="h-8 px-2 text-xs font-semibold text-primary"
+                      >
+                        Details
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -256,9 +305,9 @@ export default function PatientAppointmentsPage() {
           ) : (
             <div className="p-10 text-center space-y-3">
               <Calendar className="h-10 w-10 text-muted-foreground mx-auto" />
-              <h3 className="text-base font-bold text-foreground">No bookings found</h3>
+              <h3 className="text-base font-bold text-foreground">No appointments found</h3>
               <p className="text-sm text-muted-foreground">
-                No appointments matched &ldquo;{filter}&rdquo;.
+                No consultations found matching your current filter.
               </p>
             </div>
           )}
@@ -270,8 +319,9 @@ export default function PatientAppointmentsPage() {
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           onCancelAppointment={handleCancelAppointment}
+          isDoctorView={true}
         />
       </div>
-    </PatientLayout>
+    </DoctorLayout>
   );
 }

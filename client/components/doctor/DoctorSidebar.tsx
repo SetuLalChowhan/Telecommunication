@@ -110,8 +110,8 @@ export const DoctorSidebar: React.FC<DoctorSidebarProps> = ({ open, setOpen }) =
         </div>
 
         {/* Doctor Navigation Links */}
-        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-1.5">
-          <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-2.5">
+          <div className="px-1.5 pb-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
             Clinical Practice
           </div>
           {DOCTOR_NAV_ITEMS.map((item) => {
@@ -122,13 +122,13 @@ export const DoctorSidebar: React.FC<DoctorSidebarProps> = ({ open, setOpen }) =
                 href={item.path}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  "flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                  "flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all border",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    ? "bg-primary text-white font-semibold border-primary shadow-xs"
+                    : "bg-card border-border/80 text-secondary-text hover:text-foreground hover:bg-slate-50 dark:hover:bg-slate-900/60 hover:border-primary/40 shadow-2xs"
                 )}
               >
-                <span className={cn(isActive ? "text-primary-foreground" : "text-muted-foreground")}>
+                <span className={cn(isActive ? "text-white" : "text-muted-foreground")}>
                   {item.icon}
                 </span>
                 <span>{item.text}</span>
@@ -138,23 +138,22 @@ export const DoctorSidebar: React.FC<DoctorSidebarProps> = ({ open, setOpen }) =
         </div>
 
         {/* Logout Footer */}
-        <div className="p-4 border-t border-border shrink-0">
+        <div className="p-3.5 border-t border-border shrink-0">
           <Button
             variant="ghost"
             disabled={isLoggingOut}
             onClick={logout}
-            className="w-full justify-start gap-3.5 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl disabled:opacity-50"
+            className="w-full justify-start gap-2.5 text-destructive hover:text-destructive hover:bg-destructive/10 border border-destructive/20 bg-destructive/5 rounded-xl h-10 px-3.5 text-xs font-semibold transition-colors disabled:opacity-50"
           >
             {isLoggingOut ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin shrink-0" />
             ) : (
-              <LogOut className="h-5 w-5" />
+              <LogOut className="h-4 w-4 shrink-0" />
             )}
             <span>{isLoggingOut ? "Signing out..." : "Sign Out"}</span>
           </Button>
         </div>
       </aside>
-
     </>
   );
 };

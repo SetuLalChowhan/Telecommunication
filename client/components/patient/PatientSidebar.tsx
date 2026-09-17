@@ -91,7 +91,7 @@ export const PatientSidebar: React.FC<PatientSidebarProps> = ({ open, setOpen })
         </div>
 
         {/* Navigation Links */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-2.5">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.path;
@@ -102,15 +102,15 @@ export const PatientSidebar: React.FC<PatientSidebarProps> = ({ open, setOpen })
                 href={item.path}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all",
+                  "flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all border",
                   isActive
-                    ? "bg-primary text-white font-semibold shadow-xs"
-                    : "text-secondary-text hover:text-foreground hover:bg-muted/60"
+                    ? "bg-primary text-white font-semibold border-primary shadow-xs"
+                    : "bg-card border-border/80 text-secondary-text hover:text-foreground hover:bg-slate-50 dark:hover:bg-slate-900/60 hover:border-primary/40 shadow-2xs"
                 )}
               >
                 <Icon
                   className={cn(
-                    "h-4.5 w-4.5 shrink-0",
+                    "h-4.5 w-4.5 shrink-0 transition-colors",
                     isActive ? "text-white" : "text-muted-foreground"
                   )}
                 />
@@ -120,13 +120,13 @@ export const PatientSidebar: React.FC<PatientSidebarProps> = ({ open, setOpen })
           })}
         </div>
 
-        {/* Bottom Sign Out Area with clean border-t */}
-        <div className="p-3 border-t border-border shrink-0">
+        {/* Bottom Sign Out Area */}
+        <div className="p-3.5 border-t border-border shrink-0">
           <Button
             variant="ghost"
             disabled={isLoggingOut}
             onClick={logout}
-            className="w-full justify-start gap-2.5 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl h-10 px-3 text-sm font-semibold transition-colors disabled:opacity-50"
+            className="w-full justify-start gap-2.5 text-destructive hover:text-destructive hover:bg-destructive/10 border border-destructive/20 bg-destructive/5 rounded-xl h-10 px-3.5 text-xs font-semibold transition-colors disabled:opacity-50"
           >
             {isLoggingOut ? (
               <Loader2 className="h-4 w-4 animate-spin shrink-0" />
