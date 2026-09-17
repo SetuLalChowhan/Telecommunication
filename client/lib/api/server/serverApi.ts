@@ -1,32 +1,5 @@
 import { cookies } from "next/headers";
 
-/**
- * =============================================================================
- * serverApi (SSR / SSG / ISR)
- * =============================================================================
- * Purpose:
- *   Server-side fetch utility tailored for Next.js App Router Server Components (RSC).
- *   Works without browser globals like `window` or client-side React hooks.
- *
- * Capabilities:
- *   1. SSR (Server-Side Rendering):
- *      - Reads incoming user session cookies from `next/headers` (await cookies())
- *      - Forwards the Cookie header to NestJS so the server knows the authenticated user.
- *      - Example: Fetching user profile or private dashboard data dynamically per request.
- *
- *   2. SSG (Static Site Generation):
- *      - Fetches data at build time.
- *      - Pass { cache: "force-cache" }.
- *      - Example: Static help pages, static categories.
- *
- *   3. ISR (Incremental Static Regeneration):
- *      - Fetches data and caches it for a defined duration or until revalidated.
- *      - Pass { revalidate: 60 } (seconds) and/or { tags: ["doctors"] }.
- *      - Can be purged on-demand using revalidateTag("doctors").
- *      - Example: Public doctor profiles, specialties directory.
- * =============================================================================
- */
-
 export interface ServerFetchOptions extends RequestInit {
   /** Revalidation interval in seconds for ISR (or false to disable) */
   revalidate?: number | false;
