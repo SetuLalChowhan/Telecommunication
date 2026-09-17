@@ -26,7 +26,9 @@ export default function DoctorSettingsPage() {
     experienceYears: MOCK_DOCTOR_PROFILE.experienceYears,
     consultationFee: MOCK_DOCTOR_PROFILE.consultationFee,
     bmdcNumber: MOCK_DOCTOR_PROFILE.bmdcNumber,
+    designation: MOCK_DOCTOR_PROFILE.designation || "Senior Consultant - Cardiology",
     hospitalAffiliation: MOCK_DOCTOR_PROFILE.hospitalAffiliation,
+    clinicAddress: MOCK_DOCTOR_PROFILE.clinicAddress || "Plot 4, Road 2, Section 2, Mirpur, Dhaka 1216",
     degrees: MOCK_DOCTOR_PROFILE.degrees.join(", "),
     languages: MOCK_DOCTOR_PROFILE.languages.join(", "),
   });
@@ -129,7 +131,7 @@ export default function DoctorSettingsPage() {
 
               {/* Hospital Affiliation */}
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="hospitalAffiliation">Hospital / Institute Affiliation</Label>
+                <Label htmlFor="hospitalAffiliation">Hospital / Clinic Affiliation</Label>
                 <Input
                   id="hospitalAffiliation"
                   type="text"
@@ -138,6 +140,36 @@ export default function DoctorSettingsPage() {
                     setFormData({ ...formData, hospitalAffiliation: e.target.value })
                   }
                   className="h-10 text-xs sm:text-sm rounded-xl"
+                />
+              </div>
+
+              {/* Designation / Current Role */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="designation">Current Role / Designation</Label>
+                <Input
+                  id="designation"
+                  type="text"
+                  value={formData.designation}
+                  onChange={(e) =>
+                    setFormData({ ...formData, designation: e.target.value })
+                  }
+                  className="h-10 text-xs sm:text-sm rounded-xl"
+                  placeholder="e.g. Senior Consultant - Cardiology"
+                />
+              </div>
+
+              {/* Clinic Location / Address */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="clinicAddress">Clinic / Chamber Location</Label>
+                <Input
+                  id="clinicAddress"
+                  type="text"
+                  value={formData.clinicAddress}
+                  onChange={(e) =>
+                    setFormData({ ...formData, clinicAddress: e.target.value })
+                  }
+                  className="h-10 text-xs sm:text-sm rounded-xl"
+                  placeholder="e.g. Mirpur, Dhaka 1216"
                 />
               </div>
 

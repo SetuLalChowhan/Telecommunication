@@ -9,8 +9,6 @@ import {
   Video,
   ShieldCheck,
   Users,
-  Clock,
-  Languages,
 } from "lucide-react";
 
 interface DoctorHeroCardProps {
@@ -29,6 +27,22 @@ export const DoctorHeroCard: React.FC<DoctorHeroCardProps> = ({ doctor }) => {
   const ratingValue = doctor.rating ? Number(doctor.rating).toFixed(1) : "5.0";
   const reviewsCount = doctor.totalReviews || 190;
   const experienceYears = doctor.experienceYears || 15;
+  const patientsConsulted = doctor.totalPatientsConsulted
+    ? `${doctor.totalPatientsConsulted.toLocaleString()}+`
+    : "2,400+";
+
+  // Distinguish main specialist from other specialties
+  const mainSpecialty =
+    doctor.mainSpecialty ||
+    doctor.specialties.find((s) => s.isPrimary)?.specialty ||
+    doctor.specialties[0]?.specialty;
+
+  const otherSpecialties =
+    doctor.otherSpecialties ||
+    doctor.specialties
+      .filter((s) => !s.isPrimary && s.specialty?.id !== mainSpecialty?.id)
+      .map((s) => s.specialty)
+      .filter(Boolean);
 
   return (
     <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-7 shadow-xs">
@@ -55,7 +69,7 @@ export const DoctorHeroCard: React.FC<DoctorHeroCardProps> = ({ doctor }) => {
                 {doctor.verified && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 text-xs font-semibold border border-emerald-500/20">
                     <ShieldCheck className="h-3.5 w-3.5" />
-                    <span>BMDC Verified</span>
+                    <span>{doctor.bmdcNumber ? `BMDC: ${doctor.bmdcNumber}` : "BMDC Verified"}</span>
                   </span>
                 )}
               </div>
@@ -66,37 +80,30 @@ export const DoctorHeroCard: React.FC<DoctorHeroCardProps> = ({ doctor }) => {
               </span>
             </div>
 
-            {/* Specialties & Qualifications Tagline */}
+            {/* Specialties */}
             <div className="flex flex-wrap items-center gap-2 pt-0.5">
-              {doctor.specialties.map((item) => (
+              {/* Main Specialist Badge */}
+              {mainSpecialty && (
+                <span className="inline-flex items-center gap-1 rounded-lg bg-primary/15 text-primary border border-primary/25 font-bold px-2.5 py-0.5 text-xs">
+                  <span>★ Main:</span>
+                  <span>{mainSpecialty.name}</span>
+                </span>
+              )}
+
+              {/* Other Specialties */}
+              {otherSpecialties.map((spec) => (
                 <span
-                  key={item.specialtyId}
-                  className="inline-flex items-center rounded-lg bg-slate-100 dark:bg-slate-800 text-foreground font-semibold px-2.5 py-0.5 text-xs"
+                  key={spec.id || spec.slug}
+                  className="inline-flex items-center rounded-lg bg-slate-100 dark:bg-slate-800 text-foreground font-medium px-2.5 py-0.5 text-xs"
                 >
-                  {item.specialty?.name}
+                  {spec.name}
                 </span>
               ))}
-              <span className="text-xs text-muted-foreground font-medium">
-                · MBBS, FCPS, MD (Specialist)
-              </span>
-            </div>
-
-            {/* Spoken Languages & Clinic Info */}
-            <div className="flex items-center gap-4 text-xs text-secondary-text pt-1">
-              <span className="inline-flex items-center gap-1 font-medium">
-                <Languages className="h-3.5 w-3.5 text-primary" />
-                <span>English, Bangla</span>
-              </span>
-              <span>&bull;</span>
-              <span className="inline-flex items-center gap-1 font-medium">
-                <Clock className="h-3.5 w-3.5 text-primary" />
-                <span>Avg. Response: &lt; 15 mins</span>
-              </span>
             </div>
           </div>
 
           {/* Quick Metrics Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 pt-2">
+          <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5 pt-2">
             {/* Rating */}
             <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/40 border border-border/80">
               <div className="flex items-center gap-1 text-amber-500">
@@ -123,29 +130,16 @@ export const DoctorHeroCard: React.FC<DoctorHeroCardProps> = ({ doctor }) => {
               </p>
             </div>
 
-            {/* Patients Treated */}
+            {/* Patients Consulted */}
             <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/40 border border-border/80">
               <div className="flex items-center gap-1 text-primary">
                 <Users className="h-4 w-4" />
                 <span className="text-sm sm:text-base font-bold text-foreground">
-                  2,400+
+                  {patientsConsulted}
                 </span>
               </div>
               <p className="text-[11px] text-secondary-text mt-0.5 font-medium">
                 Patients Consulted
-              </p>
-            </div>
-
-            {/* Satisfaction */}
-            <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/40 border border-border/80">
-              <div className="flex items-center gap-1 text-emerald-600">
-                <ShieldCheck className="h-4 w-4" />
-                <span className="text-sm sm:text-base font-bold text-foreground">
-                  99%
-                </span>
-              </div>
-              <p className="text-[11px] text-secondary-text mt-0.5 font-medium">
-                Satisfaction Rate
               </p>
             </div>
           </div>

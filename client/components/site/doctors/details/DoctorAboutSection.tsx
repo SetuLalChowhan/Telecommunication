@@ -76,52 +76,81 @@ export const DoctorAboutSection: React.FC<DoctorAboutSectionProps> = ({
           </div>
           <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
             <ShieldCheck className="h-3.5 w-3.5" />
-            <span>Verified Credentials</span>
+            <span>{doctor.bmdcNumber ? `BMDC: ${doctor.bmdcNumber}` : "Verified Credentials"}</span>
           </span>
         </div>
 
         {/* Credentials Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl border border-border/80 bg-slate-50/70 dark:bg-slate-900/30 space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <span className="inline-flex items-center text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">
-                MBBS
-              </span>
-              <span className="text-xs text-muted-foreground font-medium">Graduated 2010</span>
-            </div>
-            <h4 className="text-sm font-bold text-foreground">
-              Bachelor of Medicine & Bachelor of Surgery
-            </h4>
-            <p className="text-xs text-secondary-text">
-              Dhaka Medical College & Hospital (DMCH) · First Class Honors
-            </p>
-          </div>
+          {doctor.qualifications && doctor.qualifications.length > 0 ? (
+            doctor.qualifications.map((q, idx) => (
+              <div
+                key={q.id || idx}
+                className="p-4 rounded-xl border border-border/80 bg-slate-50/70 dark:bg-slate-900/30 space-y-2"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">
+                    {q.degree}
+                  </span>
+                  {q.passingYear && (
+                    <span className="text-xs text-muted-foreground font-medium">
+                      Graduated {q.passingYear}
+                    </span>
+                  )}
+                </div>
+                <h4 className="text-sm font-bold text-foreground">
+                  {q.field || q.degree}
+                </h4>
+                <p className="text-xs text-secondary-text">
+                  {q.institute} {q.result ? `· ${q.result}` : ""}
+                </p>
+              </div>
+            ))
+          ) : (
+            <>
+              <div className="p-4 rounded-xl border border-border/80 bg-slate-50/70 dark:bg-slate-900/30 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">
+                    MBBS
+                  </span>
+                  <span className="text-xs text-muted-foreground font-medium">Graduated 2010</span>
+                </div>
+                <h4 className="text-sm font-bold text-foreground">
+                  Bachelor of Medicine & Bachelor of Surgery
+                </h4>
+                <p className="text-xs text-secondary-text">
+                  Dhaka Medical College & Hospital (DMCH) · First Class Honors
+                </p>
+              </div>
 
-          <div className="p-4 rounded-xl border border-border/80 bg-slate-50/70 dark:bg-slate-900/30 space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <span className="inline-flex items-center text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">
-                FCPS / MD
-              </span>
-              <span className="text-xs text-muted-foreground font-medium">Fellowship 2016</span>
-            </div>
-            <h4 className="text-sm font-bold text-foreground">
-              Fellow of College of Physicians & Surgeons
-            </h4>
-            <p className="text-xs text-secondary-text">
-              BCPS Bangladesh · Advanced Clinical Fellowship
-            </p>
-          </div>
+              <div className="p-4 rounded-xl border border-border/80 bg-slate-50/70 dark:bg-slate-900/30 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">
+                    FCPS / MD
+                  </span>
+                  <span className="text-xs text-muted-foreground font-medium">Fellowship 2016</span>
+                </div>
+                <h4 className="text-sm font-bold text-foreground">
+                  Fellow of College of Physicians & Surgeons
+                </h4>
+                <p className="text-xs text-secondary-text">
+                  BCPS Bangladesh · Advanced Clinical Fellowship
+                </p>
+              </div>
+            </>
+          )}
         </div>
 
-        {/* Hospital Affiliation Row */}
+        {/* Current Clinic / Hospital Affiliation Row */}
         <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/5 border border-primary/15">
           <Building2 className="h-5 w-5 text-primary shrink-0" />
           <div className="text-xs">
             <span className="font-bold text-foreground block">
-              Current Clinical Affiliation: Senior Consultant
+              Current Clinical Affiliation: {doctor.designation || "Senior Consultant"}
             </span>
             <span className="text-secondary-text">
-              Department of Medicine, Square Hospital & Tele-Health Network
+              {doctor.hospitalAffiliation || "Square Hospital & Tele-Health Network"}
+              {doctor.clinicAddress ? ` · ${doctor.clinicAddress}` : ""}
             </span>
           </div>
         </div>

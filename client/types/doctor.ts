@@ -9,7 +9,17 @@ export interface Specialty {
 export interface DoctorSpecialty {
   doctorId: string;
   specialtyId: string;
+  isPrimary?: boolean;
   specialty: Specialty;
+}
+
+export interface DoctorQualification {
+  id?: string;
+  degree: string;
+  field?: string;
+  institute: string;
+  passingYear?: number;
+  result?: string;
 }
 
 export interface DoctorAvailability {
@@ -56,8 +66,16 @@ export interface DoctorProfile {
   verified: boolean;
   rating?: number;
   totalReviews?: number;
+  totalPatientsConsulted?: number;
+  bmdcNumber?: string;
+  designation?: string;
+  hospitalAffiliation?: string;
+  clinicAddress?: string;
+  mainSpecialty?: Specialty;
+  otherSpecialties?: Specialty[];
   user: DoctorUser;
   specialties: DoctorSpecialty[];
+  qualifications?: DoctorQualification[];
   availabilities?: DoctorAvailability[];
   reviews?: DoctorReview[];
 }

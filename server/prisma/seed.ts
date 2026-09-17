@@ -53,6 +53,9 @@ async function main() {
           password: adminPassword,
           name: adminName,
         },
+        headers: new Headers({
+          origin: process.env.BETTER_AUTH_URL || 'http://localhost:5000',
+        }),
       });
 
       if (authResult?.user?.id) {
@@ -66,7 +69,7 @@ async function main() {
         console.log(` Super Admin created with ID: ${authResult.user.id}`);
       }
     } catch (err: any) {
-      console.warn(' Better-Auth signup encountered error or email exists:', err?.message || err);
+      console.error(' Better-Auth signup encountered error:', err?.message || err);
     }
   } else {
     // Ensure role is ADMIN and email is verified

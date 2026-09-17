@@ -6,7 +6,9 @@ export interface DoctorProfileData {
   experienceYears: number;
   consultationFee: number;
   bmdcNumber: string;
+  designation?: string;
   hospitalAffiliation: string;
+  clinicAddress?: string;
   degrees: string[];
   languages: string[];
   isVerified: boolean;
@@ -63,7 +65,9 @@ export const MOCK_DOCTOR_PROFILE: DoctorProfileData = {
   experienceYears: 12,
   consultationFee: 1200,
   bmdcNumber: "BMDC-A-48921",
+  designation: "Senior Consultant - Cardiology",
   hospitalAffiliation: "National Heart Foundation & Research Hospital",
+  clinicAddress: "Plot 4, Road 2, Section 2, Mirpur, Dhaka 1216",
   degrees: ["MBBS (Dhaka)", "FCPS (Cardiology)", "MRCP (UK)"],
   languages: ["English", "Bengali"],
   isVerified: true,

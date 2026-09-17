@@ -1,26 +1,31 @@
 model DoctorProfile {
-  id              String    @id @default(cuid())
-  userId          String    @unique
-  slug            String?   @unique
-  experienceYears Int       @default(0)
-  fee             Decimal   @db.Decimal(10, 2)
-  bio             String?
-  verified        Boolean   @default(false)
-  verifiedAt      DateTime?
-  verifiedById    String?
-  rating          Float     @default(0)
-  bookings        Booking[]
-  totalReviews    Int       @default(0)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                  String    @id @default(cuid())
+  userId              String    @unique
+  slug                String?   @unique
+  experienceYears     Int       @default(0)
+  fee                 Decimal   @db.Decimal(10, 2)
+  bio                 String?
+  bmdcNumber          String?
+  designation         String?
+  hospitalAffiliation String?
+  clinicAddress       String?
+  verified            Boolean   @default(false)
+  verifiedAt          DateTime?
+  verifiedById        String?
+  rating              Float     @default(0)
+  bookings            Booking[]
+  totalReviews        Int       @default(0)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   verifiedBy User?  @relation("DoctorVerifiedBy", fields: [verifiedById], references: [id], onDelete: SetNull)
 
-  specialties  DoctorSpecialty[]
-  documents    DoctorDocument[]
-  availability Availability[]
-  daysOff      DoctorDayOff[]
+  specialties    DoctorSpecialty[]
+  qualifications DoctorQualification[]
+  documents      DoctorDocument[]
+  availability   Availability[]
+  daysOff        DoctorDayOff[]
 
   @@index([verified])
 }
@@ -28,11 +33,27 @@ model DoctorProfile {
 model DoctorSpecialty {
   doctorId    String
   specialtyId String
+  isPrimary   Boolean @default(false)
 
   doctor    DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
   specialty Specialty     @relation(fields: [specialtyId], references: [id], onDelete: Cascade)
 
   @@id([doctorId, specialtyId])
+}
+
+model DoctorQualification {
+  id          String   @id @default(cuid())
+  doctorId    String
+  degree      String
+  field       String?
+  institute   String
+  passingYear Int?
+  result      String?
+  createdAt   DateTime @default(now())
+
+  doctor DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId])
 }
 
 model DoctorDocument {
