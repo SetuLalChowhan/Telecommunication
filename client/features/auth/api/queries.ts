@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
   selectCurrentUser,
@@ -20,28 +20,10 @@ import {
   resetPassword,
   verifyEmail,
   sendVerificationEmail,
-} from "./authClient";
+} from "./client";
+import { apiClient } from "@/lib/api/axios";
 import { toast } from "react-toastify";
-import { User, Role } from "@/types";
-import { useClient } from "./useClient";
-import { useMutationClient } from "./useMutationClient";
-import { axiosPublic } from "./useAxiosPublic";
-
-export type { Role } from "@/types";
-
-export interface LoginParams {
-  email: string;
-  password: string;
-  rememberMe?: boolean;
-  redirectTo?: string;
-}
-
-export interface RegisterParams {
-  name: string;
-  email: string;
-  password: string;
-  role: Role;
-}
+import { User, Role, LoginParams, RegisterParams, authKeys } from "../types";
 
 /**
  * Helper to determine dashboard route based on user role and verification status
@@ -60,14 +42,8 @@ export function getRoleDashboardRoute(role?: Role | string | null, isVerified?: 
 }
 
 /**
- * =============================================================================
  * useAuth Hook
- * =============================================================================
- * Unified authentication hook that coordinates:
- * 1. Reactive Session & Profile State (Better-Auth + TanStack Query)
- * 2. Instant Memory State (Redux)
- * 3. Type-safe Authentication Mutations
- * =============================================================================
+ * Unified authentication hook coordinating Better-Auth, TanStack Query, and Redux.
  */
 export const useAuth = () => {
   const router = useRouter();
@@ -82,32 +58,33 @@ export const useAuth = () => {
 
   const isAuthenticated = !!(session?.user || reduxIsAuthenticated);
 
-  // Fetch full backend profile (with doctorProfile/patientProfile) when authenticated
-  const { data: profileUser, isLoading: isProfileLoading } = useClient<User>({
-    queryKey: ["user", "me"],
-    url: "/users/me",
-    isPrivate: true,
+  // Fetch full backend profile when authenticated
+  const { data: profileUser, isLoading: isProfileLoading } = useQuery<User>({
+    queryKey: authKeys.profile(),
+    queryFn: async () => {
+      const res = await apiClient.get("/users/me");
+      return res.data?.data || res.data;
+    },
     enabled: isAuthenticated,
+    staleTime: 1000 * 60 * 5,
   });
 
-  // Consolidated User & Role: Profile data > Session data > Redux fallback
   const user = profileUser || (session?.user as unknown as User) || reduxUser || null;
   const role = (user?.role as Role) || profileUser?.role || reduxRole || "PATIENT";
 
   // 2. Auth Mutations
 
   // Email & Password Login
-  const loginMutation = useMutationClient<any, LoginParams>({
-    mutationFn: async ({ email, password, rememberMe = true }) => {
-      const res = await signIn.email({ email, password, rememberMe });
+  const loginMutation = useMutation({
+    mutationFn: async ({ email, password, rememberMe = true }: LoginParams) => {
+      const res = await signIn.email({ email, password: password || "", rememberMe });
       if (res.error) {
         throw new Error(res.error.message || "Invalid email or password.");
       }
       return res.data;
     },
-    successMessage: "Welcome back! Signed in successfully.",
-    invalidateKeys: [["user", "me"]],
     onSuccess: (data, variables) => {
+      toast.success("Welcome back! Signed in successfully.");
       const authUser = (data as any)?.user;
       const authSession = (data as any)?.session;
       if (authUser) {
@@ -118,46 +95,55 @@ export const useAuth = () => {
           })
         );
       }
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: authKeys.all });
       const userRole = authUser?.role || role;
       const destination = variables.redirectTo || getRoleDashboardRoute(userRole);
       router.push(destination);
     },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to sign in");
+    },
   });
 
   // Account Registration
-  const registerMutation = useMutationClient<any, RegisterParams>({
-    mutationFn: async ({ name, email, password, role }) => {
-      const res = await signUp.email({ email, password, name, role } as any);
+  const registerMutation = useMutation({
+    mutationFn: async ({ name, email, password, role }: RegisterParams) => {
+      const res = await signUp.email({ email, password: password || "", name, role } as any);
       if (res.error) {
         throw new Error(res.error.message || "Failed to create account.");
       }
       return res.data;
     },
-    successMessage: "Account created! Please check your email for the verification link.",
     onSuccess: (_data, variables) => {
+      toast.success("Account created! Please check your email for verification.");
       router.push(
         `/verify-email?email=${encodeURIComponent(variables.email)}&role=${encodeURIComponent(variables.role)}`
       );
     },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to create account");
+    },
   });
 
   // Sign Out
-  const logoutMutation = useMutationClient<void, void>({
+  const logoutMutation = useMutation({
     mutationFn: async () => {
       await signOut();
     },
-    successMessage: "Signed out successfully",
-    redirectTo: "/login",
     onSuccess: () => {
+      toast.success("Signed out successfully");
       dispatch(clearAuth());
       queryClient.clear();
+      router.push("/login");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to log out");
     },
   });
 
   // Forgot Password Request
-  const forgotPasswordMutation = useMutationClient<any, { email: string; redirectTo?: string }>({
-    mutationFn: async ({ email, redirectTo }) => {
+  const forgotPasswordMutation = useMutation({
+    mutationFn: async ({ email, redirectTo }: { email: string; redirectTo?: string }) => {
       const res = await requestPasswordReset({
         email,
         redirectTo:
@@ -169,37 +155,52 @@ export const useAuth = () => {
       }
       return res.data;
     },
-    successMessage: "Password reset instructions sent to your email!",
+    onSuccess: () => {
+      toast.success("Password reset instructions sent to your email!");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to request password reset");
+    },
   });
 
   // Reset Password Execution
-  const resetPasswordMutation = useMutationClient<any, { newPassword: string; token: string }>({
-    mutationFn: async ({ newPassword, token }) => {
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ newPassword, token }: { newPassword: string; token: string }) => {
       const res = await resetPassword({ newPassword, token });
       if (res.error) {
         throw new Error(res.error.message || "Failed to reset password.");
       }
       return res.data;
     },
-    successMessage: "Password has been reset! Please sign in with your new password.",
-    redirectTo: "/login",
+    onSuccess: () => {
+      toast.success("Password has been reset! Please sign in with your new password.");
+      router.push("/login");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to reset password");
+    },
   });
 
-  // Verify Email (via Token)
-  const verifyEmailMutation = useMutationClient<any, string>({
-    mutationFn: async (token) => {
+  // Verify Email
+  const verifyEmailMutation = useMutation({
+    mutationFn: async (token: string) => {
       const res = await verifyEmail({ query: { token } });
       if (res.error) {
         throw new Error(res.error.message || "Email verification failed.");
       }
       return res.data;
     },
-    successMessage: "Email verified successfully!",
+    onSuccess: () => {
+      toast.success("Email verified successfully!");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Email verification failed");
+    },
   });
 
   // Resend Email Verification Link
-  const resendVerificationEmailMutation = useMutationClient<any, { email: string; callbackURL?: string }>({
-    mutationFn: async ({ email, callbackURL }) => {
+  const resendVerificationEmailMutation = useMutation({
+    mutationFn: async ({ email, callbackURL }: { email: string; callbackURL?: string }) => {
       const res = await sendVerificationEmail({
         email,
         callbackURL: callbackURL || `${typeof window !== "undefined" ? window.location.origin : ""}/`,
@@ -209,20 +210,24 @@ export const useAuth = () => {
       }
       return res.data;
     },
-    successMessage: "Verification link sent! Please check your inbox.",
+    onSuccess: () => {
+      toast.success("Verification link sent! Please check your inbox.");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to resend verification email");
+    },
   });
 
   // Google One-Tap / ID-Token Login
-  const loginWithGoogleCredentialMutation = useMutationClient<any, { credential: string }>({
-    mutationFn: async ({ credential }) => {
-      const res = await axiosPublic.post("/api/auth/one-tap/callback", {
+  const loginWithGoogleCredentialMutation = useMutation({
+    mutationFn: async ({ credential }: { credential: string }) => {
+      const res = await apiClient.post("/api/auth/one-tap/callback", {
         idToken: credential,
       });
       return res.data;
     },
-    successMessage: "Welcome! Signed in with Google.",
-    invalidateKeys: [["user", "me"]],
     onSuccess: (data) => {
+      toast.success("Welcome! Signed in with Google.");
       const authUser = (data as any)?.user;
       const authSession = (data as any)?.session;
       if (authUser) {
@@ -233,9 +238,12 @@ export const useAuth = () => {
           })
         );
       }
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: authKeys.all });
       const userRole = authUser?.role || role;
       router.push(getRoleDashboardRoute(userRole));
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Google sign-in failed");
     },
   });
 
@@ -277,7 +285,7 @@ export const useAuth = () => {
     loginWithGoogleCredential: (credential: string) =>
       loginWithGoogleCredentialMutation.mutateAsync({ credential }),
 
-    // Direct Mutation Handles (for isPending, error, etc.)
+    // Direct Mutation Handles
     loginMutation,
     registerMutation,
     logoutMutation,

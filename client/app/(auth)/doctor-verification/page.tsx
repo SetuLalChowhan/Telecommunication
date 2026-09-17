@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Check, UploadCloud, ChevronRight, X, Loader2 } from "lucide-react";
 import BrandLogo from "@/components/common/BrandLogo";
 import { Button } from "@/components/ui/button";
-import { useMutationClient } from "@/lib/api";
+import { apiClient } from "@/lib/api/axios";
+import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
 interface DocumentRequirement {
@@ -50,12 +51,19 @@ export default function DoctorVerificationPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // TanStack Mutation using unified useMutationClient
-  const { mutateAsync: uploadDoc, isPending } = useMutationClient({
-    url: "/doctors/me/documents",
-    method: "post",
-    isPrivate: true,
-    successMessage: "Verification document uploaded successfully!",
+  const { mutateAsync: uploadDoc, isPending } = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const response = await apiClient.post("/doctors/me/documents", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Verification document uploaded successfully!");
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || "Failed to upload document");
+    },
   });
 
   const triggerFileSelect = (docType: string) => {
@@ -81,12 +89,7 @@ export default function DoctorVerificationPage() {
     formData.append("docType", activeUploadType);
 
     try {
-      await uploadDoc({
-        data: formData,
-        config: {
-          headers: { "Content-Type": "multipart/form-data" },
-        },
-      });
+      await uploadDoc(formData);
 
       setUploadedDocs((prev) => ({
         ...prev,

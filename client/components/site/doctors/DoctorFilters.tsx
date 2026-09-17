@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 interface DoctorFiltersProps {
   specialties: Specialty[];
@@ -21,6 +22,7 @@ interface DoctorFiltersProps {
   onMaxFeeChange: (val: string) => void;
   experience: string;
   onExperienceChange: (val: string) => void;
+  onApplyFilters: () => void;
   onResetFilters: () => void;
   isMobileOpen?: boolean;
   onMobileClose?: () => void;
@@ -36,6 +38,7 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
   onMaxFeeChange,
   experience,
   onExperienceChange,
+  onApplyFilters,
   onResetFilters,
   isMobileOpen = false,
   onMobileClose,
@@ -63,7 +66,7 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
         )}
       </div>
 
-      {/* 1. Specialty Dropdown with Active Selected Border */}
+      {/* 1. Specialty Dropdown */}
       <div className="space-y-2">
         <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
           <Stethoscope className="h-3.5 w-3.5 text-primary" />
@@ -127,6 +130,9 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
               placeholder="0"
               value={minFee}
               onChange={(e) => onMinFeeChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") onApplyFilters();
+              }}
               className={`w-full h-9 px-3 rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none transition-all ${
                 minFee
                   ? "border-2 border-primary bg-primary/5 font-semibold ring-1 ring-primary/20"
@@ -141,6 +147,9 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
               placeholder="2000"
               value={maxFee}
               onChange={(e) => onMaxFeeChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") onApplyFilters();
+              }}
               className={`w-full h-9 px-3 rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none transition-all ${
                 maxFee
                   ? "border-2 border-primary bg-primary/5 font-semibold ring-1 ring-primary/20"
@@ -182,7 +191,18 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
         </div>
       </div>
 
-      {/* Simple Verification Notice */}
+      {/* Apply Filters Action Button */}
+      <div className="pt-2 border-t border-border space-y-2">
+        <Button
+          type="button"
+          onClick={onApplyFilters}
+          className="w-full h-10 rounded-xl font-semibold text-sm shadow-xs"
+        >
+          Apply Filters
+        </Button>
+      </div>
+
+      {/* Verification Notice */}
       <div className="rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-border p-3.5 flex items-start gap-2.5 text-xs text-secondary-text">
         <ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
         <p className="leading-relaxed">
@@ -227,13 +247,16 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
             </div>
 
             <div className="pt-6 border-t border-border mt-6">
-              <button
+              <Button
                 type="button"
-                onClick={onMobileClose}
-                className="w-full h-11 rounded-xl bg-primary hover:bg-primary-dark text-white text-sm font-semibold shadow-xs transition-all cursor-pointer"
+                onClick={() => {
+                  onApplyFilters();
+                  onMobileClose?.();
+                }}
+                className="w-full h-11 rounded-xl font-semibold text-sm shadow-xs"
               >
                 Apply Filters
-              </button>
+              </Button>
             </div>
           </div>
         </div>

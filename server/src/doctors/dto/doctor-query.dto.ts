@@ -23,8 +23,20 @@ export class DoctorQueryDto {
     maxFee?: number;
 
     @IsOptional()
-    @IsIn(['rating', 'fee', 'experience'])
-    sortBy?: 'rating' | 'fee' | 'experience';
+    @IsIn(['latest', 'rating', 'fee', 'experience'])
+    sortBy?: 'latest' | 'rating' | 'fee' | 'experience';
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsNumber()
+    @Min(0)
+    minExperience?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsNumber()
+    @Min(0)
+    experience?: number;
 
     @IsOptional()
     @Type(() => Number)

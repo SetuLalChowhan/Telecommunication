@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useMemo, useEffect } from "react";
 import { DoctorProfile, DoctorAvailability } from "@/types/doctor";
 import {
   Calendar as CalendarIcon,
@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CalendarDays,
+  AlertCircle,
 } from "lucide-react";
 import {
   Popover,
@@ -25,13 +26,59 @@ interface DoctorBookingSidebarProps {
   availabilities: DoctorAvailability[];
 }
 
+const DAY_MAP: Record<string, number> = {
+  SUNDAY: 0,
+  MONDAY: 1,
+  TUESDAY: 2,
+  WEDNESDAY: 3,
+  THURSDAY: 4,
+  FRIDAY: 5,
+  SATURDAY: 6,
+};
+
+function parseDayOfWeek(day: unknown): number {
+  if (typeof day === "number") return day;
+  if (typeof day === "string") {
+    const key = day.trim().toUpperCase();
+    if (key in DAY_MAP) return DAY_MAP[key];
+    const parsed = Number(key);
+    if (!Number.isNaN(parsed)) return parsed;
+  }
+  return -1;
+}
+
+function parseTimeToMinutes(timeStr: string): number {
+  if (!timeStr) return 0;
+  const isPM = /pm/i.test(timeStr);
+  const isAM = /am/i.test(timeStr);
+  const clean = timeStr.replace(/[^\d:]/g, "").trim();
+  const parts = clean.split(":").map(Number);
+  let hours = parts[0] || 0;
+  const minutes = parts[1] || 0;
+
+  if (isPM && hours < 12) hours += 12;
+  if (isAM && hours === 12) hours = 0;
+
+  return hours * 60 + minutes;
+}
+
+function minutesToTimeSlot(totalMinutes: number): string {
+  const hours24 = Math.floor(totalMinutes / 60) % 24;
+  const minutes = totalMinutes % 60;
+  const period = hours24 >= 12 ? "PM" : "AM";
+  const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
+  const padHours = String(hours12).padStart(2, "0");
+  const padMins = String(minutes).padStart(2, "0");
+  return `${padHours}:${padMins} ${period}`;
+}
+
 export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
   doctor,
-  availabilities,
+  availabilities = [],
 }) => {
   const [selectedDayIdx, setSelectedDayIdx] = useState<number>(0);
   const [customDate, setCustomDate] = useState<Date | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<string>("10:00 AM");
+  const [selectedSlot, setSelectedSlot] = useState<string>("");
   const [isBooked, setIsBooked] = useState<boolean>(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
 
@@ -40,20 +87,32 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
   const startXRef = useRef<number>(0);
   const scrollLeftRef = useRef<number>(0);
 
+  // Combine availability sources
+  const allAvailabilities: DoctorAvailability[] = useMemo(() => {
+    if (availabilities && availabilities.length > 0) return availabilities;
+    if ((doctor as any)?.availability && (doctor as any).availability.length > 0)
+      return (doctor as any).availability;
+    if (doctor.availabilities && doctor.availabilities.length > 0)
+      return doctor.availabilities;
+    return [];
+  }, [availabilities, doctor]);
+
   // Generate 14 days
-  const days = Array.from({ length: 14 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
-    d.setHours(0, 0, 0, 0);
-    return {
-      date: d,
-      dayName:
-        i === 0 ? "Today" : d.toLocaleDateString("en-US", { weekday: "short" }),
-      dayNum: d.getDate(),
-      month: d.toLocaleDateString("en-US", { month: "short" }),
-      dayOfWeek: d.getDay(),
-    };
-  });
+  const days = useMemo(() => {
+    return Array.from({ length: 14 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      d.setHours(0, 0, 0, 0);
+      return {
+        date: d,
+        dayName:
+          i === 0 ? "Today" : d.toLocaleDateString("en-US", { weekday: "short" }),
+        dayNum: d.getDate(),
+        month: d.toLocaleDateString("en-US", { month: "short" }),
+        dayOfWeek: d.getDay(),
+      };
+    });
+  }, []);
 
   const activeDate = customDate || days[selectedDayIdx].date;
   const activeDayLabel = {
@@ -64,6 +123,82 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
     dayNum: activeDate.getDate(),
     month: activeDate.toLocaleDateString("en-US", { month: "short" }),
   };
+
+  // Check if activeDate is a doctor's scheduled day off
+  const isDayOff = useMemo(() => {
+    const daysOff = (doctor as any)?.daysOff || [];
+    return daysOff.some((off: any) => {
+      if (!off.date) return false;
+      const offDate = new Date(off.date);
+      return offDate.toDateString() === activeDate.toDateString();
+    });
+  }, [doctor, activeDate]);
+
+  // Dynamically compute slots for active date based on doctor availability
+  const { morningSlots, eveningSlots, allSlots } = useMemo(() => {
+    if (isDayOff) {
+      return { morningSlots: [], eveningSlots: [], allSlots: [] };
+    }
+
+    const activeDayOfWeek = activeDate.getDay();
+
+    const matchingRules = allAvailabilities.filter((rule) => {
+      if (rule.isActive === false) return false;
+      return parseDayOfWeek(rule.dayOfWeek) === activeDayOfWeek;
+    });
+
+    const generated: { time: string; totalMinutes: number }[] = [];
+
+    matchingRules.forEach((rule) => {
+      const startMins = parseTimeToMinutes(rule.startTime);
+      const endMins = parseTimeToMinutes(rule.endTime);
+      const duration = Number(rule.consultationDuration) || 30;
+
+      for (let m = startMins; m + duration <= endMins; m += duration) {
+        generated.push({
+          time: minutesToTimeSlot(m),
+          totalMinutes: m,
+        });
+      }
+    });
+
+    // Deduplicate & sort chronologically
+    const uniqueMap = new Map<string, number>();
+    generated.forEach((item) => {
+      if (!uniqueMap.has(item.time)) {
+        uniqueMap.set(item.time, item.totalMinutes);
+      }
+    });
+
+    const sortedSlots = Array.from(uniqueMap.entries())
+      .sort((a, b) => a[1] - b[1])
+      .map(([time, totalMinutes]) => ({ time, totalMinutes }));
+
+    const morning = sortedSlots
+      .filter((s) => s.totalMinutes < 12 * 60)
+      .map((s) => s.time);
+
+    const evening = sortedSlots
+      .filter((s) => s.totalMinutes >= 12 * 60)
+      .map((s) => s.time);
+
+    return {
+      morningSlots: morning,
+      eveningSlots: evening,
+      allSlots: sortedSlots.map((s) => s.time),
+    };
+  }, [activeDate, allAvailabilities, isDayOff]);
+
+  // Auto-sync selected slot when active date changes
+  useEffect(() => {
+    if (allSlots.length > 0) {
+      if (!allSlots.includes(selectedSlot)) {
+        setSelectedSlot(allSlots[0]);
+      }
+    } else {
+      setSelectedSlot("");
+    }
+  }, [allSlots, selectedSlot]);
 
   // Mouse drag-to-scroll implementation
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -85,7 +220,6 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
     isDraggingRef.current = false;
   };
 
-  // Wheel horizontal scroll
   const handleWheel = (e: React.WheelEvent) => {
     if (!scrollContainerRef.current) return;
     if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
@@ -93,7 +227,6 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
     }
   };
 
-  // Arrow button slide
   const handleSlide = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
       const scrollAmount = direction === "left" ? -180 : 180;
@@ -104,26 +237,21 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
     }
   };
 
-  // Calendar date select
   const handleCalendarSelect = (date: Date) => {
     setCustomDate(date);
     setIsCalendarOpen(false);
 
-    // If selected date is in our 14-day list, sync active index
     const matchIdx = days.findIndex(
-      (d) => d.date.toDateString() === date.toDateString(),
+      (d) => d.date.toDateString() === date.toDateString()
     );
     if (matchIdx !== -1) {
       setSelectedDayIdx(matchIdx);
     }
   };
 
-  // Available slots
-  const morningSlots = ["09:30 AM", "10:00 AM", "11:00 AM", "11:30 AM"];
-  const eveningSlots = ["04:30 PM", "05:00 PM", "06:30 PM", "07:00 PM"];
-
   const handleBookNow = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedSlot) return;
     setIsBooked(true);
   };
 
@@ -137,7 +265,7 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
           </span>
           <div className="flex items-baseline gap-1 mt-0.5">
             <span className="text-2xl sm:text-3xl font-bold text-foreground">
-              ৳{doctor.fee || 500}
+              ৳{Number(doctor.fee ?? 0).toLocaleString()}
             </span>
             <span className="text-xs text-secondary-text">/ video session</span>
           </div>
@@ -161,7 +289,7 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
             <p className="text-xs text-secondary-text leading-relaxed">
               Your online video appointment with{" "}
               <span className="font-semibold text-foreground">
-                {doctor.user.name || "Dr. Specialist"}
+                {doctor.user?.name || "Doctor"}
               </span>{" "}
               is confirmed for:
             </p>
@@ -180,15 +308,9 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
               <span className="font-semibold text-primary">{selectedSlot}</span>
             </div>
             <div className="flex justify-between text-secondary-text">
-              <span>Mode:</span>
+              <span>Fee:</span>
               <span className="font-semibold text-foreground">
-                Encrypted HD Video
-              </span>
-            </div>
-            <div className="flex justify-between text-secondary-text">
-              <span>Status:</span>
-              <span className="font-semibold text-emerald-600">
-                Confirmed (Demo)
+                ৳{Number(doctor.fee ?? 0).toLocaleString()}
               </span>
             </div>
           </div>
@@ -196,7 +318,7 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
           <button
             type="button"
             onClick={() => setIsBooked(false)}
-            className="w-full rounded-xl border border-border bg-card hover:bg-muted text-foreground py-2.5 text-xs font-semibold transition-all cursor-pointer"
+            className="w-full py-2.5 text-xs font-semibold text-primary hover:text-primary-dark transition-colors cursor-pointer"
           >
             Select Another Slot
           </button>
@@ -204,7 +326,7 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
       ) : (
         /* Booking Form */
         <form onSubmit={handleBookNow} className="space-y-5">
-          {/* 1. Date Selection with Mouse Drag Slide & Shadcn Calendar Popover */}
+          {/* 1. Date Selection with Mouse Drag Slide & Calendar Popover */}
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
@@ -212,9 +334,8 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
                 <span>Select Appointment Date</span>
               </label>
 
-              {/* Shadcn Calendar Popover Button & Slide Controls */}
+              {/* Calendar Popover Button & Slide Controls */}
               <div className="flex items-center gap-1.5">
-                {/* Shadcn UI Popover Calendar Trigger */}
                 <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                   <PopoverTrigger asChild>
                     <button
@@ -302,70 +423,93 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
             </div>
           </div>
 
-          {/* 2. Available Time Slots */}
-          <div className="space-y-2">
+          {/* 2. Available Time Slots (Dynamically Generated) */}
+          <div className="space-y-3">
             <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 text-primary" />
               <span>Available Time Slots</span>
             </label>
 
-            {/* Morning */}
-            <div className="space-y-1">
-              <span className="text-[11px] font-medium text-secondary-text">
-                Morning
-              </span>
-              <div className="grid grid-cols-2 gap-2">
-                {morningSlots.map((slot) => {
-                  const isSelected = selectedSlot === slot;
-                  return (
-                    <button
-                      key={slot}
-                      type="button"
-                      onClick={() => setSelectedSlot(slot)}
-                      className={`p-2 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
-                        isSelected
-                          ? "border-2 border-primary bg-primary/10 text-primary font-bold ring-2 ring-primary/20 shadow-2xs"
-                          : "border border-border bg-card text-secondary-text hover:border-primary/40 hover:text-foreground"
-                      }`}
-                    >
-                      {slot}
-                    </button>
-                  );
-                })}
+            {allSlots.length === 0 ? (
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-dashed border-border text-center space-y-1">
+                <AlertCircle className="h-5 w-5 text-muted-foreground mx-auto" />
+                <p className="text-xs font-semibold text-foreground">
+                  {isDayOff ? "Doctor is on Day Off" : "No Slots Available"}
+                </p>
+                <p className="text-[11px] text-secondary-text">
+                  Doctor has no consultation schedule on {activeDayLabel.dayName}. Please pick another date.
+                </p>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Morning Slots */}
+                {morningSlots.length > 0 && (
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-semibold text-secondary-text uppercase tracking-wider block">
+                      Morning Sessions
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      {morningSlots.map((slot) => {
+                        const isSelected = selectedSlot === slot;
+                        return (
+                          <button
+                            key={slot}
+                            type="button"
+                            onClick={() => setSelectedSlot(slot)}
+                            className={`p-2 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
+                              isSelected
+                                ? "border-2 border-primary bg-primary/10 text-primary font-bold ring-2 ring-primary/20 shadow-2xs"
+                                : "border border-border bg-card text-secondary-text hover:border-primary/40 hover:text-foreground"
+                            }`}
+                          >
+                            {slot}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
-            {/* Evening */}
-            <div className="space-y-1 pt-1">
-              <span className="text-[11px] font-medium text-secondary-text">
-                Evening
-              </span>
-              <div className="grid grid-cols-2 gap-2">
-                {eveningSlots.map((slot) => {
-                  const isSelected = selectedSlot === slot;
-                  return (
-                    <button
-                      key={slot}
-                      type="button"
-                      onClick={() => setSelectedSlot(slot)}
-                      className={`p-2 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
-                        isSelected
-                          ? "border-2 border-primary bg-primary/10 text-primary font-bold ring-2 ring-primary/20 shadow-2xs"
-                          : "border border-border bg-card text-secondary-text hover:border-primary/40 hover:text-foreground"
-                      }`}
-                    >
-                      {slot}
-                    </button>
-                  );
-                })}
+                {/* Afternoon / Evening Slots */}
+                {eveningSlots.length > 0 && (
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-semibold text-secondary-text uppercase tracking-wider block">
+                      Afternoon & Evening Sessions
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      {eveningSlots.map((slot) => {
+                        const isSelected = selectedSlot === slot;
+                        return (
+                          <button
+                            key={slot}
+                            type="button"
+                            onClick={() => setSelectedSlot(slot)}
+                            className={`p-2 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
+                              isSelected
+                                ? "border-2 border-primary bg-primary/10 text-primary font-bold ring-2 ring-primary/20 shadow-2xs"
+                                : "border border-border bg-card text-secondary-text hover:border-primary/40 hover:text-foreground"
+                            }`}
+                          >
+                            {slot}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
           </div>
 
           {/* Book CTA */}
           <button
             type="submit"
-            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-dark text-white py-3 text-sm font-semibold shadow-xs transition-all cursor-pointer"
+            disabled={!selectedSlot}
+            className={`w-full inline-flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold shadow-xs transition-all ${
+              selectedSlot
+                ? "bg-primary hover:bg-primary-dark text-white cursor-pointer active:scale-[0.99]"
+                : "bg-muted text-muted-foreground cursor-not-allowed border border-border"
+            }`}
           >
             <span>Book Video Consultation</span>
             <ArrowRight className="h-4 w-4" />

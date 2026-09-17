@@ -9,12 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+
+export type DoctorSortOption = "latest" | "rating" | "fee" | "experience";
 
 interface DoctorSearchHeaderProps {
   search: string;
   onSearchChange: (val: string) => void;
-  sortBy: "rating" | "fee" | "experience";
-  onSortChange: (val: "rating" | "fee" | "experience") => void;
+  onSearchSubmit: () => void;
+  sortBy: DoctorSortOption;
+  onSortChange: (val: DoctorSortOption) => void;
   totalResults: number;
   onOpenMobileFilters: () => void;
 }
@@ -22,11 +26,19 @@ interface DoctorSearchHeaderProps {
 export const DoctorSearchHeader: React.FC<DoctorSearchHeaderProps> = ({
   search,
   onSearchChange,
+  onSearchSubmit,
   sortBy,
   onSortChange,
   totalResults,
   onOpenMobileFilters,
 }) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      onSearchSubmit();
+    }
+  };
+
   return (
     <div className="w-full bg-slate-50/60 dark:bg-slate-900/20 border-b border-border py-10 sm:py-14">
       <div className="max-w-[1920px] mx-auto section-padding-x space-y-8">
@@ -55,36 +67,49 @@ export const DoctorSearchHeader: React.FC<DoctorSearchHeaderProps> = ({
 
         {/* Search & Sort Controls Bar */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-          {/* Main Search Input */}
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          {/* Main Search Input with Submit button */}
+          <div className="relative flex-1 flex items-center">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <input
               type="text"
               placeholder="Search by doctor name, medical specialty, or symptom..."
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full rounded-xl border border-border bg-card pl-11 pr-10 py-3 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-xs"
+              onKeyDown={handleKeyDown}
+              className="w-full rounded-xl border border-border bg-card pl-11 pr-24 py-3 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-xs"
             />
-            {search && (
-              <button
+            <div className="absolute right-2 flex items-center gap-1">
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSearchChange("");
+                  }}
+                  className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted transition-colors cursor-pointer"
+                  title="Clear search"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+              <Button
                 type="button"
-                onClick={() => onSearchChange("")}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted transition-colors cursor-pointer"
-                title="Clear search"
+                size="sm"
+                onClick={onSearchSubmit}
+                className="h-8 px-3 rounded-lg text-xs font-semibold"
               >
-                <X className="h-4 w-4" />
-              </button>
-            )}
+                Search
+              </Button>
+            </div>
           </div>
 
           {/* Select & Mobile Filter Actions */}
           <div className="flex items-center gap-3">
             {/* Sort Select */}
-            <div className="w-48 sm:w-52">
+            <div className="w-52 sm:w-56">
               <Select
                 value={sortBy}
                 onValueChange={(val) =>
-                  onSortChange(val as "rating" | "fee" | "experience")
+                  onSortChange(val as DoctorSortOption)
                 }
               >
                 <SelectTrigger className="h-11 rounded-xl border-border bg-card px-4 text-sm font-medium shadow-xs hover:border-primary/40 focus:ring-primary/20">
@@ -94,6 +119,9 @@ export const DoctorSearchHeader: React.FC<DoctorSearchHeaderProps> = ({
                   </div>
                 </SelectTrigger>
                 <SelectContent align="end" className="rounded-xl border-border bg-card shadow-lg">
+                  <SelectItem value="latest" className="text-sm font-medium">
+                    Latest Doctors
+                  </SelectItem>
                   <SelectItem value="rating" className="text-sm font-medium">
                     Top Rated
                   </SelectItem>

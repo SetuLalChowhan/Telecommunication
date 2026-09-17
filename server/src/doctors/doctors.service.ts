@@ -325,15 +325,37 @@ export class DoctorService {
   async listPublicDoctors(query: DoctorQueryDto) {
     const { skip, take } = getPaginationParams(query.page, query.limit);
 
+    const minExp = query.minExperience ?? query.experience;
+
     const where = {
       verified: true,
       ...(query.specialtySlug && {
         specialties: { some: { specialty: { slug: query.specialtySlug } } },
       }),
       ...(query.search && {
-        user: {
-          name: { contains: query.search, mode: 'insensitive' as const },
-        },
+        OR: [
+          {
+            user: {
+              OR: [
+                { name: { contains: query.search, mode: 'insensitive' as const } },
+                { firstName: { contains: query.search, mode: 'insensitive' as const } },
+                { lastName: { contains: query.search, mode: 'insensitive' as const } },
+              ],
+            },
+          },
+          {
+            designation: { contains: query.search, mode: 'insensitive' as const },
+          },
+          {
+            specialties: {
+              some: {
+                specialty: {
+                  name: { contains: query.search, mode: 'insensitive' as const },
+                },
+              },
+            },
+          },
+        ],
       }),
       ...(query.minFee !== undefined || query.maxFee !== undefined
         ? {
@@ -343,6 +365,11 @@ export class DoctorService {
             },
           }
         : {}),
+      ...(minExp !== undefined
+        ? {
+            experienceYears: { gte: minExp },
+          }
+        : {}),
     };
 
     const orderBy =
@@ -350,7 +377,9 @@ export class DoctorService {
         ? { fee: 'asc' as const }
         : query.sortBy === 'experience'
           ? { experienceYears: 'desc' as const }
-          : { rating: 'desc' as const };
+          : query.sortBy === 'rating'
+            ? { rating: 'desc' as const }
+            : { createdAt: 'desc' as const };
 
     const [doctors, total] = await Promise.all([
       this.prisma.doctorProfile.findMany({
