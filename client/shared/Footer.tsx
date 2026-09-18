@@ -45,22 +45,22 @@ export const Footer: React.FC = () => {
           {/* For Doctors */}
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground mb-3.5">
-              For Doctors
+              For Doctors & Clinics
             </h4>
             <ul className="space-y-2.5 text-xs sm:text-sm text-secondary-text">
               <li>
-                <Link href="/register/clinic" className="hover:text-primary transition-colors">
-                  Join as Doctor
+                <Link href="/register" className="hover:text-primary transition-colors">
+                  Join as Registered Doctor
                 </Link>
               </li>
               <li>
                 <Link href="/doctor-verification" className="hover:text-primary transition-colors">
-                  Verification Portal
+                  BMDC Verification Portal
                 </Link>
               </li>
               <li>
                 <Link href="/doctor/dashboard" className="hover:text-primary transition-colors">
-                  Doctor Console
+                  Doctor Clinical Console
                 </Link>
               </li>
             </ul>

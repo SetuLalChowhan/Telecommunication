@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Calendar, Video, Check, ShieldCheck } from "lucide-react";
+import { Calendar, Video, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DoctorScheduleItem } from "@/lib/dashboard-mock-data";

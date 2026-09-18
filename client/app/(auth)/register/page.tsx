@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -457,7 +456,7 @@ export default function RegisterPage() {
               id="terms"
               defaultChecked
               onCheckedChange={(checked) =>
-                setValue("agreeToTerms", checked === true ? true : (false as any))
+                setValue("agreeToTerms", checked === true)
               }
               className="mt-0.5"
             />

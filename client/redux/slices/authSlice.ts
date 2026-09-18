@@ -17,12 +17,12 @@ const initialState: AuthState = {
   isInitialized: false,
 };
 
-function sanitizeUser(user: any): User | null {
+function sanitizeUser(user: unknown): User | null {
   if (!user) return null;
   try {
-    return JSON.parse(JSON.stringify(user));
+    return JSON.parse(JSON.stringify(user)) as User;
   } catch {
-    return user;
+    return user as User;
   }
 }
 

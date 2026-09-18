@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Star, ChevronRight, Video } from "lucide-react";
+import { ArrowLeft, ArrowRight, Star, ChevronRight } from "lucide-react";
 
 interface Doctor {
   id: string;
@@ -12,6 +12,8 @@ interface Doctor {
   specialty: string;
   rating: number;
   reviewsCount: number;
+  fee: number;
+  degrees: string;
   image: string;
 }
 
@@ -19,50 +21,60 @@ const DOCTORS: Doctor[] = [
   {
     id: "doc-1",
     slug: "dr-sarah-jenkins",
-    name: "Dr. Sarah Jenkins",
-    specialty: "Cardiology",
+    name: "Dr. Sarah Ahmed",
+    specialty: "Cardiology & Hypertension",
     rating: 4.9,
     reviewsCount: 215,
+    fee: 1200,
+    degrees: "MBBS, FCPS (Cardiology)",
     image:
       "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=600&q=80",
   },
   {
     id: "doc-2",
     slug: "dr-fletcher-waelchi",
-    name: "Dr. Fletcher Waelchi",
-    specialty: "General Medicine",
+    name: "Dr. Farhana Rahman",
+    specialty: "General Medicine & Diabetes",
     rating: 4.9,
     reviewsCount: 184,
+    fee: 1000,
+    degrees: "MBBS, MRCP (UK)",
     image:
-      "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1594824813515-7798c1995815?auto=format&fit=crop&w=600&q=80",
   },
   {
     id: "doc-3",
     slug: "dr-fredrick-auer",
-    name: "Dr. Fredrick Auer",
-    specialty: "Orthopedics",
+    name: "Dr. Tanvir Anis",
+    specialty: "Orthopedics & Spine",
     rating: 4.8,
     reviewsCount: 128,
+    fee: 1200,
+    degrees: "MBBS, MS (Ortho)",
     image:
-      "https://images.unsplash.com/photo-1594824813590-7892f3922f3f?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=600&q=80",
   },
   {
     id: "doc-4",
     slug: "dr-michael-chen",
-    name: "Dr. Michael Chen",
+    name: "Dr. Asif Mahmud",
     specialty: "Neurology",
     rating: 5.0,
     reviewsCount: 190,
+    fee: 1500,
+    degrees: "MBBS, MD (Neurology)",
     image:
       "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=600&q=80",
   },
   {
     id: "doc-5",
     slug: "dr-amanda-miller",
-    name: "Dr. Amanda Miller",
-    specialty: "Pediatrics",
+    name: "Dr. Nusrat Jahan",
+    specialty: "Pediatrics & Child Care",
     rating: 4.9,
     reviewsCount: 172,
+    fee: 1000,
+    degrees: "MBBS, DCH, FCPS",
     image:
       "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=600&q=80",
   },
@@ -196,15 +208,33 @@ export const DoctorsSection: React.FC = () => {
                   </div>
 
                   {/* Doctor Info Box */}
-                  <div className="p-4 text-center flex flex-col items-center justify-center space-y-1">
-                    <span className="text-xs font-semibold text-primary">
-                      {doctor.specialty}
-                    </span>
-                    <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                      <Link href={`/doctors/${doctor.slug}`}>
-                        {doctor.name}
+                  <div className="p-4 flex flex-col justify-between flex-1 space-y-3">
+                    <div className="space-y-1 text-left">
+                      <span className="inline-block text-[11px] font-semibold text-primary">
+                        {doctor.specialty}
+                      </span>
+                      <h3 className="text-sm sm:text-base font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                        <Link href={`/doctors/${doctor.slug}`}>
+                          {doctor.name}
+                        </Link>
+                      </h3>
+                      <p className="text-[11px] text-secondary-text truncate">
+                        {doctor.degrees}
+                      </p>
+                    </div>
+
+                    <div className="pt-2.5 border-t border-border/70 flex items-center justify-between gap-2">
+                      <div>
+                        <span className="text-[10px] text-muted-foreground block uppercase">Fee</span>
+                        <span className="text-xs sm:text-sm font-bold text-foreground">৳{doctor.fee}</span>
+                      </div>
+                      <Link
+                        href={`/doctors/${doctor.slug}`}
+                        className="inline-flex items-center justify-center rounded-lg bg-primary/10 hover:bg-primary text-primary hover:text-white px-3 py-1.5 text-xs font-semibold transition-colors"
+                      >
+                        Consult
                       </Link>
-                    </h3>
+                    </div>
                   </div>
                 </div>
               ))}

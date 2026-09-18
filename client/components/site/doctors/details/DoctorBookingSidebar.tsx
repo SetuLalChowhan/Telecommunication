@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useMemo, useEffect } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import { DoctorProfile, DoctorAvailability } from "@/types/doctor";
 import {
   Calendar as CalendarIcon,
@@ -78,7 +78,7 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
 }) => {
   const [selectedDayIdx, setSelectedDayIdx] = useState<number>(0);
   const [customDate, setCustomDate] = useState<Date | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<string>("");
+  const [selectedSlotOverride, setSelectedSlotOverride] = useState<string | null>(null);
   const [isBooked, setIsBooked] = useState<boolean>(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
 
@@ -90,8 +90,12 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
   // Combine availability sources
   const allAvailabilities: DoctorAvailability[] = useMemo(() => {
     if (availabilities && availabilities.length > 0) return availabilities;
-    if ((doctor as any)?.availability && (doctor as any).availability.length > 0)
-      return (doctor as any).availability;
+    const docWithExtra = doctor as unknown as {
+      availability?: DoctorAvailability[];
+      daysOff?: Array<{ date?: string | Date }>;
+    };
+    if (docWithExtra.availability && docWithExtra.availability.length > 0)
+      return docWithExtra.availability;
     if (doctor.availabilities && doctor.availabilities.length > 0)
       return doctor.availabilities;
     return [];
@@ -126,8 +130,11 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
 
   // Check if activeDate is a doctor's scheduled day off
   const isDayOff = useMemo(() => {
-    const daysOff = (doctor as any)?.daysOff || [];
-    return daysOff.some((off: any) => {
+    const docWithExtra = doctor as unknown as {
+      daysOff?: Array<{ date?: string | Date }>;
+    };
+    const daysOff = docWithExtra.daysOff || [];
+    return daysOff.some((off) => {
       if (!off.date) return false;
       const offDate = new Date(off.date);
       return offDate.toDateString() === activeDate.toDateString();
@@ -189,16 +196,14 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
     };
   }, [activeDate, allAvailabilities, isDayOff]);
 
-  // Auto-sync selected slot when active date changes
-  useEffect(() => {
-    if (allSlots.length > 0) {
-      if (!allSlots.includes(selectedSlot)) {
-        setSelectedSlot(allSlots[0]);
-      }
-    } else {
-      setSelectedSlot("");
+  // Declaratively compute active slot without cascading effect
+  const selectedSlot = useMemo(() => {
+    if (allSlots.length === 0) return "";
+    if (selectedSlotOverride && allSlots.includes(selectedSlotOverride)) {
+      return selectedSlotOverride;
     }
-  }, [allSlots, selectedSlot]);
+    return allSlots[0] || "";
+  }, [allSlots, selectedSlotOverride]);
 
   // Mouse drag-to-scroll implementation
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -455,7 +460,7 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
                           <button
                             key={slot}
                             type="button"
-                            onClick={() => setSelectedSlot(slot)}
+                            onClick={() => setSelectedSlotOverride(slot)}
                             className={`p-2 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
                               isSelected
                                 ? "border-2 border-primary bg-primary/10 text-primary font-bold ring-2 ring-primary/20 shadow-2xs"
@@ -483,7 +488,7 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
                           <button
                             key={slot}
                             type="button"
-                            onClick={() => setSelectedSlot(slot)}
+                            onClick={() => setSelectedSlotOverride(slot)}
                             className={`p-2 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
                               isSelected
                                 ? "border-2 border-primary bg-primary/10 text-primary font-bold ring-2 ring-primary/20 shadow-2xs"

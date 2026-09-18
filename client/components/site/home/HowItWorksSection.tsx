@@ -104,12 +104,12 @@ export const HowItWorksSection: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-xs sm:text-sm font-bold text-foreground">
-                    Dr. Sarah Jenkins
+                    Dr. Sarah Ahmed
                   </h4>
                   <div className="flex items-center gap-1 text-[11px] text-secondary-text">
                     <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                     <span className="font-semibold text-foreground">4.9</span>
-                    <span>&bull; Verified Cardiologist</span>
+                    <span>&bull; BMDC Verified Cardiologist</span>
                   </div>
                 </div>
               </div>

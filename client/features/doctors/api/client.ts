@@ -5,7 +5,6 @@ import {
   DoctorQueryParams,
   DoctorAvailability,
   UpdateDoctorProfileInput,
-  PaginationMeta,
   DoctorsListResponse,
 } from "../types";
 

@@ -2,7 +2,7 @@
 
 import React from "react";
 import PatientLayout from "@/layouts/PatientLayout";
-import { MessageSquare, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

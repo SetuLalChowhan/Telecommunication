@@ -2,7 +2,7 @@
 
 import React from "react";
 import DoctorLayout from "@/layouts/DoctorLayout";
-import { Bell, Calendar, UserPlus, ShieldCheck, Clock } from "lucide-react";
+import { Calendar, UserPlus, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function DoctorNotificationsPage() {

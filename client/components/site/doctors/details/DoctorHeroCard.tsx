@@ -5,11 +5,8 @@ import Image from "next/image";
 import { DoctorProfile } from "@/types/doctor";
 import {
   Star,
-  Award,
   Video,
   ShieldCheck,
-  Users,
-  Stethoscope,
   Building2,
   MapPin,
 } from "lucide-react";

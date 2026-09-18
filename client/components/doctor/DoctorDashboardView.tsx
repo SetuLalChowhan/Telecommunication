@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Clock, Calendar, ArrowRight } from "lucide-react";
+import { Clock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DOCTOR_TODAY_SCHEDULE,
@@ -22,7 +22,7 @@ interface DoctorDashboardViewProps {
 
 export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = () => {
   const [schedule, setSchedule] = useState<DoctorScheduleItem[]>(DOCTOR_TODAY_SCHEDULE);
-  const [selectedAppt, setSelectedAppt] = useState<DashboardAppointment | null>(null);
+  const [selectedAppt] = useState<DashboardAppointment | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   const nextAppointment = schedule.find(

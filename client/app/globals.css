@@ -5,7 +5,7 @@
 
 @theme {
   /* Fonts */
-  --font-sans: var(--font-sans), "Inter", var(--font-bangla), "Noto Sans Bengali", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: var(--font-sans), "Poppins", var(--font-bangla), "Noto Sans Bengali", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-bangla: var(--font-bangla), "Noto Sans Bengali", sans-serif;
   --font-mono: "Geist Mono", monospace;
 
@@ -24,10 +24,10 @@
   /* Shadows: clean, subtle, trustworthy healthcare shadows */
   --shadow-subtle: 0 1px 2px 0 rgb(15 23 42 / 0.04);
   --shadow-card: 0 1px 3px 0 rgb(15 23 42 / 0.06), 0 1px 2px -1px rgb(15 23 42 / 0.04);
-  --shadow-card-hover: 0 4px 12px -2px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.04);
+  --shadow-card-hover: 0 6px 18px -3px rgb(15 23 42 / 0.08), 0 2px 6px -2px rgb(15 23 42 / 0.04);
 
   /* Radius tokens */
-  --radius: 0.625rem;
+  --radius: 0.75rem;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -115,23 +115,23 @@
 
 :root {
   /* Radius */
-  --radius: 0.625rem;
+  --radius: 0.75rem;
 
-  /* Brand Colors */
-  --primary: #2563EB;             /* Healthcare Blue */
-  --primary-dark: #1D4ED8;        /* Deep Blue */
+  /* Brand Colors - Sophisticated Healthcare Palette */
+  --primary: #2563EB;             /* Primary Healthcare Blue */
+  --primary-dark: #1D4ED8;        /* Deep Healthcare Blue */
   --primary-foreground: #FFFFFF;
 
-  --secondary: #0F766E;           /* Teal */
-  --secondary-dark: #115E59;       /* Deep Teal */
+  --secondary: #0F766E;           /* Healthcare Teal */
+  --secondary-dark: #115E59;       /* Deep Healthcare Teal */
   --secondary-foreground: #FFFFFF;
 
-  --accent: #E0F2FE;              /* Soft Sky Blue */
-  --accent-foreground: #0369A1;   /* High-contrast readable Blue on Sky Blue */
+  --accent: #EFF6FF;              /* Soft Light Blue Tint */
+  --accent-foreground: #1D4ED8;   /* High-contrast Deep Blue */
 
   /* Background & Surfaces */
-  --background: #F8FAFC;          /* Warm White */
-  --foreground: #0F172A;          /* Deep Navy (Main Text) */
+  --background: #F8FAFC;          /* Soft Clean Healthcare Background */
+  --foreground: #0F172A;          /* Dark Navy Main Text */
 
   --surface: #FFFFFF;             /* Pure White Surface */
   --surface-foreground: #0F172A;
@@ -143,24 +143,24 @@
   --popover-foreground: #0F172A;
 
   /* Typography & Secondary Content */
-  --body: #475569;                /* Slate (Secondary Text / Body) */
-  --secondary-text: #475569;
-  --muted: #F1F5F9;               /* Soft Slate Tint */
-  --muted-foreground: #475569;
+  --body: #334155;                /* Slate Text (High Legibility Body) */
+  --secondary-text: #64748B;      /* Muted Slate Secondary Text */
+  --muted: #F1F5F9;               /* Soft Surface Slate */
+  --muted-foreground: #64748B;    /* Muted Text */
 
   /* Borders & Inputs */
-  --border: #E2E8F0;              /* Light Slate */
+  --border: #E2E8F0;              /* Crisp Light Border */
   --input: #E2E8F0;
   --ring: #2563EB;                /* Healthcare Blue Focus */
 
   /* Status Colors */
-  --success: #16A34A;             /* Green */
+  --success: #16A34A;             /* Clinical Success Green */
   --success-foreground: #FFFFFF;
 
-  --warning: #D97706;             /* Amber */
+  --warning: #D97706;             /* Clinical Amber Warning */
   --warning-foreground: #FFFFFF;
 
-  --error: #DC2626;               /* Red */
+  --error: #DC2626;               /* Clinical Red */
   --error-foreground: #FFFFFF;
   --destructive: #DC2626;
   --destructive-foreground: #FFFFFF;
@@ -177,8 +177,8 @@
   --sidebar-foreground: #0F172A;
   --sidebar-primary: #2563EB;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #E0F2FE;
-  --sidebar-accent-foreground: #0369A1;
+  --sidebar-accent: #EFF6FF;
+  --sidebar-accent-foreground: #1D4ED8;
   --sidebar-border: #E2E8F0;
   --sidebar-ring: #2563EB;
 }

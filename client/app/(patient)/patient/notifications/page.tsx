@@ -2,7 +2,7 @@
 
 import React from "react";
 import PatientLayout from "@/layouts/PatientLayout";
-import { Bell, Calendar, CheckCircle2, FileText, AlertCircle } from "lucide-react";
+import { Calendar, CheckCircle2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function PatientNotificationsPage() {

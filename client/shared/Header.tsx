@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -37,15 +37,15 @@ const NAV_LINKS = [
 
 export const Header: React.FC = () => {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const pathname = usePathname();
   const router = useRouter();
   const { user, role, isAuthenticated, isDoctor, isSessionLoading, logout, logoutMutation } = useAuth();
   const isLoggingOut = logoutMutation.isPending;
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Lock body scroll when mobile drawer is open
   useEffect(() => {

@@ -8,7 +8,6 @@ import {
   Building2,
   ShieldCheck,
   CheckCircle2,
-  Award,
 } from "lucide-react";
 
 interface DoctorAboutSectionProps {

@@ -85,11 +85,13 @@ export const DoctorReviewsSection: React.FC<DoctorReviewsSectionProps> = ({
                           </span>
                         </div>
                         <span className="text-[11px] text-muted-foreground">
-                          {new Date(rev.createdAt || Date.now()).toLocaleDateString("en-US", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
+                          {rev.createdAt
+                            ? new Date(rev.createdAt).toLocaleDateString("en-US", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              })
+                            : "Recent review"}
                         </span>
                       </div>
                     </div>

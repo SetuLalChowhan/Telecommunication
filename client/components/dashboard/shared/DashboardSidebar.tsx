@@ -11,6 +11,8 @@ import {
   Settings,
   Clock,
   ShieldCheck,
+  Users,
+  FileText,
   LogOut,
   Loader2,
 } from "lucide-react";
@@ -40,22 +42,25 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   const primaryNavItems = isDoctor
     ? [
         { label: "Overview", path: "/doctor/dashboard", icon: LayoutDashboard },
-        { label: "Appointments", path: "/doctor/appointments", icon: Calendar },
-        { label: "Availability", path: "/doctor/schedule", icon: Clock },
-        { label: "Verification", path: "/doctor-verification", icon: ShieldCheck },
+        { label: "Consultation Queue", path: "/doctor/appointments", icon: Calendar },
+        { label: "Availability & Leaves", path: "/doctor/schedule", icon: Clock },
+        { label: "My Patients", path: "/doctor/patients", icon: Users },
+        { label: "BMDC Verification", path: "/doctor-verification", icon: ShieldCheck },
       ]
     : [
         { label: "Overview", path: "/patient/dashboard", icon: LayoutDashboard },
-        { label: "Appointments", path: "/patient/appointments", icon: Calendar },
+        { label: "My Appointments", path: "/patient/appointments", icon: Calendar },
         { label: "Find Doctors", path: "/doctors", icon: Stethoscope },
+        { label: "Medical Records", path: "/patient/records", icon: FileText },
       ];
 
   const secondaryNavItems = isDoctor
     ? [
-        { label: "Profile & Settings", path: "/doctor/settings", icon: Settings },
+        { label: "Profile & Practice", path: "/doctor/settings", icon: Settings },
       ]
     : [
         { label: "My Profile", path: "/patient/profile", icon: User },
+        { label: "Settings", path: "/patient/settings", icon: Settings },
       ];
 
   const displayName = user?.name || (isDoctor ? "Dr. Sarah Ahmed" : "Setulal Chowhan");

@@ -8,7 +8,6 @@ import {
   Video,
   Check,
   Search,
-  CheckCircle2,
 } from "lucide-react";
 import DoctorLayout from "@/layouts/DoctorLayout";
 import { Button } from "@/components/ui/button";

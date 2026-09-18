@@ -6,7 +6,6 @@ import {
   ShieldCheck,
   Lock,
   FileCheck,
-  Stethoscope,
   HeartHandshake,
   ArrowRight,
   CheckCircle2,

@@ -4,7 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { DoctorProfile } from "@/types/doctor";
-import { Star, ShieldCheck, Award, ArrowRight, Video, Stethoscope } from "lucide-react";
+import { Star, ShieldCheck, Award, ArrowRight, Video } from "lucide-react";
 
 interface DoctorCardProps {
   doctor: DoctorProfile;

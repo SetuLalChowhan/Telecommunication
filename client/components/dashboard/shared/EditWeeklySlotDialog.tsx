@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -68,29 +68,22 @@ const TIME_OPTIONS = [
   "09:00 PM",
 ];
 
-export const EditWeeklySlotDialog: React.FC<EditWeeklySlotDialogProps> = ({
+interface EditWeeklySlotFormProps {
+  slot: AvailabilitySlot;
+  onUpdateSlot: (slot: AvailabilitySlot) => void;
+  onCancel: () => void;
+}
+
+const EditWeeklySlotForm: React.FC<EditWeeklySlotFormProps> = ({
   slot,
-  open,
-  onOpenChange,
   onUpdateSlot,
+  onCancel,
 }) => {
-  const [day, setDay] = useState("MONDAY");
-  const [startTime, setStartTime] = useState("09:00 AM");
-  const [endTime, setEndTime] = useState("01:00 PM");
-  const [duration, setDuration] = useState("30");
-  const [isActive, setIsActive] = useState(true);
-
-  useEffect(() => {
-    if (slot) {
-      setDay(slot.dayOfWeek);
-      setStartTime(slot.startTime);
-      setEndTime(slot.endTime);
-      setDuration(String(slot.consultationDuration || 30));
-      setIsActive(slot.isActive ?? true);
-    }
-  }, [slot, open]);
-
-  if (!slot) return null;
+  const [day, setDay] = useState(slot.dayOfWeek);
+  const [startTime, setStartTime] = useState(slot.startTime);
+  const [endTime, setEndTime] = useState(slot.endTime);
+  const [duration, setDuration] = useState(String(slot.consultationDuration || 30));
+  const [isActive, setIsActive] = useState(slot.isActive ?? true);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,22 +96,11 @@ export const EditWeeklySlotDialog: React.FC<EditWeeklySlotDialogProps> = ({
       isActive,
     };
     onUpdateSlot(updatedSlot);
-    onOpenChange(false);
+    onCancel();
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[450px] p-6 sm:p-7">
-        <DialogHeader className="mb-5">
-          <DialogTitle className="text-lg font-bold text-foreground">
-            Edit Weekly Slot
-          </DialogTitle>
-          <DialogDescription className="text-xs text-secondary-text mt-1">
-            Update regular consultation hours and visit length.
-          </DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
           {/* Day of Week */}
           <div>
             <Label htmlFor="edit-day-select">Day of Week</Label>
@@ -208,7 +190,7 @@ export const EditWeeklySlotDialog: React.FC<EditWeeklySlotDialogProps> = ({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => onOpenChange(false)}
+              onClick={onCancel}
               className="h-9 px-4 text-xs rounded-xl"
             >
               Cancel
@@ -222,6 +204,37 @@ export const EditWeeklySlotDialog: React.FC<EditWeeklySlotDialogProps> = ({
             </Button>
           </DialogFooter>
         </form>
+  );
+};
+
+export const EditWeeklySlotDialog: React.FC<EditWeeklySlotDialogProps> = ({
+  slot,
+  open,
+  onOpenChange,
+  onUpdateSlot,
+}) => {
+  if (!slot) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[450px] p-6 sm:p-7">
+        <DialogHeader className="mb-5">
+          <DialogTitle className="text-lg font-bold text-foreground">
+            Edit Weekly Slot
+          </DialogTitle>
+          <DialogDescription className="text-xs text-secondary-text mt-1">
+            Update regular consultation hours and visit length.
+          </DialogDescription>
+        </DialogHeader>
+
+        {open && (
+          <EditWeeklySlotForm
+            key={slot.id}
+            slot={slot}
+            onUpdateSlot={onUpdateSlot}
+            onCancel={() => onOpenChange(false)}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

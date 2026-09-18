@@ -197,7 +197,7 @@ export const DoctorList: React.FC = () => {
                     No Doctors Found
                   </h3>
                   <p className="text-xs sm:text-sm text-secondary-text leading-relaxed">
-                    We couldn't find any certified doctors matching your current
+                    We couldn&apos;t find any certified doctors matching your current
                     filter criteria. Try adjusting or resetting your search
                     filters.
                   </p>

@@ -14,30 +14,30 @@ interface Testimonial {
 const TESTIMONIALS: Testimonial[] = [
   {
     id: "t-1",
-    name: "Irene Strong",
-    role: "Verified Patient",
+    name: "Mohammad Rafiqul Islam",
+    role: "Patient &bull; Mirpur, Dhaka",
     quote:
-      "Booking an appointment and consulting online was so simple and fast. The doctor was attentive, thorough, and provided clear guidance.",
-    avatar:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    id: "t-2",
-    name: "Jonas Kakaroto",
-    role: "Verified Patient",
-    quote:
-      "The video consultation gave me peace of mind without having to travel or wait in line. High definition video call and instant digital prescription.",
+      "Consulting Dr. Sarah online saved me hours in Dhaka traffic. The video call was crystal clear, she reviewed my ECG reports instantly, and sent the e-prescription right to my portal.",
     avatar:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80",
   },
   {
-    id: "t-3",
-    name: "Maddison Reichel",
-    role: "Verified Patient",
+    id: "t-2",
+    name: "Nusrat Jahan",
+    role: "Patient &bull; Dhanmondi, Dhaka",
     quote:
-      "Exceptional telehealth care. Being able to connect directly with specialized doctors anytime has transformed my family's routine health management.",
+      "When my child had a sudden high fever at night, getting an immediate pediatric consultation was a lifesaver. The doctor was patient, caring, and guided us every step of the way.",
     avatar:
       "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    id: "t-3",
+    name: "Tanvir Ahmed",
+    role: "Patient &bull; Chittagong",
+    quote:
+      "Living outside Dhaka often makes accessing top specialists difficult. This platform connected me directly with leading physicians from national institutes without any hassle.",
+    avatar:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
   },
 ];
 

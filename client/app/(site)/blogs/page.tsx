@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import Link from "next/link";
 import { Search, X, ChevronLeft, ChevronRight, SlidersHorizontal, FileQuestion } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BLOG_POSTS, BlogPost } from "@/lib/blog-data";
+import { BLOG_POSTS } from "@/lib/blog-data";
 import BlogCard from "@/components/site/blogs/BlogCard";
 
 const ITEMS_PER_PAGE = 6;

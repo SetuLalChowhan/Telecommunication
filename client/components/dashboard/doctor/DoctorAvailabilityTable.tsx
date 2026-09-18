@@ -49,84 +49,149 @@ export const DoctorAvailabilityTable: React.FC<DoctorAvailabilityTableProps> = (
       </div>
 
       <div className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-xs">
-        <Table>
-          <TableHeader className="bg-slate-50/60 dark:bg-slate-900/40 border-b border-border/60">
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="py-3 px-6 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Day of Week</TableHead>
-              <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Consultation Hours</TableHead>
-              <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Slot Length</TableHead>
-              <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Availability Status</TableHead>
-              <TableHead className="py-3 px-6 text-right font-semibold text-xs text-muted-foreground uppercase tracking-wider">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody className="divide-y divide-border/40">
-            {slots.map((slot) => (
-              <TableRow
-                key={slot.id}
-                className={`transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-900/30 ${!slot.isActive ? "opacity-60 bg-muted/20" : ""
-                  }`}
-              >
-                <TableCell className="py-3.5 px-6 font-bold text-sm text-foreground">
-                  <span className="text-primary font-bold">{slot.dayOfWeek}</span>
-                </TableCell>
+        {/* Desktop Table View */}
+        <div className="hidden md:block">
+          <Table>
+            <TableHeader className="bg-slate-50/60 dark:bg-slate-900/40 border-b border-border/60">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="py-3 px-6 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Day of Week</TableHead>
+                <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Consultation Hours</TableHead>
+                <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Slot Length</TableHead>
+                <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Availability Status</TableHead>
+                <TableHead className="py-3 px-6 text-right font-semibold text-xs text-muted-foreground uppercase tracking-wider">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-border/40">
+              {slots.map((slot) => (
+                <TableRow
+                  key={slot.id}
+                  className={`transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-900/30 ${!slot.isActive ? "opacity-60 bg-muted/20" : ""
+                    }`}
+                >
+                  <TableCell className="py-3.5 px-6 font-bold text-sm text-foreground">
+                    <span className="text-primary font-bold">{slot.dayOfWeek}</span>
+                  </TableCell>
 
-                <TableCell className="py-3.5 px-4 font-semibold text-sm text-foreground">
-                  {slot.startTime} – {slot.endTime}
-                </TableCell>
+                  <TableCell className="py-3.5 px-4 font-semibold text-sm text-foreground">
+                    {slot.startTime} – {slot.endTime}
+                  </TableCell>
 
-                <TableCell className="py-3.5 px-4 text-xs sm:text-sm text-secondary-text">
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                    {slot.consultationDuration} mins / visit
-                  </span>
-                </TableCell>
-
-                <TableCell className="py-3.5 px-4">
-                  <div className="flex items-center gap-3">
-                    <Switch
-                      checked={slot.isActive}
-                      onCheckedChange={() => onToggleSlot(slot.id)}
-                      aria-label={`Toggle availability for ${slot.dayOfWeek}`}
-                    />
-                    <span
-                      className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border uppercase ${slot.isActive
-                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                          : "bg-muted text-muted-foreground border-border"
-                        }`}
-                    >
-                      {slot.isActive ? "Active" : "Disabled"}
+                  <TableCell className="py-3.5 px-4 text-xs sm:text-sm text-secondary-text">
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                      {slot.consultationDuration} mins / visit
                     </span>
-                  </div>
-                </TableCell>
+                  </TableCell>
 
-                <TableCell className="py-3.5 px-6 text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    {onEditSlot && (
+                  <TableCell className="py-3.5 px-4">
+                    <div className="flex items-center gap-3">
+                      <Switch
+                        checked={slot.isActive}
+                        onCheckedChange={() => onToggleSlot(slot.id)}
+                        aria-label={`Toggle availability for ${slot.dayOfWeek}`}
+                      />
+                      <span
+                        className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border uppercase ${slot.isActive
+                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                            : "bg-muted text-muted-foreground border-border"
+                          }`}
+                      >
+                        {slot.isActive ? "Active" : "Disabled"}
+                      </span>
+                    </div>
+                  </TableCell>
+
+                  <TableCell className="py-3.5 px-6 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      {onEditSlot && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onEditSlot(slot)}
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                          aria-label={`Edit slot for ${slot.dayOfWeek}`}
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => onEditSlot(slot)}
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                        aria-label={`Edit slot for ${slot.dayOfWeek}`}
+                        onClick={() => onDeleteSlot(slot.id)}
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                        aria-label={`Delete slot for ${slot.dayOfWeek}`}
                       >
-                        <Edit2 className="h-3.5 w-3.5" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
-                    )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Mobile Responsive Stacked Cards */}
+        <div className="md:hidden divide-y divide-border/60">
+          {slots.map((slot) => (
+            <div
+              key={slot.id}
+              className={`p-4 space-y-3 transition-colors ${!slot.isActive ? "opacity-60 bg-muted/20" : ""}`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-primary font-bold text-sm block">{slot.dayOfWeek}</span>
+                  <span className="text-xs font-semibold text-foreground">{slot.startTime} – {slot.endTime}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={slot.isActive}
+                    onCheckedChange={() => onToggleSlot(slot.id)}
+                    aria-label={`Toggle availability for ${slot.dayOfWeek}`}
+                  />
+                  <span
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border uppercase ${slot.isActive
+                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                        : "bg-muted text-muted-foreground border-border"
+                      }`}
+                  >
+                    {slot.isActive ? "Active" : "Off"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-1 border-t border-border/40 text-xs text-secondary-text">
+                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" />
+                  {slot.consultationDuration} mins / visit
+                </span>
+
+                <div className="flex items-center gap-1">
+                  {onEditSlot && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => onDeleteSlot(slot.id)}
-                      className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                      aria-label={`Delete slot for ${slot.dayOfWeek}`}
+                      onClick={() => onEditSlot(slot)}
+                      className="h-8 px-2.5 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Edit2 className="h-3.5 w-3.5 mr-1" />
+                      <span>Edit</span>
                     </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDeleteSlot(slot.id)}
+                    className="h-8 px-2.5 text-xs font-semibold text-destructive hover:bg-destructive/10 rounded-lg"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-1" />
+                    <span>Delete</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

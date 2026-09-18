@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, Noto_Sans_Bengali } from "next/font/google";
+import { Poppins, Noto_Sans_Bengali } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers";
 
-const inter = Inter({
+const poppins = Poppins({
+  weight: ["300", "400", "500", "600", "700"],
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
@@ -16,8 +17,8 @@ const notoSansBengali = Noto_Sans_Bengali({
 });
 
 export const metadata: Metadata = {
-  title: "Telecommunication & Healthcare",
-  description: "Modern, accessible telehealth and communication platform",
+  title: "TeleHealth — Verified Doctors & Online Consultations",
+  description: "Consult with verified specialists, book video appointments, and manage prescriptions securely from home.",
 };
 
 export default function RootLayout({
@@ -28,7 +29,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${notoSansBengali.variable} h-full antialiased`}
+      className={`${poppins.variable} ${notoSansBengali.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground selection:bg-accent selection:text-primary">
         <Providers>{children}</Providers>

@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       }
       return NextResponse.redirect(redirectUrl);
     }
-  } catch (error: any) {
+  } catch {
     const redirectUrl = new URL("/verify-email", request.url);
     redirectUrl.searchParams.set("status", "error");
     redirectUrl.searchParams.set("message", "Network error during email verification.");

@@ -34,7 +34,7 @@ export interface SessionUser {
 
 export interface ServerSessionResponse {
   user: SessionUser | null;
-  session: any | null;
+  session: Record<string, unknown> | null;
 }
 
 export interface LoginParams {

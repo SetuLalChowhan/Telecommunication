@@ -31,7 +31,11 @@ export default function GoogleAuthButton({
   };
 
   return (
-    <div className="w-full relative flex justify-center items-center min-h-[44px]">
+    <div
+      className={`w-full relative flex justify-center items-center min-h-[44px] ${
+        disabled ? "pointer-events-none opacity-60" : ""
+      }`}
+    >
       {isGooglePending ? (
         <div className="w-full h-11 sm:h-12 border border-slate-200 bg-white text-foreground font-medium text-sm sm:text-base rounded-xl flex items-center justify-center gap-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
           <Loader2 className="h-4 w-4 animate-spin text-primary" />

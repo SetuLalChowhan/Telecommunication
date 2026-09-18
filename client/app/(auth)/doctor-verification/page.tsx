@@ -61,8 +61,11 @@ export default function DoctorVerificationPage() {
     onSuccess: () => {
       toast.success("Verification document uploaded successfully!");
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Failed to upload document");
+    onError: (err: unknown) => {
+      const errorMsg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to upload document";
+      toast.error(errorMsg);
     },
   });
 

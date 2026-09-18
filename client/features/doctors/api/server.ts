@@ -135,7 +135,9 @@ export async function getSpecialtiesServer(
       }
     );
     const data = response.data || [];
-    return Array.isArray(data) ? data : (data as any)?.data || [];
+    return Array.isArray(data)
+      ? data
+      : (data as unknown as { data?: Specialty[] })?.data || [];
   } catch {
     return [];
   }

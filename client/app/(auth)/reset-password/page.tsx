@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Eye, EyeOff, Check, CheckCircle2, ArrowLeft, Loader2, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Check, ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 import AuthSplitLayout from "@/components/auth/AuthSplitLayout";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

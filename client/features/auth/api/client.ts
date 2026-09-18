@@ -1,5 +1,4 @@
 import { createAuthClient } from "better-auth/react";
-import { apiClient } from "@/lib/api/axios";
 
 /**
  * Better-Auth React Client
@@ -24,7 +23,28 @@ export const {
   requestPasswordReset,
   resetPassword,
   verifyEmail,
-} = authClient;
+} = authClient as unknown as {
+  signIn: typeof authClient.signIn;
+  signUp: typeof authClient.signUp;
+  signOut: typeof authClient.signOut;
+  useSession: typeof authClient.useSession;
+  getSession?: (params?: unknown) => Promise<unknown>;
+  sendVerificationEmail: (params: {
+    email: string;
+    callbackURL?: string;
+  }) => Promise<{ error?: { message?: string }; data?: unknown }>;
+  requestPasswordReset: (params: {
+    email: string;
+    redirectTo?: string;
+  }) => Promise<{ error?: { message?: string }; data?: unknown }>;
+  resetPassword: (params: {
+    newPassword: string;
+    token: string;
+  }) => Promise<{ error?: { message?: string }; data?: unknown }>;
+  verifyEmail: (params: {
+    query: { token: string };
+  }) => Promise<{ error?: { message?: string }; data?: unknown }>;
+};
 
 export interface LoginCredentials {
   email: string;
@@ -65,7 +85,7 @@ export async function registerWithEmail(credentials: RegisterCredentials) {
     email: credentials.email,
     password: credentials.password || "",
     role: credentials.role || "PATIENT",
-  } as any);
+  } as unknown as Parameters<typeof authClient.signUp.email>[0]);
 
   if (res.error) {
     throw new Error(res.error.message || "Failed to register account");

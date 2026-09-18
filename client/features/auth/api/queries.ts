@@ -85,13 +85,18 @@ export const useAuth = () => {
     },
     onSuccess: (data, variables) => {
       toast.success("Welcome back! Signed in successfully.");
-      const authUser = (data as any)?.user;
-      const authSession = (data as any)?.session;
+      const authPayload = data as unknown as {
+        user?: User;
+        session?: { token?: string };
+        token?: string;
+      };
+      const authUser = authPayload?.user;
+      const authSession = authPayload?.session;
       if (authUser) {
         dispatch(
           setSession({
             user: authUser as unknown as User,
-            token: authSession?.token || (data as any)?.token || null,
+            token: authSession?.token || authPayload?.token || null,
           })
         );
       }
@@ -108,7 +113,12 @@ export const useAuth = () => {
   // Account Registration
   const registerMutation = useMutation({
     mutationFn: async ({ name, email, password, role }: RegisterParams) => {
-      const res = await signUp.email({ email, password: password || "", name, role } as any);
+      const res = await signUp.email({
+        email,
+        password: password || "",
+        name,
+        role,
+      } as unknown as Parameters<typeof signUp.email>[0]);
       if (res.error) {
         throw new Error(res.error.message || "Failed to create account.");
       }
@@ -228,13 +238,18 @@ export const useAuth = () => {
     },
     onSuccess: (data) => {
       toast.success("Welcome! Signed in with Google.");
-      const authUser = (data as any)?.user;
-      const authSession = (data as any)?.session;
+      const authPayload = data as unknown as {
+        user?: User;
+        session?: { token?: string };
+        token?: string;
+      };
+      const authUser = authPayload?.user;
+      const authSession = authPayload?.session;
       if (authUser) {
         dispatch(
           setSession({
             user: authUser as unknown as User,
-            token: authSession?.token || (data as any)?.token || null,
+            token: authSession?.token || authPayload?.token || null,
           })
         );
       }
@@ -254,8 +269,12 @@ export const useAuth = () => {
         provider: "google",
         callbackURL,
       });
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to initiate Google sign-in.");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Failed to initiate Google sign-in.";
+      toast.error(message);
     }
   }, []);
 
