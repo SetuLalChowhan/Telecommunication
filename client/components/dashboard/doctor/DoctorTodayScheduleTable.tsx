@@ -18,12 +18,14 @@ import { DoctorScheduleItem } from "@/lib/dashboard-mock-data";
 interface DoctorTodayScheduleTableProps {
   schedule: DoctorScheduleItem[];
   onMarkComplete: (id: string) => void;
+  onConfirm?: (id: string) => void;
   showViewAllLink?: boolean;
 }
 
 export const DoctorTodayScheduleTable: React.FC<DoctorTodayScheduleTableProps> = ({
   schedule,
   onMarkComplete,
+  onConfirm,
   showViewAllLink = true,
 }) => {
   return (
@@ -106,6 +108,16 @@ export const DoctorTodayScheduleTable: React.FC<DoctorTodayScheduleTableProps> =
                   </TableCell>
                   <TableCell className="py-3.5 px-6 text-right">
                     <div className="flex items-center justify-end gap-2">
+                      {item.status === "PENDING" && onConfirm && (
+                        <Button
+                          size="sm"
+                          onClick={() => onConfirm(item.id)}
+                          className="h-8 px-3 rounded-lg text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                          <span>Confirm</span>
+                        </Button>
+                      )}
                       {item.meetLink && item.status === "CONFIRMED" && (
                         <a href={item.meetLink} target="_blank" rel="noopener noreferrer">
                           <Button size="sm" className="h-8 px-3 rounded-lg text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white">
@@ -168,6 +180,16 @@ export const DoctorTodayScheduleTable: React.FC<DoctorTodayScheduleTableProps> =
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-1">
+                {item.status === "PENDING" && onConfirm && (
+                  <Button
+                    size="sm"
+                    onClick={() => onConfirm(item.id)}
+                    className="h-8 px-3 rounded-lg text-xs font-semibold gap-1 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                    <span>Confirm</span>
+                  </Button>
+                )}
                 {item.meetLink && item.status === "CONFIRMED" && (
                   <a href={item.meetLink} target="_blank" rel="noopener noreferrer">
                     <Button size="sm" className="h-8 px-3 rounded-lg text-xs font-semibold gap-1 bg-emerald-600 text-white">

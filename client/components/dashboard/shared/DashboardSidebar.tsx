@@ -63,7 +63,8 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         { label: "Settings", path: "/patient/settings", icon: Settings },
       ];
 
-  const displayName = user?.name || (isDoctor ? "Dr. Sarah Ahmed" : "Setulal Chowhan");
+  const displayName =
+    user?.name || (isDoctor ? "Doctor Portal" : "Patient Portal");
   const displayRole = isDoctor ? "Doctor / Specialist" : "Patient";
 
   return (
@@ -157,12 +158,18 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         <div className="flex items-center gap-3 px-2 py-1.5 rounded-xl">
           <Avatar className="h-9 w-9 ring-1 ring-primary/20 shrink-0">
             <AvatarImage src={user?.image || ""} alt={displayName} />
-            <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
+            <AvatarFallback
+              className="bg-primary/10 text-primary font-bold text-xs"
+              suppressHydrationWarning
+            >
               {displayName.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold text-foreground truncate">
+            <p
+              className="text-xs font-semibold text-foreground truncate"
+              suppressHydrationWarning
+            >
               {displayName}
             </p>
             <p className="text-[11px] text-muted-foreground truncate">

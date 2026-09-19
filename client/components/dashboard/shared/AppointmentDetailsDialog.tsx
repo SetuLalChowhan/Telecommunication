@@ -17,6 +17,7 @@ import {
   Video,
   FileText,
   AlertTriangle,
+  Check,
 } from "lucide-react";
 import { DashboardAppointment } from "@/lib/dashboard-mock-data";
 
@@ -25,6 +26,7 @@ interface AppointmentDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCancelAppointment?: (id: string) => void;
+  onConfirmAppointment?: (id: string) => void;
   isDoctorView?: boolean;
 }
 
@@ -33,6 +35,7 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
   open,
   onOpenChange,
   onCancelAppointment,
+  onConfirmAppointment,
   isDoctorView = false,
 }) => {
   const [confirmCancel, setConfirmCancel] = useState(false);
@@ -193,6 +196,20 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
             >
               Close
             </Button>
+
+            {isDoctorView && appointment.status === "PENDING" && onConfirmAppointment && (
+              <Button
+                size="sm"
+                onClick={() => {
+                  onConfirmAppointment(appointment.id);
+                  onOpenChange(false);
+                }}
+                className="h-8.5 px-3.5 text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-xs"
+              >
+                <Check className="h-3.5 w-3.5" />
+                <span>Confirm Appointment</span>
+              </Button>
+            )}
 
             {appointment.meetLink && appointment.status === "CONFIRMED" && (
               <a

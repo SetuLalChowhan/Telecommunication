@@ -51,6 +51,20 @@ export default function DoctorAppointmentsPage() {
     );
   };
 
+  const handleConfirmAppointment = (id: string) => {
+    setAppointments((prev) =>
+      prev.map((appt) =>
+        appt.id === id
+          ? {
+              ...appt,
+              status: "CONFIRMED" as const,
+              meetLink: `https://meet.google.com/tele-${appt.id.slice(-8)}`,
+            }
+          : appt
+      )
+    );
+  };
+
   const handleCancelAppointment = (id: string) => {
     setAppointments((prev) =>
       prev.map((a) => (a.id === id ? { ...a, status: "CANCELLED" as const } : a))
@@ -206,6 +220,16 @@ export default function DoctorAppointmentsPage() {
                         </TableCell>
                         <TableCell className="py-3.5 px-6 text-right">
                           <div className="flex items-center justify-end gap-2">
+                            {item.status === "PENDING" && (
+                              <Button
+                                size="sm"
+                                onClick={() => handleConfirmAppointment(item.id)}
+                                className="h-8 px-3 rounded-lg text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer"
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                                <span>Confirm</span>
+                              </Button>
+                            )}
                             {item.meetLink && item.status === "CONFIRMED" && (
                               <a href={item.meetLink} target="_blank" rel="noopener noreferrer">
                                 <Button size="sm" className="h-8 px-3 rounded-lg text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white">
@@ -270,6 +294,16 @@ export default function DoctorAppointmentsPage() {
                     </div>
 
                     <div className="flex items-center justify-end gap-2 pt-1">
+                      {item.status === "PENDING" && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleConfirmAppointment(item.id)}
+                          className="h-8 px-3 rounded-lg text-xs font-semibold gap-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                          <span>Confirm</span>
+                        </Button>
+                      )}
                       {item.meetLink && item.status === "CONFIRMED" && (
                         <a href={item.meetLink} target="_blank" rel="noopener noreferrer">
                           <Button size="sm" className="h-8 px-3 rounded-lg text-xs font-semibold gap-1 bg-emerald-600 text-white">
@@ -319,6 +353,7 @@ export default function DoctorAppointmentsPage() {
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           onCancelAppointment={handleCancelAppointment}
+          onConfirmAppointment={handleConfirmAppointment}
           isDoctorView={true}
         />
       </div>

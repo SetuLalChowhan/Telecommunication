@@ -5,15 +5,16 @@ import { Calendar, Video, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DoctorScheduleItem } from "@/lib/dashboard-mock-data";
-
 interface DoctorNextConsultationProps {
   appointment?: DoctorScheduleItem;
   onMarkComplete: (id: string) => void;
+  onConfirm?: (id: string) => void;
 }
 
 export const DoctorNextConsultation: React.FC<DoctorNextConsultationProps> = ({
   appointment,
   onMarkComplete,
+  onConfirm,
 }) => {
   return (
     <section className="space-y-3">
@@ -29,11 +30,7 @@ export const DoctorNextConsultation: React.FC<DoctorNextConsultationProps> = ({
         </div>
 
         <span className="text-xs text-muted-foreground font-medium">
-          {new Date().toLocaleDateString("en-US", {
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-          })}
+          {appointment ? `Today · ${appointment.time}` : "Scheduled Session"}
         </span>
       </div>
 
@@ -83,6 +80,16 @@ export const DoctorNextConsultation: React.FC<DoctorNextConsultationProps> = ({
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2.5 self-start lg:self-auto shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-border/50 w-full lg:w-auto justify-end">
+              {appointment.status === "PENDING" && onConfirm && (
+                <Button
+                  onClick={() => onConfirm(appointment.id)}
+                  className="w-full sm:w-auto h-9 sm:h-10 px-4 sm:px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold gap-2 shadow-xs cursor-pointer"
+                >
+                  <Check className="h-4 w-4" />
+                  <span>Confirm Appointment</span>
+                </Button>
+              )}
+
               {appointment.meetLink && appointment.status === "CONFIRMED" && (
                 <a
                   href={appointment.meetLink}

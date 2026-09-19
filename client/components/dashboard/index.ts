@@ -11,6 +11,7 @@ export * from "./shared/DeleteDayOffDialog";
 export * from "./patient/PatientNextConsultation";
 export * from "./patient/PatientAppointmentsTable";
 export * from "./patient/PatientQuickActions";
+export * from "./patient/PatientStatsCards";
 
 export * from "./doctor/DoctorNextConsultation";
 export * from "./doctor/DoctorTodayScheduleTable";

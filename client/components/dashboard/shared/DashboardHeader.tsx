@@ -37,15 +37,8 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   const isLoggingOut = logoutMutation.isPending;
 
   const isDoctor = role === "DOCTOR";
-  const rawName = user?.name || (isDoctor ? "Dr. Sarah Ahmed" : "Setulal");
-  const firstName = rawName.split(" ")[0];
-
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 18) return "Good afternoon";
-    return "Good evening";
-  };
+  const rawName = user?.name || "";
+  const firstName = rawName ? rawName.split(" ")[0] : "";
 
   const profilePath = isDoctor ? "/doctor/settings" : "/patient/profile";
 
@@ -74,8 +67,11 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           </Sheet>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm sm:text-base font-semibold text-foreground tracking-tight">
-              {getGreeting()}, {firstName}
+            <span
+              className="text-sm sm:text-base font-semibold text-foreground tracking-tight"
+              suppressHydrationWarning
+            >
+              {firstName ? `Welcome back, ${firstName}` : "Welcome back"}
             </span>
           </div>
         </div>
@@ -89,16 +85,24 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                 className="flex items-center gap-2 rounded-full p-0.5 hover:ring-2 hover:ring-primary/20 transition-all cursor-pointer focus:outline-none"
               >
                 <Avatar className="h-9 w-9 sm:h-10 sm:w-10 ring-1 ring-primary/20">
-                  <AvatarImage src={user?.image || ""} alt={rawName} />
-                  <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs sm:text-sm">
-                    {rawName.slice(0, 2).toUpperCase()}
+                  <AvatarImage src={user?.image || ""} alt={rawName || "User"} />
+                  <AvatarFallback
+                    className="bg-primary/10 text-primary font-bold text-xs sm:text-sm"
+                    suppressHydrationWarning
+                  >
+                    {(rawName || (isDoctor ? "DR" : "PT")).slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 rounded-2xl p-1.5 shadow-xl border-border">
               <div className="px-2.5 py-2">
-                <p className="text-sm font-bold text-foreground truncate">{rawName}</p>
+                <p
+                  className="text-sm font-bold text-foreground truncate"
+                  suppressHydrationWarning
+                >
+                  {rawName || (isDoctor ? "Doctor" : "Patient")}
+                </p>
                 <p className="text-xs text-muted-foreground truncate">{user?.email || "user@example.com"}</p>
               </div>
               <DropdownMenuSeparator />

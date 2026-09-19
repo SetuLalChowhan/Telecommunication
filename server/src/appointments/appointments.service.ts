@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { BookingStatus, DayOfWeek } from '@prisma/client';
+import { BookingStatus, DayOfWeek, NotificationType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateBookingDto } from './dto/create-booking.dto.js';
 import { SlotQueryDto } from './dto/slot-query.dto.js';
@@ -16,6 +16,7 @@ import {
 } from '../common/pagination/pagination.utils.js';
 
 import { GoogleService } from '../google/google.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 
 const DAYS_MAP: Record<number, DayOfWeek> = {
   0: DayOfWeek.SUNDAY,
@@ -65,6 +66,7 @@ export class AppointmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly googleService: GoogleService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -348,37 +350,39 @@ export class AppointmentsService {
           slotStart,
           slotEnd,
           notes: dto.notes,
-          status: BookingStatus.CONFIRMED,
+          status: BookingStatus.PENDING,
         },
         include: BOOKING_INCLUDE,
       });
     });
 
-    // 4. Generate Google Meet link / Calendar Event
+    // 4. Dispatch initial notifications for pending appointment
     try {
-      const meetingResult = await this.googleService.createMeetingEvent({
-        doctorUserId: doctor.userId,
-        doctorName: doctor.user.name,
-        patientEmail: patient.user.email,
-        patientName: patient.user.name,
-        slotStart,
-        slotEnd,
-        bookingId: booking.id,
-        notes: dto.notes,
+      const patientName = patient.user?.name || 'A patient';
+      const slotTime = slotStart.toLocaleString('en-US', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
       });
 
-      if (meetingResult.meetLink) {
-        return this.prisma.booking.update({
-          where: { id: booking.id },
-          data: {
-            meetLink: meetingResult.meetLink,
-            googleEventId: meetingResult.googleEventId,
-          },
-          include: BOOKING_INCLUDE,
-        });
-      }
+      // Notify doctor of new pending booking request
+      await this.notificationsService.createNotification({
+        userId: doctor.userId,
+        type: NotificationType.GENERAL,
+        title: 'New Appointment Request',
+        message: `${patientName} has requested a video consultation for ${slotTime}. Please review and confirm.`,
+        relatedBookingId: booking.id,
+      });
+
+      // Notify patient of submitted request
+      await this.notificationsService.createNotification({
+        userId: patient.userId,
+        type: NotificationType.GENERAL,
+        title: 'Appointment Request Submitted',
+        message: `Your appointment request with Dr. ${doctor.user?.name || 'Specialist'} for ${slotTime} is pending doctor confirmation.`,
+        relatedBookingId: booking.id,
+      });
     } catch (err) {
-      console.error('Failed to create Google Meet event for booking:', err);
+      console.error('Failed to dispatch booking creation notifications:', err);
     }
 
     return booking;
@@ -462,6 +466,89 @@ export class AppointmentsService {
   }
 
   /**
+   * Confirm booking (Doctor or Admin)
+   * Transitions status from PENDING to CONFIRMED, generates Google Meet link / Calendar event,
+   * updates booking record with meetLink, and dispatches notification to patient.
+   */
+  async confirmBooking(bookingId: string, userId: string, role: string) {
+    const booking = await this.getBookingById(bookingId, userId, role);
+
+    if (role !== 'ADMIN' && booking.doctor.userId !== userId) {
+      throw new ForbiddenException(
+        'Only the assigned doctor or admin can confirm this booking',
+      );
+    }
+
+    if (booking.status === BookingStatus.CONFIRMED) {
+      throw new BadRequestException('Booking is already confirmed');
+    }
+
+    if (booking.status === BookingStatus.COMPLETED) {
+      throw new BadRequestException('Cannot confirm an already completed booking');
+    }
+
+    if (booking.status === BookingStatus.CANCELLED) {
+      throw new BadRequestException('Cannot confirm a cancelled booking');
+    }
+
+    let meetLink = booking.meetLink;
+    let googleEventId = booking.googleEventId;
+
+    // Generate Google Calendar event & Meet link if not already generated
+    try {
+      const meetingResult = await this.googleService.createMeetingEvent({
+        doctorUserId: booking.doctor.userId,
+        doctorName: booking.doctor.user?.name,
+        patientEmail: booking.patient.user?.email || '',
+        patientName: booking.patient.user?.name,
+        slotStart: booking.slotStart,
+        slotEnd: booking.slotEnd,
+        bookingId: booking.id,
+        notes: booking.notes,
+      });
+
+      if (meetingResult.meetLink) {
+        meetLink = meetingResult.meetLink;
+        googleEventId = meetingResult.googleEventId || null;
+      }
+    } catch (err) {
+      console.error('Failed to create Google Meet event during confirmation:', err);
+      if (!meetLink) {
+        meetLink = `https://meet.google.com/tele-${booking.id.slice(-8)}`;
+      }
+    }
+
+    const updatedBooking = await this.prisma.booking.update({
+      where: { id: bookingId },
+      data: {
+        status: BookingStatus.CONFIRMED,
+        meetLink,
+        googleEventId,
+      },
+      include: BOOKING_INCLUDE,
+    });
+
+    // Send confirmation notification to patient
+    try {
+      const slotTime = booking.slotStart.toLocaleString('en-US', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      });
+      await this.notificationsService.createNotification({
+        userId: booking.patient.userId,
+        type: NotificationType.BOOKING_CONFIRMED,
+        title: 'Appointment Confirmed',
+        message: `Dr. ${booking.doctor.user?.name || 'Specialist'} has confirmed your video consultation for ${slotTime}. Your meet link is ready.`,
+        relatedBookingId: booking.id,
+      });
+    } catch (err) {
+      console.error('Failed to dispatch patient confirmation notification:', err);
+    }
+
+    return updatedBooking;
+  }
+
+  /**
    * Cancel booking (Patient or Doctor or Admin)
    */
   async cancelBooking(bookingId: string, userId: string, role: string) {
@@ -475,11 +562,32 @@ export class AppointmentsService {
       throw new BadRequestException('Booking is already cancelled');
     }
 
-    return this.prisma.booking.update({
+    const updated = await this.prisma.booking.update({
       where: { id: bookingId },
       data: { status: BookingStatus.CANCELLED },
       include: BOOKING_INCLUDE,
     });
+
+    // Notify the other party of cancellation
+    try {
+      const isDoctor = booking.doctor.userId === userId;
+      const targetUserId = isDoctor ? booking.patient.userId : booking.doctor.userId;
+      const actorName = isDoctor
+        ? `Dr. ${booking.doctor.user?.name || 'Doctor'}`
+        : booking.patient.user?.name || 'Patient';
+
+      await this.notificationsService.createNotification({
+        userId: targetUserId,
+        type: NotificationType.BOOKING_CANCELLED,
+        title: 'Appointment Cancelled',
+        message: `${actorName} has cancelled the appointment scheduled for ${booking.slotStart.toLocaleDateString()}.`,
+        relatedBookingId: booking.id,
+      });
+    } catch (err) {
+      console.error('Failed to dispatch cancellation notification:', err);
+    }
+
+    return updated;
   }
 
   /**

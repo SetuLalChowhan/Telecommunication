@@ -17,6 +17,22 @@ import { ResponseMessage } from '../common/decorator/response-message.decorator.
 export class PatientsController {
   constructor(private readonly patientsService: PatientsService) {}
 
+  @Get('dashboard')
+  @Roles('PATIENT')
+  @UseGuards(RolesGuard)
+  @ResponseMessage('Patient dashboard data fetched successfully')
+  getPatientDashboard(@CurrentUser('id') userId: string) {
+    return this.patientsService.getPatientDashboard(userId);
+  }
+
+  @Get('dashboard/stats')
+  @Roles('PATIENT')
+  @UseGuards(RolesGuard)
+  @ResponseMessage('Patient dashboard stats fetched successfully')
+  getPatientDashboardStats(@CurrentUser('id') userId: string) {
+    return this.patientsService.getPatientDashboard(userId);
+  }
+
   @Get('me')
   @Roles('PATIENT')
   @UseGuards(RolesGuard)

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useMemo } from "react";
+import Link from "next/link";
 import { DoctorProfile, DoctorAvailability } from "@/types/doctor";
 import {
   Calendar as CalendarIcon,
@@ -282,21 +283,25 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
       </div>
 
       {isBooked ? (
-        /* Confirmed Booking State */
-        <div className="text-center py-6 space-y-4 animate-in fade-in duration-200">
-          <div className="h-12 w-12 rounded-full bg-emerald-500/10 text-emerald-600 mx-auto flex items-center justify-center">
-            <CheckCircle2 className="h-6 w-6" />
+        /* Pending Confirmation State */
+        <div className="text-center py-5 space-y-4 animate-in fade-in duration-200">
+          <div className="h-12 w-12 rounded-full bg-amber-500/10 text-amber-600 mx-auto flex items-center justify-center">
+            <Clock className="h-6 w-6" />
           </div>
-          <div className="space-y-1">
+
+          <div className="space-y-1.5">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-700 border border-amber-500/20 uppercase tracking-wide">
+              Status: Pending Confirmation
+            </span>
             <h3 className="text-lg font-bold text-foreground">
-              Consultation Booked
+              Appointment Request Submitted
             </h3>
-            <p className="text-xs text-secondary-text leading-relaxed">
-              Your online video appointment with{" "}
+            <p className="text-xs text-secondary-text leading-relaxed px-1">
+              Your consultation request has been sent to{" "}
               <span className="font-semibold text-foreground">
-                {doctor.user?.name || "Doctor"}
-              </span>{" "}
-              is confirmed for:
+                {doctor.user?.name || "the specialist"}
+              </span>
+              . Once the doctor reviews and confirms your visit, the Google Meet video link will be generated and you will be notified.
             </p>
           </div>
 
@@ -318,15 +323,29 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
                 ৳{Number(doctor.fee ?? 0).toLocaleString()}
               </span>
             </div>
+            <div className="flex justify-between text-secondary-text pt-1.5 border-t border-border/60">
+              <span>Next Step:</span>
+              <span className="font-semibold text-amber-600">Awaiting Doctor Confirmation</span>
+            </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsBooked(false)}
-            className="w-full py-2.5 text-xs font-semibold text-primary hover:text-primary-dark transition-colors cursor-pointer"
-          >
-            Select Another Slot
-          </button>
+          <div className="space-y-2 pt-1">
+            <Link
+              href="/patient/appointments"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-dark text-white py-2.5 text-xs font-semibold shadow-xs transition-all"
+            >
+              <span>View in My Appointments</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => setIsBooked(false)}
+              className="w-full py-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              Book Another Slot
+            </button>
+          </div>
         </div>
       ) : (
         /* Booking Form */

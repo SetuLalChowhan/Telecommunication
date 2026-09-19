@@ -62,6 +62,18 @@ export class AppointmentsController {
     return this.appointmentsService.getBookingById(id, userId, role);
   }
 
+  @Patch(':id/confirm')
+  @Roles('DOCTOR', 'ADMIN')
+  @UseGuards(RolesGuard)
+  @ResponseMessage('Booking confirmed successfully')
+  confirmBooking(
+    @Param('id') id: string,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: string,
+  ) {
+    return this.appointmentsService.confirmBooking(id, userId, role);
+  }
+
   @Patch(':id/cancel')
   @UseGuards(RolesGuard)
   @ResponseMessage('Booking cancelled successfully')

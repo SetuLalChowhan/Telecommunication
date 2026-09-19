@@ -39,18 +39,34 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = () => {
     );
   };
 
+  const handleConfirmAppointment = (id: string) => {
+    setSchedule((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              status: "CONFIRMED" as const,
+              meetLink: `https://meet.google.com/tele-${item.id.slice(-8)}`,
+            }
+          : item
+      )
+    );
+  };
+
   return (
     <div className="w-full space-y-6 sm:space-y-8">
       {/* 1. Next Live Consultation Surface */}
       <DoctorNextConsultation
         appointment={nextAppointment}
         onMarkComplete={handleMarkComplete}
+        onConfirm={handleConfirmAppointment}
       />
 
       {/* 2. Today's Consultations Queue (shadcn Table) */}
       <DoctorTodayScheduleTable
         schedule={schedule}
         onMarkComplete={handleMarkComplete}
+        onConfirm={handleConfirmAppointment}
       />
 
       {/* 3. Minimal Practice Availability Summary Card */}

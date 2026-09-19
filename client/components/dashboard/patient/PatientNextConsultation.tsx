@@ -8,12 +8,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DashboardAppointment } from "@/lib/dashboard-mock-data";
 
 interface PatientNextConsultationProps {
-  appointment?: DashboardAppointment;
+  appointment?: DashboardAppointment | null;
+  isLoading?: boolean;
   onOpenDetails: (appointment: DashboardAppointment) => void;
 }
 
 export const PatientNextConsultation: React.FC<PatientNextConsultationProps> = ({
   appointment,
+  isLoading = false,
   onOpenDetails,
 }) => {
   return (
@@ -21,8 +23,8 @@ export const PatientNextConsultation: React.FC<PatientNextConsultationProps> = (
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
           </span>
           <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-muted-foreground">
             Next Up
@@ -30,21 +32,39 @@ export const PatientNextConsultation: React.FC<PatientNextConsultationProps> = (
         </div>
 
         <span className="text-xs text-muted-foreground font-medium">
-          {new Date().toLocaleDateString("en-US", {
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-          })}
+          {appointment ? `${appointment.dateFormatted} · ${appointment.timeFormatted}` : "Scheduled Consultation"}
         </span>
       </div>
 
-      {appointment ? (
+      {isLoading ? (
+        <div className="rounded-2xl bg-card border border-border/70 p-5 sm:p-6 shadow-xs animate-pulse">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+            <div className="flex items-center gap-4 min-w-0">
+              <div className="h-14 w-14 rounded-full bg-muted shrink-0" />
+              <div className="space-y-2 min-w-0">
+                <div className="flex items-center gap-2">
+                  <div className="h-5 w-36 bg-muted rounded-md" />
+                  <div className="h-4 w-16 bg-muted rounded-full" />
+                </div>
+                <div className="h-4 w-52 bg-muted/80 rounded-md" />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 self-end lg:self-auto shrink-0">
+              <div className="h-9 w-28 bg-muted rounded-xl" />
+              <div className="h-9 w-20 bg-muted rounded-xl" />
+            </div>
+          </div>
+        </div>
+      ) : appointment ? (
         <div className="rounded-2xl bg-card border border-border/70 p-5 sm:p-6 shadow-xs transition-all hover:border-primary/30">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             {/* Doctor and Schedule info */}
             <div className="flex items-center gap-4 min-w-0">
               <Avatar className="h-13 w-13 sm:h-14 sm:w-14 ring-1 ring-primary/20 shrink-0">
-                <AvatarImage src={appointment.doctorAvatar} alt={appointment.doctorName} />
+                <AvatarImage
+                  src={appointment.doctorAvatar}
+                  alt={appointment.doctorName}
+                />
                 <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
                   {appointment.doctorName.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
@@ -67,15 +87,26 @@ export const PatientNextConsultation: React.FC<PatientNextConsultationProps> = (
                 </div>
 
                 <div className="flex items-center gap-2 text-xs sm:text-sm text-secondary-text flex-wrap">
-                  <span className="font-medium text-foreground">{appointment.doctorSpecialty}</span>
+                  <span className="font-medium text-foreground">
+                    {appointment.doctorSpecialty}
+                  </span>
                   <span>&bull;</span>
                   <span className="flex items-center gap-1 font-semibold text-primary">
                     <Calendar className="h-3.5 w-3.5" />
                     {appointment.dateFormatted} · {appointment.timeFormatted}
                   </span>
                   <span>&bull;</span>
-                  <span className="text-muted-foreground">{appointment.consultationType}</span>
+                  <span className="text-muted-foreground">
+                    {appointment.consultationType}
+                  </span>
                 </div>
+
+                {appointment.status === "PENDING" && (
+                  <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+                    Awaiting doctor confirmation &bull; Video consultation link
+                    will activate once confirmed.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -108,12 +139,18 @@ export const PatientNextConsultation: React.FC<PatientNextConsultationProps> = (
       ) : (
         <div className="rounded-2xl border border-dashed border-border p-6 text-center space-y-2 bg-card/50">
           <Stethoscope className="h-8 w-8 text-muted-foreground mx-auto" />
-          <h3 className="text-sm font-bold text-foreground">No upcoming consultations</h3>
+          <h3 className="text-sm font-bold text-foreground">
+            No upcoming consultations
+          </h3>
           <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-            You do not have any scheduled appointments. Book a doctor when you need clinical guidance.
+            You do not have any scheduled appointments. Book a doctor when you
+            need clinical guidance.
           </p>
           <Link href="/doctors" className="inline-block pt-1">
-            <Button size="sm" className="h-8.5 px-4 rounded-xl text-xs font-semibold gap-1.5 shadow-xs">
+            <Button
+              size="sm"
+              className="h-8.5 px-4 rounded-xl text-xs font-semibold gap-1.5 shadow-xs"
+            >
               <span>Find a Doctor</span>
             </Button>
           </Link>
