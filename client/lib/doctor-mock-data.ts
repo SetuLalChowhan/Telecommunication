@@ -40,6 +40,7 @@ export interface DoctorPatientRecord {
   lastVisitDate: string;
   lastCondition: string;
   avatar: string;
+  reportsCount?: number;
 }
 
 export interface AvailabilitySlot {

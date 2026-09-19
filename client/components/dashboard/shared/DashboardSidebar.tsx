@@ -15,6 +15,7 @@ import {
   FileText,
   LogOut,
   Loader2,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import BrandLogo from "@/components/common/BrandLogo";
@@ -52,6 +53,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         { label: "My Appointments", path: "/patient/appointments", icon: Calendar },
         { label: "Find Doctors", path: "/doctors", icon: Stethoscope },
         { label: "Medical Records", path: "/patient/records", icon: FileText },
+        { label: "Notifications", path: "/patient/notifications", icon: Bell },
       ];
 
   const secondaryNavItems = isDoctor

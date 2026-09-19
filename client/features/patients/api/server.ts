@@ -96,3 +96,34 @@ export async function getPatientBookingsServer(
     };
   }
 }
+
+/**
+ * Server-Side fetcher for patient profile
+ */
+export async function getPatientProfileServer(
+  options?: ServerFetchOptions
+): Promise<import("../types").PatientProfileData | null> {
+  try {
+    let cookieHeader = "";
+    try {
+      const cookieStore = await cookies();
+      cookieHeader = cookieStore.toString();
+    } catch {}
+
+    const response = await serverFetch<{
+      success: boolean;
+      data: import("../types").PatientProfileData;
+    }>("/patients/me", {
+      headers: {
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
+      cache: "no-store",
+      ...options,
+    });
+
+    return response.data || null;
+  } catch (error) {
+    console.error("Failed to fetch patient profile on server:", error);
+    return null;
+  }
+}

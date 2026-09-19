@@ -91,9 +91,61 @@ export interface PatientBookingsResponse {
   };
 }
 
+export interface PatientProfileUser {
+  id: string;
+  name: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  phone: string | null;
+  image: string | null;
+  dateOfBirth: string | null;
+  role: string;
+  createdAt: string;
+}
+
+export interface PatientProfileData {
+  id: string;
+  userId: string;
+  address: string | null;
+  gender: "MALE" | "FEMALE" | "OTHER" | null;
+  bloodGroup:
+    | "A_POSITIVE"
+    | "A_NEGATIVE"
+    | "B_POSITIVE"
+    | "B_NEGATIVE"
+    | "AB_POSITIVE"
+    | "AB_NEGATIVE"
+    | "O_POSITIVE"
+    | "O_NEGATIVE"
+    | null;
+  emergencyContactName: string | null;
+  emergencyContactPhone: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user: PatientProfileUser;
+  _count?: {
+    bookings: number;
+    medicalReports: number;
+  };
+}
+
+export interface UpdatePatientProfilePayload {
+  name?: string;
+  phone?: string;
+  image?: string | File;
+  dateOfBirth?: string;
+  address?: string;
+  gender?: string;
+  bloodGroup?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+}
+
 export const patientKeys = {
   all: ["patients"] as const,
   dashboard: () => [...patientKeys.all, "dashboard"] as const,
+  profile: () => [...patientKeys.all, "profile"] as const,
   bookings: (params?: PatientBookingsQueryParams) =>
     [
       ...patientKeys.all,

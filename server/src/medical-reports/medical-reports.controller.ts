@@ -27,16 +27,17 @@ export class MedicalReportsController {
   ) {}
 
   @Post()
-  @Roles('PATIENT')
+  @Roles('PATIENT', 'DOCTOR')
   @UseGuards(RolesGuard)
   @UseInterceptors(FileInterceptor('file', reportUploadOptions))
   @ResponseMessage('Medical report uploaded successfully')
   uploadReport(
     @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: string,
     @Body() dto: UploadReportDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.medicalReportsService.uploadReport(userId, dto, file);
+    return this.medicalReportsService.uploadReport(userId, role, dto, file);
   }
 
   @Get('my-reports')

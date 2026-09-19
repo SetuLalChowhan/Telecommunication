@@ -6,6 +6,8 @@ import {
   fetchPatientDashboard,
   fetchPatientBookings,
   cancelPatientBooking,
+  fetchPatientProfile,
+  updatePatientProfile,
 } from "./client";
 import {
   PatientDashboardData,
@@ -32,7 +34,6 @@ export function usePatientBookings(params?: PatientBookingsQueryParams) {
   return useQuery<PatientBookingsResponse>({
     queryKey: patientKeys.bookings(params),
     queryFn: () => fetchPatientBookings(params),
-    placeholderData: (previousData) => previousData,
     staleTime: 1000 * 30, // 30 seconds
   });
 }
@@ -64,6 +65,46 @@ export function useCancelPatientBooking() {
         err?.response?.data?.message ||
         err?.message ||
         "Failed to cancel appointment. Please try again.";
+      toast.error(message);
+    },
+  });
+}
+
+/**
+ * Query hook for authenticated patient profile
+ */
+export function usePatientProfile() {
+  return useQuery<import("../types").PatientProfileData>({
+    queryKey: patientKeys.profile(),
+    queryFn: fetchPatientProfile,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
+/**
+ * Mutation hook to update patient profile
+ */
+export function useUpdatePatientProfile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (
+      payload: FormData | import("../types").UpdatePatientProfilePayload
+    ) => updatePatientProfile(payload),
+    onSuccess: () => {
+      toast.success("Profile updated successfully");
+      queryClient.invalidateQueries({ queryKey: patientKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["auth"] });
+    },
+    onError: (error: unknown) => {
+      const err = error as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to update profile. Please check your details.";
       toast.error(message);
     },
   });

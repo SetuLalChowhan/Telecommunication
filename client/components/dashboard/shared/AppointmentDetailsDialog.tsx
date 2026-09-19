@@ -18,6 +18,7 @@ import {
   FileText,
   AlertTriangle,
   Check,
+  Loader2,
 } from "lucide-react";
 import { DashboardAppointment } from "@/lib/dashboard-mock-data";
 
@@ -28,6 +29,7 @@ interface AppointmentDetailsDialogProps {
   onCancelAppointment?: (id: string) => void;
   onConfirmAppointment?: (id: string) => void;
   isDoctorView?: boolean;
+  isCancelling?: boolean;
 }
 
 export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> = ({
@@ -37,6 +39,7 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
   onCancelAppointment,
   onConfirmAppointment,
   isDoctorView = false,
+  isCancelling = false,
 }) => {
   const [confirmCancel, setConfirmCancel] = useState(false);
 
@@ -46,8 +49,6 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
     if (onCancelAppointment) {
       onCancelAppointment(appointment.id);
     }
-    setConfirmCancel(false);
-    onOpenChange(false);
   };
 
   return (
@@ -155,14 +156,23 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
                 <Button
                   variant="destructive"
                   size="sm"
+                  disabled={isCancelling}
                   onClick={handleCancel}
-                  className="h-7.5 px-3 text-xs"
+                  className="h-7.5 px-3 text-xs gap-1.5"
                 >
-                  Confirm Cancel
+                  {isCancelling ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Cancelling...</span>
+                    </>
+                  ) : (
+                    <span>Confirm Cancel</span>
+                  )}
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
+                  disabled={isCancelling}
                   onClick={() => setConfirmCancel(false)}
                   className="h-7.5 px-3 text-xs"
                 >

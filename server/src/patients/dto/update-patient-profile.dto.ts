@@ -1,7 +1,25 @@
-import { IsEnum, IsOptional, IsPhoneNumber, IsString, MaxLength } from 'class-validator';
+import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 import { BloodGroup, Gender } from '@prisma/client';
 
 export class UpdatePatientProfileDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  image?: string;
+
+  @IsOptional()
+  @IsString()
+  dateOfBirth?: string;
+
   @IsOptional()
   @IsString()
   @MaxLength(255)
@@ -21,6 +39,7 @@ export class UpdatePatientProfileDto {
   emergencyContactName?: string;
 
   @IsOptional()
-  @IsPhoneNumber('BD', { message: 'emergencyContactPhone must be a valid phone number' })
+  @IsString()
+  @MaxLength(30)
   emergencyContactPhone?: string;
 }

@@ -8,6 +8,7 @@ import {
   Activity,
   Droplet,
   FileText,
+  UploadCloud,
 } from "lucide-react";
 import DoctorLayout from "@/layouts/DoctorLayout";
 import { Button } from "@/components/ui/button";
@@ -170,6 +171,41 @@ export default function DoctorPatientsPage() {
                   <p>
                     <span className="font-semibold text-foreground">Last Consultation:</span> {selectedPatient.lastVisitDate}
                   </p>
+                </div>
+
+                {/* Patient Reports & Prescription Upload */}
+                <div className="rounded-xl bg-primary/5 p-3.5 space-y-2 border border-primary/20 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-foreground flex items-center gap-1.5">
+                      <FileText className="h-4 w-4 text-primary" />
+                      Patient Medical Records
+                    </span>
+                    <span className="text-[11px] text-primary font-bold">
+                      {selectedPatient.reportsCount || 0} Files
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-secondary-text">
+                    Review patient uploaded lab tests or issue signed e-prescriptions.
+                  </p>
+                  <div className="flex items-center gap-2 pt-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => alert(`Reviewing medical reports for ${selectedPatient.name}`)}
+                      className="h-8 rounded-xl text-xs font-semibold gap-1.5 flex-1"
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      <span>View Reports</span>
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => alert(`Upload e-Prescription for ${selectedPatient.name}`)}
+                      className="h-8 rounded-xl text-xs font-semibold gap-1.5 flex-1"
+                    >
+                      <UploadCloud className="h-3.5 w-3.5" />
+                      <span>Upload Rx</span>
+                    </Button>
+                  </div>
                 </div>
               </div>
 

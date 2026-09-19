@@ -36,6 +36,7 @@ export class MedicalReportsService {
 
   async uploadReport(
     userId: string,
+    role: string,
     dto: UploadReportDto,
     file?: Express.Multer.File,
   ) {
@@ -43,22 +44,50 @@ export class MedicalReportsService {
       throw new BadRequestException('Report file is required (PDF, JPG, PNG)');
     }
 
-    const patient = await this.getOrCreatePatient(userId);
+    let patientId: string;
 
-    // If bookingId is provided, verify it belongs to this patient
-    if (dto.bookingId) {
+    if (role === 'DOCTOR') {
+      if (!dto.bookingId) {
+        throw new BadRequestException(
+          'bookingId is required when a doctor uploads a prescription or medical report',
+        );
+      }
+
       const booking = await this.prisma.booking.findUnique({
         where: { id: dto.bookingId },
+        include: { doctor: true },
       });
 
       if (!booking) {
         throw new NotFoundException(`Booking with ID "${dto.bookingId}" not found`);
       }
 
-      if (booking.patientId !== patient.id) {
+      if (booking.doctor.userId !== userId) {
         throw new ForbiddenException(
-          'You can only attach reports to your own appointments',
+          'You can only upload prescriptions or reports for your own appointments',
         );
+      }
+
+      patientId = booking.patientId;
+    } else {
+      // Patient upload
+      const patient = await this.getOrCreatePatient(userId);
+      patientId = patient.id;
+
+      if (dto.bookingId) {
+        const booking = await this.prisma.booking.findUnique({
+          where: { id: dto.bookingId },
+        });
+
+        if (!booking) {
+          throw new NotFoundException(`Booking with ID "${dto.bookingId}" not found`);
+        }
+
+        if (booking.patientId !== patient.id) {
+          throw new ForbiddenException(
+            'You can only attach reports to your own appointments',
+          );
+        }
       }
     }
 
@@ -68,11 +97,15 @@ export class MedicalReportsService {
       { resourceType: 'auto' },
     );
     const fileUrl = uploadRes.secureUrl;
-    const displayName = dto.fileName || file.originalname;
+
+    let displayName = dto.fileName || file.originalname;
+    if (role === 'DOCTOR' && !displayName.toLowerCase().includes('prescription')) {
+      displayName = `Prescription - ${displayName}`;
+    }
 
     return this.prisma.medicalReport.create({
       data: {
-        patientId: patient.id,
+        patientId,
         bookingId: dto.bookingId || null,
         fileUrl,
         fileName: displayName,
@@ -84,9 +117,16 @@ export class MedicalReportsService {
             slotStart: true,
             status: true,
             doctor: {
-              include: {
+              select: {
+                id: true,
+                slug: true,
+                designation: true,
+                hospitalAffiliation: true,
                 user: {
-                  select: { name: true, email: true },
+                  select: { name: true, email: true, image: true },
+                },
+                specialties: {
+                  include: { specialty: true },
                 },
               },
             },
@@ -113,8 +153,17 @@ export class MedicalReportsService {
               slotStart: true,
               status: true,
               doctor: {
-                include: {
-                  user: { select: { name: true, email: true } },
+                select: {
+                  id: true,
+                  slug: true,
+                  designation: true,
+                  hospitalAffiliation: true,
+                  user: {
+                    select: { name: true, email: true, image: true },
+                  },
+                  specialties: {
+                    include: { specialty: true },
+                  },
                 },
               },
             },

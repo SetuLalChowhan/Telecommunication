@@ -1,82 +1,44 @@
-"use client";
-
-import React from "react";
+import React, { Suspense } from "react";
 import {
-  FileText,
-  Download,
-  UploadCloud,
-} from "lucide-react";
-import PatientLayout from "@/layouts/PatientLayout";
-import { Button } from "@/components/ui/button";
-import { MOCK_MEDICAL_REPORTS } from "@/lib/patient-mock-data";
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
+import { getMyMedicalReportsServer } from "@/features/medical-reports/api/server";
+import { medicalReportKeys } from "@/features/medical-reports/types";
+import { getPatientBookingsServer } from "@/features/patients/api/server";
+import { patientKeys } from "@/features/patients/types";
+import { PatientRecordsClient } from "./PatientRecordsClient";
 
-export default function PatientRecordsPage() {
+export default async function PatientRecordsPage() {
+  const queryClient = new QueryClient();
+
+  // Prefetch both patient medical reports and appointments (so booking selector in upload modal is fast)
+  await Promise.all([
+    queryClient.prefetchQuery({
+      queryKey: medicalReportKeys.myReports(),
+      queryFn: () => getMyMedicalReportsServer(),
+    }),
+    queryClient.prefetchQuery({
+      queryKey: patientKeys.bookings({ limit: 50 }),
+      queryFn: () => getPatientBookingsServer({ limit: 50 }),
+    }),
+  ]);
+
   return (
-    <PatientLayout>
-      <div className="w-full space-y-6 sm:space-y-7">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-border/70">
-          <div className="space-y-1">
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
-              Medical Reports
-            </h1>
-            <p className="text-xs sm:text-sm text-secondary-text">
-              View and download your uploaded diagnostic reports and laboratory tests.
-            </p>
-          </div>
-
-          <Button
-            onClick={() => alert("Upload report feature: Select a PDF or Image file")}
-            className="h-10 sm:h-10.5 px-4 sm:px-5 rounded-xl gap-2 text-xs sm:text-sm font-semibold shadow-xs"
-          >
-            <UploadCloud className="h-4 w-4" />
-            <span>Upload Report</span>
-          </Button>
-        </div>
-
-        {/* Reports Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
-          {MOCK_MEDICAL_REPORTS.map((report) => (
-            <div
-              key={report.id}
-              className="rounded-2xl border border-border bg-card p-5 space-y-4 shadow-xs flex flex-col justify-between hover:border-primary/40 transition-colors"
-            >
-              <div className="space-y-2">
-                <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                  <FileText className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm sm:text-base font-bold text-foreground">
-                    {report.fileName}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Uploaded on {report.uploadedAt}
-                  </p>
-                  {report.doctorName && (
-                    <p className="text-xs text-primary font-semibold mt-1">
-                      Consultant: {report.doctorName}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-border flex items-center justify-between gap-2">
-                <span className="text-[11px] font-mono text-muted-foreground uppercase font-medium">
-                  PDF Document
-                </span>
-                <Button
-                  variant="outline"
-                  onClick={() => alert(`Downloading ${report.fileName}...`)}
-                  className="h-8.5 px-3 rounded-xl text-xs font-semibold gap-1.5 hover:border-primary hover:text-primary"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  <span>Download</span>
-                </Button>
-              </div>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <Suspense
+        fallback={
+          <div className="w-full min-h-[400px] flex items-center justify-center">
+            <div className="flex items-center gap-3 text-sm font-semibold text-primary">
+              <span className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+              <span>Loading Medical Records...</span>
             </div>
-          ))}
-        </div>
-      </div>
-    </PatientLayout>
+          </div>
+        }
+      >
+        <PatientRecordsClient />
+      </Suspense>
+    </HydrationBoundary>
   );
 }

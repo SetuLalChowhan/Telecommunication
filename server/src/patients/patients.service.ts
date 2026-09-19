@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { BookingStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { UpdatePatientProfileDto } from './dto/update-patient-profile.dto.js';
+import { CloudinaryService } from '../common/cloudinary/cloudinary.service.js';
 
 const PATIENT_PROFILE_INCLUDE = {
   user: {
@@ -28,7 +29,10 @@ const PATIENT_PROFILE_INCLUDE = {
 
 @Injectable()
 export class PatientsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   private async getOwnProfileOrThrow(userId: string) {
     let profile = await this.prisma.patientProfile.findUnique({
@@ -51,18 +55,68 @@ export class PatientsService {
     return this.getOwnProfileOrThrow(userId);
   }
 
-  async updateMyProfile(userId: string, dto: UpdatePatientProfileDto) {
+  async updateMyProfile(
+    userId: string,
+    dto: UpdatePatientProfileDto,
+    file?: Express.Multer.File,
+  ) {
     const profile = await this.getOwnProfileOrThrow(userId);
+
+    let imageUrl: string | undefined = undefined;
+
+    if (file) {
+      const uploadRes = await this.cloudinaryService.uploadFile(
+        file,
+        'telehealth/avatars',
+        {
+          transformation: [
+            { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+          ],
+        },
+      );
+      imageUrl = uploadRes.secureUrl;
+
+      // Clean up previous image if on Cloudinary
+      if (profile.user?.image) {
+        await this.cloudinaryService.deleteFile(profile.user.image);
+      }
+    } else if (dto.image) {
+      imageUrl = dto.image;
+    }
+
+    // 1. Update user fields if provided
+    const userUpdateData: Record<string, any> = {};
+    if (dto.name !== undefined) userUpdateData.name = dto.name;
+    if (dto.phone !== undefined) userUpdateData.phone = dto.phone;
+    if (imageUrl !== undefined) userUpdateData.image = imageUrl;
+    if (dto.dateOfBirth !== undefined) {
+      userUpdateData.dateOfBirth = dto.dateOfBirth
+        ? new Date(dto.dateOfBirth)
+        : null;
+    }
+
+    if (Object.keys(userUpdateData).length > 0) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: userUpdateData,
+      });
+    }
+
+    // 2. Update patient profile fields if provided
+    const profileUpdateData: Record<string, any> = {};
+    if (dto.address !== undefined) profileUpdateData.address = dto.address;
+    if (dto.gender !== undefined) profileUpdateData.gender = dto.gender;
+    if (dto.bloodGroup !== undefined) profileUpdateData.bloodGroup = dto.bloodGroup;
+    if (dto.emergencyContactName !== undefined) {
+      profileUpdateData.emergencyContactName = dto.emergencyContactName;
+    }
+    if (dto.emergencyContactPhone !== undefined) {
+      profileUpdateData.emergencyContactPhone = dto.emergencyContactPhone;
+    }
 
     return this.prisma.patientProfile.update({
       where: { id: profile.id },
-      data: {
-        address: dto.address,
-        gender: dto.gender,
-        bloodGroup: dto.bloodGroup,
-        emergencyContactName: dto.emergencyContactName,
-        emergencyContactPhone: dto.emergencyContactPhone,
-      },
+      data: profileUpdateData,
       include: PATIENT_PROFILE_INCLUDE,
     });
   }

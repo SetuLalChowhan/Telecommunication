@@ -68,3 +68,32 @@ export async function cancelPatientBooking(
   );
   return response.data.data;
 }
+
+/**
+ * Fetch authenticated patient profile details
+ */
+export async function fetchPatientProfile(): Promise<import("../types").PatientProfileData> {
+  const response = await apiClient.get<{ data: import("../types").PatientProfileData }>(
+    "/patients/me"
+  );
+  return response.data.data;
+}
+
+/**
+ * Update authenticated patient profile (handles both FormData for image upload and json)
+ */
+export async function updatePatientProfile(
+  payload: FormData | import("../types").UpdatePatientProfilePayload
+): Promise<import("../types").PatientProfileData> {
+  const headers =
+    payload instanceof FormData
+      ? { "Content-Type": "multipart/form-data" }
+      : undefined;
+
+  const response = await apiClient.patch<{ data: import("../types").PatientProfileData }>(
+    "/patients/me",
+    payload,
+    { headers }
+  );
+  return response.data.data;
+}

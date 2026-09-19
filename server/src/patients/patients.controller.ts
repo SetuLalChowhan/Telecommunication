@@ -4,14 +4,18 @@ import {
   Get,
   Param,
   Patch,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { PatientsService } from './patients.service.js';
 import { UpdatePatientProfileDto } from './dto/update-patient-profile.dto.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { CurrentUser } from '../common/decorator/current-user.decorator.js';
 import { ResponseMessage } from '../common/decorator/response-message.decorator.js';
+import { avatarUploadOptions } from '../common/utils/file-upload.util.js';
 
 @Controller('patients')
 export class PatientsController {
@@ -44,12 +48,14 @@ export class PatientsController {
   @Patch('me')
   @Roles('PATIENT')
   @UseGuards(RolesGuard)
+  @UseInterceptors(FileInterceptor('image', avatarUploadOptions))
   @ResponseMessage('Patient profile updated successfully')
   updateMyProfile(
     @CurrentUser('id') userId: string,
     @Body() dto: UpdatePatientProfileDto,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.patientsService.updateMyProfile(userId, dto);
+    return this.patientsService.updateMyProfile(userId, dto, file);
   }
 
   @Get(':id')

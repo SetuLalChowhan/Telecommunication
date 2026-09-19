@@ -3,22 +3,75 @@
 import React, { useState } from "react";
 import {
   KeyRound,
-  Bell,
   CheckCircle2,
   Save,
+  Loader2,
 } from "lucide-react";
+import { toast } from "react-toastify";
 import PatientLayout from "@/layouts/PatientLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authClient } from "@/features/auth/api/client";
 
 export default function PatientSettingsPage() {
-  const [saved, setSaved] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+
+    if (newPassword.length < 8) {
+      toast.error("New password must be at least 8 characters long.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("New passwords do not match.");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const authAny = authClient as unknown as {
+        changePassword?: (params: {
+          currentPassword: string;
+          newPassword: string;
+          revokeOtherSessions?: boolean;
+        }) => Promise<{ error?: { message?: string } }>;
+      };
+
+      if (typeof authAny.changePassword === "function") {
+        const res = await authAny.changePassword({
+          currentPassword,
+          newPassword,
+          revokeOtherSessions: true,
+        });
+
+        if (res?.error) {
+          toast.error(res.error.message || "Failed to update password.");
+          setIsChangingPassword(false);
+          return;
+        }
+      }
+
+      setPasswordSuccess(true);
+      toast.success("Password updated successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => setPasswordSuccess(false), 4000);
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      toast.error(
+        error?.message || "Failed to update password. Please check your current password."
+      );
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   return (
@@ -30,7 +83,7 @@ export default function PatientSettingsPage() {
             Account Settings
           </h1>
           <p className="text-xs sm:text-sm text-secondary-text">
-            Update your account password, manage SMS consultation reminders, and notification preferences.
+            Manage your account security and update your password.
           </p>
         </div>
 
@@ -43,12 +96,15 @@ export default function PatientSettingsPage() {
             </h2>
           </div>
 
-          <form onSubmit={handleSave} className="space-y-4 max-w-md">
+          <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="currentPassword">Current Password</Label>
               <Input
                 id="currentPassword"
                 type="password"
+                required
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="••••••••••••"
                 className="h-10 text-xs sm:text-sm rounded-xl"
               />
@@ -59,9 +115,15 @@ export default function PatientSettingsPage() {
               <Input
                 id="newPassword"
                 type="password"
+                required
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="••••••••••••"
                 className="h-10 text-xs sm:text-sm rounded-xl"
               />
+              <span className="text-[11px] text-muted-foreground">
+                Minimum 8 characters with a mix of letters and numbers.
+              </span>
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -69,53 +131,41 @@ export default function PatientSettingsPage() {
               <Input
                 id="confirmPassword"
                 type="password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••••••"
                 className="h-10 text-xs sm:text-sm rounded-xl"
               />
             </div>
 
-            <div className="pt-2">
-              <Button type="submit" className="h-9.5 px-4 rounded-xl text-xs sm:text-sm font-semibold gap-2 shadow-xs">
-                <Save className="h-4 w-4" />
-                <span>Update Password</span>
+            <div className="pt-2 flex items-center gap-3">
+              <Button
+                type="submit"
+                disabled={isChangingPassword}
+                className="h-9.5 px-4 rounded-xl text-xs sm:text-sm font-semibold gap-2 shadow-xs"
+              >
+                {isChangingPassword ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Updating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    <span>Update Password</span>
+                  </>
+                )}
               </Button>
+
+              {passwordSuccess && (
+                <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>Password updated!</span>
+                </p>
+              )}
             </div>
-
-            {saved && (
-              <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 pt-1">
-                <CheckCircle2 className="h-4 w-4" />
-                <span>Password updated successfully!</span>
-              </p>
-            )}
           </form>
-        </div>
-
-        {/* Notification Settings */}
-        <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-7 shadow-xs space-y-4">
-          <div className="flex items-center gap-2 pb-2.5 border-b border-border/70">
-            <Bell className="h-4 w-4 text-primary" />
-            <h2 className="text-sm sm:text-base font-semibold text-foreground">
-              Consultation Notifications
-            </h2>
-          </div>
-
-          <div className="space-y-2.5 max-w-xl text-xs sm:text-sm">
-            <label className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/20 cursor-pointer hover:border-primary/40 transition-colors">
-              <div>
-                <span className="font-semibold text-foreground block">SMS Appointment Reminders</span>
-                <span className="text-xs text-secondary-text">Receive SMS 30 minutes before your video call</span>
-              </div>
-              <input type="checkbox" defaultChecked className="h-4 w-4 text-primary rounded cursor-pointer" />
-            </label>
-
-            <label className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/20 cursor-pointer hover:border-primary/40 transition-colors">
-              <div>
-                <span className="font-semibold text-foreground block">e-Prescription Ready Alerts</span>
-                <span className="text-xs text-secondary-text">Instant notification when physician uploads prescription</span>
-              </div>
-              <input type="checkbox" defaultChecked className="h-4 w-4 text-primary rounded cursor-pointer" />
-            </label>
-          </div>
         </div>
       </div>
     </PatientLayout>

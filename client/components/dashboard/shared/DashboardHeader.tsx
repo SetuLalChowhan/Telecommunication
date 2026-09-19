@@ -8,6 +8,7 @@ import {
   Lock,
   LogOut,
   Loader2,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,6 +23,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
 import { useAuth } from "@/lib/api";
+import { useUnreadNotificationCount } from "@/features/notifications/api/queries";
 
 interface DashboardHeaderProps {
   role?: "PATIENT" | "DOCTOR" | "ADMIN";
@@ -41,6 +43,8 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   const firstName = rawName ? rawName.split(" ")[0] : "";
 
   const profilePath = isDoctor ? "/doctor/settings" : "/patient/profile";
+  const notificationsPath = isDoctor ? "/doctor/notifications" : "/patient/notifications";
+  const { data: unreadCount = 0 } = useUnreadNotificationCount();
 
   return (
     <>
@@ -76,8 +80,25 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           </div>
         </div>
 
-        {/* Right: User Menu with Profile & Password */}
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Right: Notifications & User Menu */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <button
+            type="button"
+            onClick={() => router.push(notificationsPath)}
+            className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
+            title="View notifications"
+          >
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <span
+                suppressHydrationWarning
+                className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground animate-in zoom-in-50"
+              >
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button

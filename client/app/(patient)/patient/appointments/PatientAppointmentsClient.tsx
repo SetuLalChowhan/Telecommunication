@@ -9,6 +9,7 @@ import {
   Search,
   AlertCircle,
   RefreshCw,
+  Loader2,
 } from "lucide-react";
 import PatientLayout from "@/layouts/PatientLayout";
 import { Button } from "@/components/ui/button";
@@ -79,13 +80,14 @@ export function PatientAppointmentsClient({
   const {
     data: bookingsResponse,
     isLoading: isQueryLoading,
+    isFetching,
     isError,
     error,
     refetch,
   } = usePatientBookings(queryParams);
 
-  // Only show skeleton if there is no data in cache yet
-  const isLoading = isQueryLoading && !bookingsResponse;
+  // Show skeleton loading when changing status tab or initial query load
+  const showSkeleton = isQueryLoading || isFetching;
 
   const cancelMutation = useCancelPatientBooking();
 
@@ -112,7 +114,14 @@ export function PatientAppointmentsClient({
   };
 
   const handleCancelAppointment = (id: string) => {
-    cancelMutation.mutate({ bookingId: id });
+    cancelMutation.mutate(
+      { bookingId: id },
+      {
+        onSuccess: () => {
+          setDialogOpen(false);
+        },
+      }
+    );
   };
 
   return (
@@ -174,15 +183,20 @@ export function PatientAppointmentsClient({
                   key={status}
                   type="button"
                   onClick={() => setFilter(status)}
-                  className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all cursor-pointer border ${
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all cursor-pointer border ${
                     isCurrent
                       ? "bg-primary text-white border-primary shadow-xs"
                       : "bg-card text-secondary-text border-border/80 hover:border-primary/40 hover:text-foreground"
                   }`}
                 >
-                  {status === "ALL"
-                    ? "All Bookings"
-                    : status.charAt(0) + status.slice(1).toLowerCase()}
+                  {isCurrent && isFetching && (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+                  )}
+                  <span>
+                    {status === "ALL"
+                      ? "All Bookings"
+                      : status.charAt(0) + status.slice(1).toLowerCase()}
+                  </span>
                 </button>
               );
             })}
@@ -203,7 +217,7 @@ export function PatientAppointmentsClient({
 
         {/* Bookings Table Surface */}
         <div className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-xs">
-          {isLoading ? (
+          {showSkeleton ? (
             <div className="p-6 space-y-4">
               <div className="hidden md:block">
                 <div className="space-y-3">
@@ -458,6 +472,7 @@ export function PatientAppointmentsClient({
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           onCancelAppointment={handleCancelAppointment}
+          isCancelling={cancelMutation.isPending}
         />
       </div>
     </PatientLayout>
