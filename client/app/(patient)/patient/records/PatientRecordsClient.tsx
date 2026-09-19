@@ -39,10 +39,24 @@ import {
   useMyMedicalReports,
   useDeleteMedicalReport,
 } from "@/features/medical-reports/api/queries";
+import { getReportFileUrl } from "@/features/medical-reports/api/client";
 import { UploadReportModal } from "./UploadReportModal";
 
 export function PatientRecordsClient() {
   const [activeTab, setActiveTab] = useState<"diagnostic" | "prescription" | "all">("diagnostic");
+
+  const resolveDownloadFilename = (fileName: string, fileUrl: string) => {
+    const isPdf =
+      fileUrl.toLowerCase().endsWith(".pdf") ||
+      fileName.toLowerCase().endsWith(".pdf");
+    const urlExt = fileUrl.match(/\.([a-zA-Z0-9]+)(?:[?#]|$)/)?.[1]?.toLowerCase();
+    const ext = isPdf ? "pdf" : urlExt || "pdf";
+
+    if (!fileName.toLowerCase().endsWith(`.${ext}`)) {
+      return `${fileName}.${ext}`;
+    }
+    return fileName;
+  };
   const [searchQuery, setSearchQuery] = useState("");
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
@@ -342,7 +356,12 @@ export function PatientRecordsClient() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => window.open(report.fileUrl, "_blank")}
+                                onClick={() =>
+                                  window.open(
+                                    getReportFileUrl(report.id, "view"),
+                                    "_blank"
+                                  )
+                                }
                                 className="h-7.5 px-2.5 rounded-lg text-xs font-medium gap-1 hover:border-primary hover:text-primary"
                               >
                                 <ExternalLink className="h-3 w-3" />
@@ -354,9 +373,8 @@ export function PatientRecordsClient() {
                                 size="icon"
                                 onClick={() => {
                                   const a = document.createElement("a");
-                                  a.href = report.fileUrl;
-                                  a.download = report.fileName;
-                                  a.target = "_blank";
+                                  a.href = getReportFileUrl(report.id, "download");
+                                  a.download = resolveDownloadFilename(report.fileName, report.fileUrl);
                                   document.body.appendChild(a);
                                   a.click();
                                   document.body.removeChild(a);
@@ -441,7 +459,12 @@ export function PatientRecordsClient() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => window.open(report.fileUrl, "_blank")}
+                          onClick={() =>
+                            window.open(
+                              getReportFileUrl(report.id, "view"),
+                              "_blank"
+                            )
+                          }
                           className="h-7 px-2 text-[11px] font-medium gap-1"
                         >
                           <ExternalLink className="h-3 w-3" />
@@ -452,14 +475,14 @@ export function PatientRecordsClient() {
                           size="icon"
                           onClick={() => {
                             const a = document.createElement("a");
-                            a.href = report.fileUrl;
-                            a.download = report.fileName;
-                            a.target = "_blank";
+                            a.href = getReportFileUrl(report.id, "download");
+                            a.download = resolveDownloadFilename(report.fileName, report.fileUrl);
                             document.body.appendChild(a);
                             a.click();
                             document.body.removeChild(a);
                           }}
                           className="h-7 w-7 rounded-lg text-muted-foreground"
+                          title="Download"
                         >
                           <Download className="h-3.5 w-3.5" />
                         </Button>

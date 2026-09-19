@@ -119,6 +119,20 @@ export class CloudinaryService {
   }
 
   /**
+   * Generate an authenticated signed download URL for restricted Cloudinary assets (like PDFs)
+   */
+  getPrivateDownloadUrl(
+    publicId: string,
+    format: string = 'pdf',
+    resourceType: 'image' | 'raw' | 'video' = 'image',
+  ): string {
+    return cloudinary.utils.private_download_url(publicId, format, {
+      resource_type: resourceType,
+      type: 'upload',
+    });
+  }
+
+  /**
    * Safely delete a file from Cloudinary (or fallback legacy local file)
    */
   async deleteFile(urlOrPublicId?: string | null): Promise<boolean> {

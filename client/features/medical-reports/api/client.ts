@@ -1,9 +1,19 @@
-import { apiClient } from "@/lib/api/axios";
+import { apiClient, API_BASE_URL } from "@/lib/api/axios";
 import {
   MedicalReport,
   MedicalReportsQueryParams,
   MedicalReportsResponse,
 } from "../types";
+
+/**
+ * Get direct streaming / download URL for a medical report
+ */
+export function getReportFileUrl(
+  reportId: string,
+  action: "view" | "download" = "view"
+): string {
+  return `${API_BASE_URL}/medical-reports/${reportId}/file?action=${action}`;
+}
 
 /**
  * Fetch patient's medical reports with pagination

@@ -99,6 +99,10 @@ export class MedicalReportsService {
     const fileUrl = uploadRes.secureUrl;
 
     let displayName = dto.fileName || file.originalname;
+    const fileExt = file.originalname.match(/\.([a-zA-Z0-9]+)$/)?.[0] || '';
+    if (fileExt && !displayName.toLowerCase().endsWith(fileExt.toLowerCase())) {
+      displayName = `${displayName}${fileExt}`;
+    }
     if (role === 'DOCTOR' && !displayName.toLowerCase().includes('prescription')) {
       displayName = `Prescription - ${displayName}`;
     }
@@ -236,5 +240,85 @@ export class MedicalReportsService {
     return this.prisma.medicalReport.delete({
       where: { id: reportId },
     });
+  }
+
+  async streamReportFile(
+    reportId: string,
+    action: 'view' | 'download',
+    res: any,
+  ) {
+    const report = await this.prisma.medicalReport.findUnique({
+      where: { id: reportId },
+    });
+
+    if (!report || !report.fileUrl) {
+      throw new NotFoundException('Medical report file not found');
+    }
+
+    const isPdf =
+      report.fileUrl.toLowerCase().endsWith('.pdf') ||
+      (Boolean(report.fileName) && report.fileName!.toLowerCase().endsWith('.pdf'));
+
+    const { publicId, resourceType } = this.cloudinaryService.extractPublicId(
+      report.fileUrl,
+    );
+
+    const downloadUrl = isPdf
+      ? this.cloudinaryService.getPrivateDownloadUrl(
+          publicId,
+          'pdf',
+          resourceType,
+        )
+      : report.fileUrl;
+
+    const response = await fetch(downloadUrl);
+    if (!response.ok) {
+      throw new NotFoundException('Could not retrieve file from storage provider');
+    }
+
+    const contentType =
+      response.headers.get('content-type') ||
+      (isPdf ? 'application/pdf' : 'application/octet-stream');
+
+    const dispositionType = action === 'download' ? 'attachment' : 'inline';
+    const fallbackName = isPdf ? 'medical-report.pdf' : 'medical-document';
+    const rawFileName = report.fileName || fallbackName;
+
+    // Detect extension from filename, url or content type
+    let ext = '';
+    const extMatch = rawFileName.match(/\.([a-zA-Z0-9]+)$/);
+    if (extMatch) {
+      ext = extMatch[1].toLowerCase();
+    } else {
+      const urlExtMatch = report.fileUrl.match(/\.([a-zA-Z0-9]+)(?:[?#]|$)/);
+      if (urlExtMatch) {
+        ext = urlExtMatch[1].toLowerCase();
+      } else if (isPdf || contentType.includes('pdf')) {
+        ext = 'pdf';
+      } else if (contentType.includes('jpeg') || contentType.includes('jpg')) {
+        ext = 'jpg';
+      } else if (contentType.includes('png')) {
+        ext = 'png';
+      } else if (contentType.includes('webp')) {
+        ext = 'webp';
+      } else {
+        ext = 'pdf';
+      }
+    }
+
+    let safeFileName = rawFileName.replace(/[^\w.-]/g, '_');
+    if (ext && !safeFileName.toLowerCase().endsWith(`.${ext}`)) {
+      safeFileName = `${safeFileName}.${ext}`;
+    }
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader(
+      'Content-Disposition',
+      `${dispositionType}; filename="${safeFileName}"; filename*=UTF-8''${encodeURIComponent(safeFileName)}`,
+    );
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    res.end(buffer);
   }
 }

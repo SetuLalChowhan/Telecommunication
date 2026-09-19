@@ -72,9 +72,16 @@ export function UploadReportModal({ open, onOpenChange }: UploadReportModalProps
     e.preventDefault();
     if (!selectedFile) return;
 
+    const extMatch = selectedFile.name.match(/\.([a-zA-Z0-9]+)$/);
+    const ext = extMatch ? `.${extMatch[1]}` : "";
+    let finalTitle = fileName.trim() || selectedFile.name;
+    if (ext && !finalTitle.toLowerCase().endsWith(ext.toLowerCase())) {
+      finalTitle = `${finalTitle}${ext}`;
+    }
+
     const formData = new FormData();
     formData.append("file", selectedFile);
-    formData.append("fileName", fileName.trim() || selectedFile.name);
+    formData.append("fileName", finalTitle);
     if (bookingId && bookingId !== "none") {
       formData.append("bookingId", bookingId);
     }
