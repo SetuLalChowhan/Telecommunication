@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { CloudinaryService } from '../common/cloudinary/cloudinary.service.js';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -23,6 +24,13 @@ describe('UsersService', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: CloudinaryService,
+          useValue: {
+            uploadBuffer: vi.fn(),
+            deleteFile: vi.fn(),
+          },
         },
       ],
     }).compile();
