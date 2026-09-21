@@ -252,7 +252,8 @@ export function DoctorSettingsClient() {
   const triggerGoogleLogin = useGoogleLogin({
     flow: "auth-code",
     scope:
-      "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile",
+      "openid https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile",
+    select_account: true,
     onSuccess: async (codeResponse) => {
       setIsConnectingGoogle(true);
       try {

@@ -108,27 +108,75 @@ export class GoogleService {
     try {
       oauth2Client.setCredentials(tokens);
 
-      const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
-      const userInfo = await oauth2.userinfo.get();
-      const googleAccountId = userInfo.data.id || userId;
+      let googleAccountId: string = userId;
+
+      // Extract Google sub ID safely from id_token without external API dependency
+      if (tokens.id_token) {
+        try {
+          const payloadBase64 = tokens.id_token.split('.')[1];
+          if (payloadBase64) {
+            const decoded = JSON.parse(
+              Buffer.from(payloadBase64, 'base64').toString('utf8'),
+            );
+            if (decoded?.sub) {
+              googleAccountId = String(decoded.sub);
+            }
+          }
+        } catch (err) {
+          this.logger.warn('Could not decode id_token sub, attempting userinfo API', err);
+        }
+      }
+
+      if (googleAccountId === userId) {
+        try {
+          const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
+          const userInfo = await oauth2.userinfo.get();
+          if (userInfo?.data?.id) {
+            googleAccountId = userInfo.data.id;
+          }
+        } catch (err) {
+          this.logger.warn('Optional userInfo.get() call was skipped or failed:', err);
+        }
+      }
 
       const expiresAt = tokens.expiry_date
         ? new Date(tokens.expiry_date)
         : null;
 
-      const existing = await this.prisma.account.findFirst({
+      // 1. Check if an account already exists with this Google account ID
+      const existingByGoogleId = await this.prisma.account.findFirst({
+        where: { providerId: 'google', accountId: googleAccountId },
+      });
+
+      // 2. Check if the current user already has a Google account linked
+      const existingByUser = await this.prisma.account.findFirst({
         where: { userId, providerId: 'google' },
       });
 
-      if (existing) {
+      if (
+        existingByGoogleId &&
+        existingByUser &&
+        existingByGoogleId.id !== existingByUser.id
+      ) {
+        // If there are two separate rows, delete the old user row to prevent unique constraint conflicts
+        await this.prisma.account.delete({
+          where: { id: existingByUser.id },
+        });
+      }
+
+      const targetAccount = existingByGoogleId || existingByUser;
+
+      if (targetAccount) {
         await this.prisma.account.update({
-          where: { id: existing.id },
+          where: { id: targetAccount.id },
           data: {
+            userId,
             accountId: googleAccountId,
-            accessToken: tokens.access_token || existing.accessToken,
-            refreshToken: tokens.refresh_token || existing.refreshToken,
-            accessTokenExpiresAt: expiresAt,
-            scope: tokens.scope || existing.scope,
+            accessToken: tokens.access_token || targetAccount.accessToken,
+            refreshToken: tokens.refresh_token || targetAccount.refreshToken,
+            idToken: tokens.id_token || targetAccount.idToken,
+            accessTokenExpiresAt: expiresAt || targetAccount.accessTokenExpiresAt,
+            scope: tokens.scope || targetAccount.scope,
           },
         });
       } else {
@@ -139,6 +187,7 @@ export class GoogleService {
             accountId: googleAccountId,
             accessToken: tokens.access_token,
             refreshToken: tokens.refresh_token,
+            idToken: tokens.id_token,
             accessTokenExpiresAt: expiresAt,
             scope: tokens.scope,
           },
@@ -149,9 +198,16 @@ export class GoogleService {
         success: true,
         message: 'Google Calendar & Meet successfully connected',
       };
-    } catch (error) {
-      this.logger.error('Failed to save Google account credentials:', error);
-      throw new BadRequestException('Failed to process Google account information');
+    } catch (error: any) {
+      this.logger.error(
+        'Failed to save Google account credentials:',
+        error?.stack || error?.message || error,
+      );
+      throw new BadRequestException(
+        error?.message ||
+          error?.response?.data?.error_description ||
+          'Failed to process Google account information',
+      );
     }
   }
 
@@ -163,14 +219,14 @@ export class GoogleService {
       where: { userId, providerId: 'google' },
     });
 
-    if (!account || !account.refreshToken) {
+    if (!account || (!account.refreshToken && !account.accessToken)) {
       return null;
     }
 
     const oauth2Client = this.getOAuth2Client();
     oauth2Client.setCredentials({
       access_token: account.accessToken || undefined,
-      refresh_token: account.refreshToken,
+      refresh_token: account.refreshToken || undefined,
       expiry_date: account.accessTokenExpiresAt
         ? account.accessTokenExpiresAt.getTime()
         : undefined,
@@ -286,7 +342,9 @@ export class GoogleService {
     });
 
     return {
-      isConnected: Boolean(account && account.refreshToken),
+      isConnected: Boolean(
+        account && (account.refreshToken || account.accessToken),
+      ),
       connectedAt: account?.createdAt || null,
     };
   }
