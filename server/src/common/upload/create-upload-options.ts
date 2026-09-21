@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
-import { memoryStorage, MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface.js';
+import type { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface.js';
+import { memoryStorage } from 'multer';
 import { extname } from 'node:path';
 
 export interface UploadPreset {
