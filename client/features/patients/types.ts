@@ -142,6 +142,29 @@ export interface UpdatePatientProfilePayload {
   emergencyContactPhone?: string;
 }
 
+export interface AvailableSlotItem {
+  slotStart: string;
+  slotEnd: string;
+  startTime: string;
+  endTime: string;
+  isAvailable: boolean;
+}
+
+export interface AvailableSlotsData {
+  date: string;
+  isDayOff: boolean;
+  reason?: string;
+  message?: string;
+  slots: AvailableSlotItem[];
+}
+
+export interface CreateBookingInput {
+  doctorId: string;
+  slotStart: string;
+  slotEnd: string;
+  notes?: string;
+}
+
 export const patientKeys = {
   all: ["patients"] as const,
   dashboard: () => [...patientKeys.all, "dashboard"] as const,
@@ -153,6 +176,8 @@ export const patientKeys = {
       params?.status || "ALL",
       params?.page || 1,
     ] as const,
+  slots: (doctorId: string, date: string) =>
+    ["appointments", "slots", doctorId, date] as const,
 };
 
 /**

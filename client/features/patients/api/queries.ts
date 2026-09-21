@@ -8,11 +8,16 @@ import {
   cancelPatientBooking,
   fetchPatientProfile,
   updatePatientProfile,
+  fetchAvailableSlots,
+  createAppointmentBooking,
 } from "./client";
 import {
   PatientDashboardData,
   PatientBookingsQueryParams,
   PatientBookingsResponse,
+  AvailableSlotsData,
+  CreateBookingInput,
+  RawBooking,
   patientKeys,
 } from "../types";
 
@@ -109,3 +114,46 @@ export function useUpdatePatientProfile() {
     },
   });
 }
+
+/**
+ * Query hook to fetch real-time concrete slots for a doctor on a specific date (YYYY-MM-DD)
+ */
+export function useAvailableSlots(doctorId?: string, date?: string) {
+  return useQuery<AvailableSlotsData>({
+    queryKey: patientKeys.slots(doctorId || "", date || ""),
+    queryFn: () => fetchAvailableSlots(doctorId!, date!),
+    enabled: Boolean(doctorId && date),
+    staleTime: 1000 * 30, // 30 seconds
+  });
+}
+
+/**
+ * Mutation hook to book an appointment with a doctor
+ */
+export function useCreateAppointmentBooking() {
+  const queryClient = useQueryClient();
+
+  return useMutation<RawBooking, Error, CreateBookingInput>({
+    mutationFn: (input: CreateBookingInput) => createAppointmentBooking(input),
+    onSuccess: (booking) => {
+      toast.success("Appointment request submitted successfully!");
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: patientKeys.all });
+      queryClient.invalidateQueries({
+        queryKey: ["appointments", "slots", booking.doctorId],
+      });
+    },
+    onError: (error: any) => {
+      const err = error as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to book appointment. Please try again.";
+      toast.error(message);
+    },
+  });
+}
+

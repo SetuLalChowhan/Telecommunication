@@ -1,8 +1,16 @@
 "use client";
 
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useRef, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { DoctorProfile, DoctorAvailability } from "@/types/doctor";
+import { useAuth } from "@/lib/api";
+import {
+  useAvailableSlots,
+  useCreateAppointmentBooking,
+  AvailableSlotItem,
+  RawBooking,
+} from "@/features/patients";
 import {
   Calendar as CalendarIcon,
   Clock,
@@ -14,6 +22,10 @@ import {
   ChevronRight,
   CalendarDays,
   AlertCircle,
+  Loader2,
+  FileText,
+  LogIn,
+  Check,
 } from "lucide-react";
 import {
   Popover,
@@ -21,6 +33,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { toast } from "react-toastify";
 
 interface DoctorBookingSidebarProps {
   doctor: DoctorProfile;
@@ -28,50 +41,22 @@ interface DoctorBookingSidebarProps {
   isLoading?: boolean;
 }
 
-const DAY_MAP: Record<string, number> = {
-  SUNDAY: 0,
-  MONDAY: 1,
-  TUESDAY: 2,
-  WEDNESDAY: 3,
-  THURSDAY: 4,
-  FRIDAY: 5,
-  SATURDAY: 6,
-};
-
-function parseDayOfWeek(day: unknown): number {
-  if (typeof day === "number") return day;
-  if (typeof day === "string") {
-    const key = day.trim().toUpperCase();
-    if (key in DAY_MAP) return DAY_MAP[key];
-    const parsed = Number(key);
-    if (!Number.isNaN(parsed)) return parsed;
-  }
-  return -1;
+function formatToDateInput(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
-function parseTimeToMinutes(timeStr: string): number {
-  if (!timeStr) return 0;
-  const isPM = /pm/i.test(timeStr);
-  const isAM = /am/i.test(timeStr);
-  const clean = timeStr.replace(/[^\d:]/g, "").trim();
-  const parts = clean.split(":").map(Number);
-  let hours = parts[0] || 0;
-  const minutes = parts[1] || 0;
-
-  if (isPM && hours < 12) hours += 12;
-  if (isAM && hours === 12) hours = 0;
-
-  return hours * 60 + minutes;
-}
-
-function minutesToTimeSlot(totalMinutes: number): string {
-  const hours24 = Math.floor(totalMinutes / 60) % 24;
-  const minutes = totalMinutes % 60;
-  const period = hours24 >= 12 ? "PM" : "AM";
-  const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
-  const padHours = String(hours12).padStart(2, "0");
-  const padMins = String(minutes).padStart(2, "0");
-  return `${padHours}:${padMins} ${period}`;
+function format12Hour(timeStr: string): string {
+  if (!timeStr) return "";
+  const [hStr, mStr] = timeStr.split(":");
+  const h = Number(hStr);
+  const m = Number(mStr) || 0;
+  if (isNaN(h)) return timeStr;
+  const period = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${String(h12).padStart(2, "0")}:${String(m).padStart(2, "0")} ${period}`;
 }
 
 export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
@@ -79,32 +64,32 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
   availabilities = [],
   isLoading = false,
 }) => {
+  const router = useRouter();
+  const { user, isAuthenticated, isSessionLoading } = useAuth();
+  const isPatient = user?.role === "PATIENT";
+
+  // Date selection state
   const [selectedDayIdx, setSelectedDayIdx] = useState<number>(0);
   const [customDate, setCustomDate] = useState<Date | null>(null);
-  const [selectedSlotOverride, setSelectedSlotOverride] = useState<string | null>(null);
-  const [isBooked, setIsBooked] = useState<boolean>(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
 
+  // Selected concrete slot from backend
+  const [selectedSlotItem, setSelectedSlotItem] = useState<AvailableSlotItem | null>(null);
+
+  // Consultation notes / symptoms input
+  const [notes, setNotes] = useState<string>("");
+
+  // Post-booking confirmed state
+  const [isBooked, setIsBooked] = useState<boolean>(false);
+  const [bookedDetails, setBookedDetails] = useState<RawBooking | null>(null);
+
+  // Drag-to-scroll refs
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef<boolean>(false);
   const startXRef = useRef<number>(0);
   const scrollLeftRef = useRef<number>(0);
 
-  // Combine availability sources
-  const allAvailabilities: DoctorAvailability[] = useMemo(() => {
-    if (availabilities && availabilities.length > 0) return availabilities;
-    const docWithExtra = doctor as unknown as {
-      availability?: DoctorAvailability[];
-      daysOff?: Array<{ date?: string | Date }>;
-    };
-    if (docWithExtra.availability && docWithExtra.availability.length > 0)
-      return docWithExtra.availability;
-    if (doctor.availabilities && doctor.availabilities.length > 0)
-      return doctor.availabilities;
-    return [];
-  }, [availabilities, doctor]);
-
-  // Generate 14 days
+  // Generate next 14 days
   const days = useMemo(() => {
     return Array.from({ length: 14 }, (_, i) => {
       const d = new Date();
@@ -122,6 +107,8 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
   }, []);
 
   const activeDate = customDate || days[selectedDayIdx].date;
+  const activeDateStr = useMemo(() => formatToDateInput(activeDate), [activeDate]);
+
   const activeDayLabel = {
     dayName:
       activeDate.toDateString() === new Date().toDateString()
@@ -131,82 +118,55 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
     month: activeDate.toLocaleDateString("en-US", { month: "short" }),
   };
 
-  // Check if activeDate is a doctor's scheduled day off
-  const isDayOff = useMemo(() => {
-    const docWithExtra = doctor as unknown as {
-      daysOff?: Array<{ date?: string | Date }>;
-    };
-    const daysOff = docWithExtra.daysOff || [];
-    return daysOff.some((off) => {
-      if (!off.date) return false;
-      const offDate = new Date(off.date);
-      return offDate.toDateString() === activeDate.toDateString();
-    });
-  }, [doctor, activeDate]);
+  // Real-time slot availability from backend API
+  const {
+    data: slotsData,
+    isLoading: isSlotsLoading,
+    isError: isSlotsError,
+    error: slotsError,
+    refetch: refetchSlots,
+  } = useAvailableSlots(doctor.id, activeDateStr);
 
-  // Dynamically compute slots for active date based on doctor availability
-  const { morningSlots, eveningSlots, allSlots } = useMemo(() => {
-    if (isDayOff) {
-      return { morningSlots: [], eveningSlots: [], allSlots: [] };
+  // Booking mutation
+  const createBookingMutation = useCreateAppointmentBooking();
+
+  // Auto-select first available slot whenever date or slots data changes
+  useEffect(() => {
+    if (slotsData?.slots && slotsData.slots.length > 0) {
+      const firstAvail = slotsData.slots.find((s) => s.isAvailable);
+      setSelectedSlotItem((prev) => {
+        if (
+          prev &&
+          slotsData.slots.some(
+            (s) => s.slotStart === prev.slotStart && s.isAvailable
+          )
+        ) {
+          return prev;
+        }
+        return firstAvail || null;
+      });
+    } else {
+      setSelectedSlotItem(null);
     }
+  }, [slotsData]);
 
-    const activeDayOfWeek = activeDate.getDay();
+  // Group slots into Morning vs Afternoon / Evening
+  const { morningSlots, eveningSlots } = useMemo(() => {
+    const all = slotsData?.slots || [];
+    const morning: AvailableSlotItem[] = [];
+    const evening: AvailableSlotItem[] = [];
 
-    const matchingRules = allAvailabilities.filter((rule) => {
-      if (rule.isActive === false) return false;
-      return parseDayOfWeek(rule.dayOfWeek) === activeDayOfWeek;
-    });
-
-    const generated: { time: string; totalMinutes: number }[] = [];
-
-    matchingRules.forEach((rule) => {
-      const startMins = parseTimeToMinutes(rule.startTime);
-      const endMins = parseTimeToMinutes(rule.endTime);
-      const duration = Number(rule.consultationDuration) || 30;
-
-      for (let m = startMins; m + duration <= endMins; m += duration) {
-        generated.push({
-          time: minutesToTimeSlot(m),
-          totalMinutes: m,
-        });
+    all.forEach((item) => {
+      const [h] = item.startTime.split(":").map(Number);
+      if (h < 12) {
+        morning.push(item);
+      } else {
+        evening.push(item);
       }
     });
 
-    // Deduplicate & sort chronologically
-    const uniqueMap = new Map<string, number>();
-    generated.forEach((item) => {
-      if (!uniqueMap.has(item.time)) {
-        uniqueMap.set(item.time, item.totalMinutes);
-      }
-    });
-
-    const sortedSlots = Array.from(uniqueMap.entries())
-      .sort((a, b) => a[1] - b[1])
-      .map(([time, totalMinutes]) => ({ time, totalMinutes }));
-
-    const morning = sortedSlots
-      .filter((s) => s.totalMinutes < 12 * 60)
-      .map((s) => s.time);
-
-    const evening = sortedSlots
-      .filter((s) => s.totalMinutes >= 12 * 60)
-      .map((s) => s.time);
-
-    return {
-      morningSlots: morning,
-      eveningSlots: evening,
-      allSlots: sortedSlots.map((s) => s.time),
-    };
-  }, [activeDate, allAvailabilities, isDayOff]);
-
-  // Declaratively compute active slot without cascading effect
-  const selectedSlot = useMemo(() => {
-    if (allSlots.length === 0) return "";
-    if (selectedSlotOverride && allSlots.includes(selectedSlotOverride)) {
-      return selectedSlotOverride;
-    }
-    return allSlots[0] || "";
-  }, [allSlots, selectedSlotOverride]);
+    return { morningSlots: morning, eveningSlots: evening };
+  }, [slotsData]);
 
   // Mouse drag-to-scroll implementation
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -259,9 +219,49 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
 
   const handleBookNow = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedSlot) return;
-    setIsBooked(true);
+
+    if (!isAuthenticated) {
+      toast.info("Please sign in to your patient account to book a consultation.");
+      const currentPath = typeof window !== "undefined" ? window.location.pathname : `/doctors/${doctor.slug || doctor.id}`;
+      router.push(`/login?callbackUrl=${encodeURIComponent(currentPath)}`);
+      return;
+    }
+
+    if (!isPatient) {
+      toast.warning("Doctors cannot book appointments. Please use a patient account.");
+      return;
+    }
+
+    if (!selectedSlotItem) {
+      toast.error("Please select an available consultation time slot.");
+      return;
+    }
+
+    createBookingMutation.mutate(
+      {
+        doctorId: doctor.id,
+        slotStart: selectedSlotItem.slotStart,
+        slotEnd: selectedSlotItem.slotEnd,
+        notes: notes.trim() || undefined,
+      },
+      {
+        onSuccess: (booking) => {
+          setBookedDetails(booking);
+          setIsBooked(true);
+        },
+      }
+    );
   };
+
+  const doctorName =
+    doctor.user?.name ||
+    `${doctor.user?.firstName || ""} ${doctor.user?.lastName || ""}`.trim() ||
+    "Specialist";
+
+  const primarySpecialty =
+    doctor.specialties?.find((s) => s.isPrimary)?.specialty?.name ||
+    doctor.specialties?.[0]?.specialty?.name ||
+    "General Physician";
 
   return (
     <div className="sticky top-24 rounded-2xl border border-border/70 bg-card p-6 sm:p-7 shadow-xs space-y-6">
@@ -285,29 +285,43 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
       </div>
 
       {isBooked ? (
-        /* Pending Confirmation State */
-        <div className="text-center py-5 space-y-4 animate-in fade-in duration-200">
-          <div className="h-12 w-12 rounded-full bg-amber-500/10 text-amber-600 mx-auto flex items-center justify-center">
-            <Clock className="h-6 w-6" />
+        /* Confirmed / Submitted State */
+        <div className="text-center py-4 space-y-4 animate-in fade-in duration-200">
+          <div className="h-12 w-12 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center">
+            <CheckCircle2 className="h-6 w-6" />
           </div>
 
           <div className="space-y-1.5">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-700 border border-amber-500/20 uppercase tracking-wide">
-              Status: Pending Confirmation
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 uppercase tracking-wide">
+              Status: Pending Doctor Confirmation
             </span>
             <h3 className="text-lg font-bold text-foreground">
               Appointment Request Submitted
             </h3>
             <p className="text-xs text-secondary-text leading-relaxed px-1">
-              Your consultation request has been sent to{" "}
+              Your consultation request has been placed with{" "}
               <span className="font-semibold text-foreground">
-                {doctor.user?.name || "the specialist"}
+                Dr. {doctorName}
               </span>
-              . Once the doctor reviews and confirms your visit, the Google Meet video link will be generated and you will be notified.
+              . Once the doctor reviews and confirms, your Google Meet video link will be generated automatically.
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-border/70 text-xs text-left space-y-2">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-border/70 text-xs text-left space-y-2.5">
+            {bookedDetails?.id && (
+              <div className="flex justify-between text-secondary-text pb-1.5 border-b border-border/60">
+                <span>Booking ID:</span>
+                <span className="font-mono font-semibold text-foreground">
+                  #{bookedDetails.id.slice(-8).toUpperCase()}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between text-secondary-text">
+              <span>Doctor:</span>
+              <span className="font-semibold text-foreground">
+                Dr. {doctorName} ({primarySpecialty})
+              </span>
+            </div>
             <div className="flex justify-between text-secondary-text">
               <span>Date:</span>
               <span className="font-semibold text-foreground">
@@ -317,18 +331,28 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
             </div>
             <div className="flex justify-between text-secondary-text">
               <span>Time Slot:</span>
-              <span className="font-semibold text-primary">{selectedSlot}</span>
+              <span className="font-semibold text-primary">
+                {selectedSlotItem
+                  ? `${format12Hour(selectedSlotItem.startTime)} - ${format12Hour(selectedSlotItem.endTime)}`
+                  : "Scheduled"}
+              </span>
             </div>
             <div className="flex justify-between text-secondary-text">
-              <span>Fee:</span>
+              <span>Consultation Fee:</span>
               <span className="font-semibold text-foreground">
                 ৳{Number(doctor.fee ?? 0).toLocaleString()}
               </span>
             </div>
-            <div className="flex justify-between text-secondary-text pt-1.5 border-t border-border/60">
-              <span>Next Step:</span>
-              <span className="font-semibold text-amber-600">Awaiting Doctor Confirmation</span>
-            </div>
+            {notes.trim() && (
+              <div className="pt-1.5 border-t border-border/60">
+                <span className="text-[11px] text-muted-foreground block mb-0.5 font-medium">
+                  Reason for visit:
+                </span>
+                <p className="text-xs text-foreground bg-card p-2 rounded-lg border border-border/60">
+                  {notes.trim()}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2 pt-1">
@@ -342,7 +366,12 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
 
             <button
               type="button"
-              onClick={() => setIsBooked(false)}
+              onClick={() => {
+                setIsBooked(false);
+                setBookedDetails(null);
+                setNotes("");
+                refetchSlots();
+              }}
               className="w-full py-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               Book Another Slot
@@ -449,27 +478,62 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
             </div>
           </div>
 
-          {/* 2. Available Time Slots (Dynamically Generated) */}
+          {/* 2. Available Time Slots */}
           <div className="space-y-3">
-            <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-primary" />
-              <span>Available Time Slots</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-primary" />
+                <span>Available Consultation Slots</span>
+              </label>
+              {isSlotsLoading && (
+                <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                  Checking slots...
+                </span>
+              )}
+            </div>
 
-            {isLoading ? (
+            {isSlotsLoading ? (
               <div className="grid grid-cols-2 gap-2">
                 {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-10 rounded-xl bg-muted/60 animate-pulse border border-border/40" />
+                  <div
+                    key={i}
+                    className="h-10 rounded-xl bg-muted/60 animate-pulse border border-border/40"
+                  />
                 ))}
               </div>
-            ) : allSlots.length === 0 ? (
+            ) : isSlotsError ? (
+              <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-center space-y-2">
+                <AlertCircle className="h-5 w-5 text-destructive mx-auto" />
+                <p className="text-xs font-semibold text-destructive">
+                  Could not load schedule slots
+                </p>
+                <button
+                  type="button"
+                  onClick={() => refetchSlots()}
+                  className="text-xs font-semibold text-primary underline cursor-pointer"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : slotsData?.isDayOff ? (
+              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center space-y-1.5">
+                <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 mx-auto" />
+                <p className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                  Doctor is on Day Off
+                </p>
+                <p className="text-[11px] text-amber-800 dark:text-amber-300">
+                  {slotsData.reason || `Dr. ${doctorName} is unavailable on ${activeDayLabel.dayName}. Please choose another date.`}
+                </p>
+              </div>
+            ) : !slotsData?.slots || slotsData.slots.length === 0 ? (
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-dashed border-border text-center space-y-1">
                 <AlertCircle className="h-5 w-5 text-muted-foreground mx-auto" />
                 <p className="text-xs font-semibold text-foreground">
-                  {isDayOff ? "Doctor is on Day Off" : "No Slots Available"}
+                  No Consultation Slots Available
                 </p>
                 <p className="text-[11px] text-secondary-text">
-                  Doctor has no consultation schedule on {activeDayLabel.dayName}. Please pick another date.
+                  Doctor has no active schedule on {activeDayLabel.dayName}. Please pick another date.
                 </p>
               </div>
             ) : (
@@ -482,19 +546,32 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
                     </span>
                     <div className="grid grid-cols-2 gap-2">
                       {morningSlots.map((slot) => {
-                        const isSelected = selectedSlot === slot;
+                        const isSelected = selectedSlotItem?.slotStart === slot.slotStart;
+                        const isAvail = slot.isAvailable;
+
                         return (
                           <button
-                            key={slot}
+                            key={slot.slotStart}
                             type="button"
-                            onClick={() => setSelectedSlotOverride(slot)}
-                            className={`p-2 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
-                              isSelected
-                                ? "border-2 border-primary bg-primary/10 text-primary font-bold ring-2 ring-primary/20 shadow-2xs"
-                                : "border border-border bg-card text-secondary-text hover:border-primary/40 hover:text-foreground"
+                            disabled={!isAvail}
+                            onClick={() => setSelectedSlotItem(slot)}
+                            className={`p-2.5 rounded-xl text-xs font-medium border text-center transition-all relative ${
+                              !isAvail
+                                ? "border-border/50 bg-muted/40 text-muted-foreground/60 cursor-not-allowed opacity-60 line-through"
+                                : isSelected
+                                ? "border-2 border-primary bg-primary/10 text-primary font-bold ring-2 ring-primary/20 shadow-2xs cursor-pointer"
+                                : "border border-border bg-card text-secondary-text hover:border-primary/40 hover:text-foreground cursor-pointer"
                             }`}
                           >
-                            {slot}
+                            <div className="flex items-center justify-center gap-1">
+                              {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                              <span>{format12Hour(slot.startTime)}</span>
+                            </div>
+                            {!isAvail && (
+                              <span className="block text-[9px] no-underline font-normal text-muted-foreground">
+                                Booked
+                              </span>
+                            )}
                           </button>
                         );
                       })}
@@ -510,19 +587,32 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
                     </span>
                     <div className="grid grid-cols-2 gap-2">
                       {eveningSlots.map((slot) => {
-                        const isSelected = selectedSlot === slot;
+                        const isSelected = selectedSlotItem?.slotStart === slot.slotStart;
+                        const isAvail = slot.isAvailable;
+
                         return (
                           <button
-                            key={slot}
+                            key={slot.slotStart}
                             type="button"
-                            onClick={() => setSelectedSlotOverride(slot)}
-                            className={`p-2 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
-                              isSelected
-                                ? "border-2 border-primary bg-primary/10 text-primary font-bold ring-2 ring-primary/20 shadow-2xs"
-                                : "border border-border bg-card text-secondary-text hover:border-primary/40 hover:text-foreground"
+                            disabled={!isAvail}
+                            onClick={() => setSelectedSlotItem(slot)}
+                            className={`p-2.5 rounded-xl text-xs font-medium border text-center transition-all relative ${
+                              !isAvail
+                                ? "border-border/50 bg-muted/40 text-muted-foreground/60 cursor-not-allowed opacity-60 line-through"
+                                : isSelected
+                                ? "border-2 border-primary bg-primary/10 text-primary font-bold ring-2 ring-primary/20 shadow-2xs cursor-pointer"
+                                : "border border-border bg-card text-secondary-text hover:border-primary/40 hover:text-foreground cursor-pointer"
                             }`}
                           >
-                            {slot}
+                            <div className="flex items-center justify-center gap-1">
+                              {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                              <span>{format12Hour(slot.startTime)}</span>
+                            </div>
+                            {!isAvail && (
+                              <span className="block text-[9px] no-underline font-normal text-muted-foreground">
+                                Booked
+                              </span>
+                            )}
                           </button>
                         );
                       })}
@@ -533,19 +623,85 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
             )}
           </div>
 
-          {/* Book CTA */}
-          <button
-            type="submit"
-            disabled={!selectedSlot}
-            className={`w-full inline-flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold shadow-xs transition-all ${
-              selectedSlot
-                ? "bg-primary hover:bg-primary-dark text-white cursor-pointer active:scale-[0.99]"
-                : "bg-muted text-muted-foreground cursor-not-allowed border border-border"
-            }`}
-          >
-            <span>Book Video Consultation</span>
-            <ArrowRight className="h-4 w-4" />
-          </button>
+          {/* 3. Reason for Consultation / Notes */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5 text-primary" />
+                <span>Reason for Consultation (Optional)</span>
+              </label>
+              <span className="text-[10px] text-muted-foreground font-mono">
+                {notes.length}/500
+              </span>
+            </div>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value.slice(0, 500))}
+              rows={2}
+              placeholder="e.g. Follow-up consultation for hypertension, fever, or medication advice..."
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none transition-all"
+            />
+          </div>
+
+          {/* Role Warning for Doctors or Admins */}
+          {isAuthenticated && !isPatient && (
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-semibold block">Logged in as {user?.role}</span>
+                <span className="opacity-90">
+                  Doctor or admin accounts cannot book patient consultations. Please sign in with a registered patient account.
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Book CTA / Auth CTA */}
+          {!isAuthenticated ? (
+            <button
+              type="button"
+              onClick={() => {
+                const currentPath =
+                  typeof window !== "undefined"
+                    ? window.location.pathname
+                    : `/doctors/${doctor.slug || doctor.id}`;
+                router.push(`/login?callbackUrl=${encodeURIComponent(currentPath)}`);
+              }}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold shadow-xs transition-all bg-primary hover:bg-primary-dark text-white cursor-pointer active:scale-[0.99]"
+            >
+              <LogIn className="h-4 w-4" />
+              <span>Sign In as Patient to Book</span>
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={
+                !selectedSlotItem ||
+                !isPatient ||
+                createBookingMutation.isPending ||
+                isSlotsLoading
+              }
+              className={`w-full inline-flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold shadow-xs transition-all ${
+                selectedSlotItem && isPatient && !createBookingMutation.isPending
+                  ? "bg-primary hover:bg-primary-dark text-white cursor-pointer active:scale-[0.99]"
+                  : "bg-muted text-muted-foreground cursor-not-allowed border border-border opacity-70"
+              }`}
+            >
+              {createBookingMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Submitting Request...</span>
+                </>
+              ) : (
+                <>
+                  <span>
+                    Book Consultation (৳{Number(doctor.fee ?? 0).toLocaleString()})
+                  </span>
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </button>
+          )}
         </form>
       )}
 

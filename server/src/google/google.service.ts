@@ -6,6 +6,8 @@ import {
 import { google } from 'googleapis';
 import { PrismaService } from '../prisma/prisma.service.js';
 
+const GOOGLE_CALENDAR_PROVIDER = 'google-calendar';
+
 @Injectable()
 export class GoogleService {
   private readonly logger = new Logger(GoogleService.name);
@@ -143,14 +145,14 @@ export class GoogleService {
         ? new Date(tokens.expiry_date)
         : null;
 
-      // 1. Check if an account already exists with this Google account ID
+      // 1. Check if a google-calendar integration account already exists with this Google account ID
       const existingByGoogleId = await this.prisma.account.findFirst({
-        where: { providerId: 'google', accountId: googleAccountId },
+        where: { providerId: GOOGLE_CALENDAR_PROVIDER, accountId: googleAccountId },
       });
 
-      // 2. Check if the current user already has a Google account linked
+      // 2. Check if the current doctor user already has a google-calendar integration account linked
       const existingByUser = await this.prisma.account.findFirst({
-        where: { userId, providerId: 'google' },
+        where: { userId, providerId: GOOGLE_CALENDAR_PROVIDER },
       });
 
       if (
@@ -171,6 +173,7 @@ export class GoogleService {
           where: { id: targetAccount.id },
           data: {
             userId,
+            providerId: GOOGLE_CALENDAR_PROVIDER,
             accountId: googleAccountId,
             accessToken: tokens.access_token || targetAccount.accessToken,
             refreshToken: tokens.refresh_token || targetAccount.refreshToken,
@@ -183,7 +186,7 @@ export class GoogleService {
         await this.prisma.account.create({
           data: {
             userId,
-            providerId: 'google',
+            providerId: GOOGLE_CALENDAR_PROVIDER,
             accountId: googleAccountId,
             accessToken: tokens.access_token,
             refreshToken: tokens.refresh_token,
@@ -216,7 +219,11 @@ export class GoogleService {
    */
   private async getAuthenticatedClient(userId: string) {
     const account = await this.prisma.account.findFirst({
-      where: { userId, providerId: 'google' },
+      where: {
+        userId,
+        providerId: { in: [GOOGLE_CALENDAR_PROVIDER, 'google'] },
+      },
+      orderBy: { createdAt: 'desc' },
     });
 
     if (!account || (!account.refreshToken && !account.accessToken)) {
@@ -338,7 +345,11 @@ export class GoogleService {
    */
   async getConnectionStatus(userId: string) {
     const account = await this.prisma.account.findFirst({
-      where: { userId, providerId: 'google' },
+      where: {
+        userId,
+        providerId: { in: [GOOGLE_CALENDAR_PROVIDER, 'google'] },
+      },
+      orderBy: { createdAt: 'desc' },
     });
 
     return {
@@ -354,7 +365,10 @@ export class GoogleService {
    */
   async disconnect(userId: string) {
     await this.prisma.account.deleteMany({
-      where: { userId, providerId: 'google' },
+      where: {
+        userId,
+        providerId: { in: [GOOGLE_CALENDAR_PROVIDER, 'google'] },
+      },
     });
 
     return { message: 'Google account disconnected successfully' };

@@ -97,3 +97,33 @@ export async function updatePatientProfile(
   );
   return response.data.data;
 }
+
+/**
+ * Fetch concrete available slots for a doctor on a specific date (YYYY-MM-DD)
+ */
+export async function fetchAvailableSlots(
+  doctorId: string,
+  date: string
+): Promise<import("../types").AvailableSlotsData> {
+  const response = await apiClient.get<{
+    success: boolean;
+    data: import("../types").AvailableSlotsData;
+  }>("/appointments/slots", {
+    params: { doctorId, date },
+  });
+  return response.data.data;
+}
+
+/**
+ * Patient books an appointment for an available slot
+ */
+export async function createAppointmentBooking(
+  input: import("../types").CreateBookingInput
+): Promise<RawBooking> {
+  const response = await apiClient.post<{
+    success: boolean;
+    message?: string;
+    data: RawBooking;
+  }>("/appointments", input);
+  return response.data.data;
+}
