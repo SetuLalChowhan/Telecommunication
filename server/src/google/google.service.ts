@@ -310,7 +310,9 @@ export class GoogleService {
           end: {
             dateTime: slotEnd.toISOString(),
           },
-          attendees: [{ email: patientEmail }],
+          attendees: patientEmail?.trim()
+            ? [{ email: patientEmail.trim() }]
+            : undefined,
           conferenceData: {
             createRequest: {
               requestId: `tele-${bookingId}-${Date.now()}`,
@@ -328,6 +330,10 @@ export class GoogleService {
         )?.uri ||
         event.data.hangoutLink ||
         `https://meet.google.com/tele-${bookingId.slice(-8)}`;
+
+      this.logger.log(
+        `Google Calendar event created successfully. Meet Link: ${meetLink} (Event ID: ${event.data.id})`,
+      );
 
       return {
         meetLink,
