@@ -1,10 +1,9 @@
 /**
- * Core API Layer Gateway
+ * Core API Layer Gateway (Client-Safe Re-Exports)
  */
 
-// 1. Core HTTP Clients
+// 1. Core HTTP Client
 export { apiClient, API_BASE_URL } from "./axios";
-export { serverFetch } from "./server-fetch";
 
 // 2. Feature Re-Exports for Seamless Interop
 export {

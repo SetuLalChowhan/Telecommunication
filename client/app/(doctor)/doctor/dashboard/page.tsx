@@ -1,5 +1,12 @@
 import React from "react";
 import type { Metadata } from "next";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
+import { getDoctorDashboardServer } from "@/features/doctors/api/server";
+import { doctorKeys } from "@/features/doctors/types";
 import { DoctorDashboardClient } from "./DoctorDashboardClient";
 
 export const metadata: Metadata = {
@@ -7,6 +14,17 @@ export const metadata: Metadata = {
   description: "Manage your consultations, patients, and schedule.",
 };
 
-export default function DoctorDashboardPage() {
-  return <DoctorDashboardClient />;
+export default async function DoctorDashboardPage() {
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: doctorKeys.dashboard(),
+    queryFn: () => getDoctorDashboardServer(),
+  });
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <DoctorDashboardClient />
+    </HydrationBoundary>
+  );
 }
