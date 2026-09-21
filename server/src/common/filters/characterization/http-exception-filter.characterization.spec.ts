@@ -63,8 +63,10 @@ describe('HttpExceptionFilter Characterization', () => {
       expect.objectContaining({
         success: false,
         statusCode: HttpStatus.NOT_FOUND,
-        message: 'Resource not found',
+        code: 'NOT_FOUND',
+        message: 'The requested record was not found.',
         path: '/appointments',
+        requestId: expect.any(String),
       }),
     );
   });
@@ -85,7 +87,10 @@ describe('HttpExceptionFilter Characterization', () => {
       expect.objectContaining({
         success: false,
         statusCode: HttpStatus.CONFLICT,
-        message: 'A record with this value already exists',
+        code: 'CONFLICT',
+        message: 'A duplicate record already exists.',
+        path: '/appointments',
+        requestId: expect.any(String),
       }),
     );
   });
@@ -106,7 +111,10 @@ describe('HttpExceptionFilter Characterization', () => {
       expect.objectContaining({
         success: false,
         statusCode: HttpStatus.BAD_REQUEST,
-        message: 'Invalid related record',
+        code: 'BAD_REQUEST',
+        message: 'Invalid relation or reference to another record.',
+        path: '/appointments',
+        requestId: expect.any(String),
       }),
     );
   });

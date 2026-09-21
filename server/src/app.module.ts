@@ -7,6 +7,8 @@ import { AuthModule } from '@thallesp/nestjs-better-auth';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { UsersModule } from './users/users.module.js';
 import { ConfigModule } from '@nestjs/config';
+import { validateEnv } from './config/env.schema.js';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware.js';
 import { LoggerMiddleware } from './common/middleware/logger.middleware.js';
 import { DoctorModule } from './doctors/doctors.module.js';
 import { SpecialtiesModule } from './specialties/specialties.module.js';
@@ -27,6 +29,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      validate: validateEnv,
     }),
     CloudinaryModule,
 
@@ -66,7 +69,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(LoggerMiddleware)
+      .apply(RequestIdMiddleware, LoggerMiddleware)
       .forRoutes('*');
   }
 }
