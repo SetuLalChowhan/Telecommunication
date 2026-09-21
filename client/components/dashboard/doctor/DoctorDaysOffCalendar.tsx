@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { CalendarOff, Plus, Trash2 } from "lucide-react";
+import { CalendarOff, Plus, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { AddDayOffDialog } from "@/components/dashboard/shared/AddDayOffDialog";
@@ -16,12 +16,16 @@ export interface DayOffItem {
 
 interface DoctorDaysOffCalendarProps {
   daysOff: DayOffItem[];
-  onAddDayOff: (dateStr: string, reason: string) => void;
+  isAddingDayOff?: boolean;
+  deletingDayOffId?: string | null;
+  onAddDayOff: (dateStr: string, reason: string, onSuccess?: () => void) => void;
   onRemoveDayOff: (id: string) => void;
 }
 
 export const DoctorDaysOffCalendar: React.FC<DoctorDaysOffCalendarProps> = ({
   daysOff,
+  isAddingDayOff = false,
+  deletingDayOffId = null,
   onAddDayOff,
   onRemoveDayOff,
 }) => {
@@ -33,6 +37,12 @@ export const DoctorDaysOffCalendar: React.FC<DoctorDaysOffCalendarProps> = ({
     if (!dayOffToDelete) return;
     onRemoveDayOff(dayOffToDelete.id);
     setDayOffToDelete(null);
+  };
+
+  const handleAddSubmit = (dateStr: string, reason: string) => {
+    onAddDayOff(dateStr, reason, () => {
+      setAddDialogOpen(false);
+    });
   };
 
   return (
@@ -53,7 +63,12 @@ export const DoctorDaysOffCalendar: React.FC<DoctorDaysOffCalendarProps> = ({
           />
           <div className="w-full pt-4 mt-2 border-t border-border/60 flex items-center justify-between gap-2 flex-wrap">
             <span className="text-xs font-semibold text-foreground">
-              Selected: {selectedDate?.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) || "None"}
+              Selected:{" "}
+              {selectedDate?.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              }) || "None"}
             </span>
             <Button
               size="sm"
@@ -75,32 +90,45 @@ export const DoctorDaysOffCalendar: React.FC<DoctorDaysOffCalendarProps> = ({
                 Scheduled Days Off
               </h3>
             </div>
-            <span className="text-xs text-muted-foreground">{daysOff.length} planned</span>
+            <span className="text-xs text-muted-foreground">
+              {daysOff.length} planned
+            </span>
           </div>
 
           <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
             {daysOff.length > 0 ? (
-              daysOff.map((day) => (
-                <div
-                  key={day.id}
-                  className="p-3.5 rounded-xl border border-border/60 bg-slate-50/50 dark:bg-slate-900/30 flex items-center justify-between gap-3"
-                >
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-bold text-foreground">{day.formatted}</p>
-                    <p className="text-xs text-muted-foreground">{day.reason}</p>
-                  </div>
+              daysOff.map((day) => {
+                const isDeleting = deletingDayOffId === day.id;
 
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setDayOffToDelete(day)}
-                    className="h-8 px-2.5 text-xs text-destructive hover:bg-destructive/10 font-medium gap-1"
+                return (
+                  <div
+                    key={day.id}
+                    className="p-3.5 rounded-xl border border-border/60 bg-slate-50/50 dark:bg-slate-900/30 flex items-center justify-between gap-3"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    <span>Remove</span>
-                  </Button>
-                </div>
-              ))
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-bold text-foreground">
+                        {day.formatted}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{day.reason}</p>
+                    </div>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={isDeleting}
+                      onClick={() => setDayOffToDelete(day)}
+                      className="h-8 px-2.5 text-xs text-destructive hover:bg-destructive/10 font-medium gap-1"
+                    >
+                      {isDeleting ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
+                      <span>Remove</span>
+                    </Button>
+                  </div>
+                );
+              })
             ) : (
               <p className="text-xs text-muted-foreground py-6 text-center">
                 No upcoming days off scheduled.
@@ -115,7 +143,8 @@ export const DoctorDaysOffCalendar: React.FC<DoctorDaysOffCalendarProps> = ({
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
         selectedDate={selectedDate}
-        onAddDayOff={onAddDayOff}
+        onAddDayOff={handleAddSubmit}
+        isLoading={isAddingDayOff}
       />
 
       {/* Remove Day Off Alert Dialog */}

@@ -23,6 +23,7 @@ export class DoctorQualificationDto {
   @IsOptional()
   @IsInt()
   @Min(1950)
+  @Type(() => Number)
   passingYear?: number;
 
   @IsOptional()
@@ -33,16 +34,30 @@ export class DoctorQualificationDto {
 export class UpdateDoctorProfileDto {
   @IsOptional()
   @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  image?: string;
+
+  @IsOptional()
+  @IsString()
   bio?: string;
 
   @IsOptional()
   @IsInt()
   @Min(0)
+  @Type(() => Number)
   experienceYears?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Type(() => Number)
   fee?: number;
 
   @IsOptional()

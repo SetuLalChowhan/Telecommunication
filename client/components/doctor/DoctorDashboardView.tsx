@@ -5,14 +5,19 @@ import Link from "next/link";
 import { Clock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  DOCTOR_TODAY_SCHEDULE,
   DoctorScheduleItem,
   DashboardAppointment,
 } from "@/lib/dashboard-mock-data";
-import { MOCK_AVAILABILITY_SLOTS } from "@/lib/doctor-mock-data";
 import { DoctorNextConsultation } from "@/components/dashboard/doctor/DoctorNextConsultation";
 import { DoctorTodayScheduleTable } from "@/components/dashboard/doctor/DoctorTodayScheduleTable";
+import { DoctorStatsCards } from "@/components/dashboard/doctor/DoctorStatsCards";
 import { AppointmentDetailsDialog } from "@/components/dashboard/shared/AppointmentDetailsDialog";
+import {
+  useDoctorDashboard,
+  useConfirmDoctorBooking,
+  useCompleteDoctorBooking,
+} from "@/features/doctors/api/queries";
+import { DoctorDashboardBooking } from "@/features/doctors/types";
 
 interface DoctorDashboardViewProps {
   doctorName?: string | null;
@@ -20,56 +25,94 @@ interface DoctorDashboardViewProps {
   isLoading?: boolean;
 }
 
-export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = () => {
-  const [schedule, setSchedule] = useState<DoctorScheduleItem[]>(DOCTOR_TODAY_SCHEDULE);
+function adaptBookingToScheduleItem(booking: DoctorDashboardBooking): DoctorScheduleItem {
+  const patientUser = booking.patient?.user;
+  const patientName = patientUser?.name || "Patient";
+
+  let patientAge = 32;
+  if (patientUser?.dateOfBirth) {
+    const birthYear = new Date(patientUser.dateOfBirth).getFullYear();
+    const currentYear = new Date().getFullYear();
+    if (!isNaN(birthYear) && birthYear > 1900) {
+      patientAge = Math.max(1, currentYear - birthYear);
+    }
+  }
+
+  const rawGender = booking.patient?.gender || patientUser?.gender;
+  const patientGender = rawGender
+    ? rawGender.charAt(0).toUpperCase() + rawGender.slice(1).toLowerCase()
+    : "Patient";
+
+  const slotDate = new Date(booking.slotStart);
+  const timeFormatted = !isNaN(slotDate.getTime())
+    ? slotDate.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+    : "10:00 AM";
+
+  return {
+    id: booking.id,
+    time: timeFormatted,
+    patientName,
+    patientAge,
+    patientGender,
+    patientAvatar: patientUser?.image || "",
+    consultationType: "Video Consultation",
+    status: booking.status,
+    symptoms: booking.notes || "General Consultation",
+    meetLink: booking.meetLink || undefined,
+    fee: 1200,
+  };
+}
+
+export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
+  isLoading: isParentLoading = false,
+}) => {
   const [selectedAppt] = useState<DashboardAppointment | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
-  const nextAppointment = schedule.find(
-    (s) => s.status === "CONFIRMED" || s.status === "PENDING"
-  );
-
-  const activeSlotsCount = MOCK_AVAILABILITY_SLOTS.filter((s) => s.isActive).length;
-
-  const handleMarkComplete = (id: string) => {
-    setSchedule((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, status: "COMPLETED" as const } : item
-      )
-    );
-  };
+  const { data: dashboardData, isLoading: isDashboardLoading } = useDoctorDashboard();
+  const confirmMutation = useConfirmDoctorBooking();
+  const completeMutation = useCompleteDoctorBooking();
 
   const handleConfirmAppointment = (id: string) => {
-    setSchedule((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              status: "CONFIRMED" as const,
-              meetLink: `https://meet.google.com/tele-${item.id.slice(-8)}`,
-            }
-          : item
-      )
-    );
+    confirmMutation.mutate(id);
   };
+
+  const handleMarkComplete = (id: string) => {
+    completeMutation.mutate(id);
+  };
+
+  const nextApptAdapted = dashboardData?.nextAppointment
+    ? adaptBookingToScheduleItem(dashboardData.nextAppointment)
+    : undefined;
+
+  const todayScheduleAdapted = (dashboardData?.todaySchedule || []).map(adaptBookingToScheduleItem);
+  const activeSlotsCount = dashboardData?.activeDaysCount ?? 0;
+  const isLoading = (isParentLoading || isDashboardLoading) && !dashboardData;
 
   return (
     <div className="w-full space-y-6 sm:space-y-8">
-      {/* 1. Next Live Consultation Surface */}
+      {/* 1. Practice Stats Row */}
+      <DoctorStatsCards stats={dashboardData?.stats} isLoading={isLoading} />
+
+      {/* 2. Next Live Consultation Surface */}
       <DoctorNextConsultation
-        appointment={nextAppointment}
+        appointment={nextApptAdapted}
         onMarkComplete={handleMarkComplete}
         onConfirm={handleConfirmAppointment}
       />
 
-      {/* 2. Today's Consultations Queue (shadcn Table) */}
+      {/* 3. Today's Consultations Queue */}
       <DoctorTodayScheduleTable
-        schedule={schedule}
+        schedule={todayScheduleAdapted}
         onMarkComplete={handleMarkComplete}
         onConfirm={handleConfirmAppointment}
       />
 
-      {/* 3. Minimal Practice Availability Summary Card */}
+      {/* 4. Practice Availability Summary Card */}
       <section className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs hover:border-primary/30 transition-colors">
         <div className="flex items-center gap-4">
           <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">

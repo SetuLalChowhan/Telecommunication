@@ -24,7 +24,8 @@ import { Calendar } from "@/components/ui/calendar";
 
 interface DoctorBookingSidebarProps {
   doctor: DoctorProfile;
-  availabilities: DoctorAvailability[];
+  availabilities?: DoctorAvailability[];
+  isLoading?: boolean;
 }
 
 const DAY_MAP: Record<string, number> = {
@@ -76,6 +77,7 @@ function minutesToTimeSlot(totalMinutes: number): string {
 export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
   doctor,
   availabilities = [],
+  isLoading = false,
 }) => {
   const [selectedDayIdx, setSelectedDayIdx] = useState<number>(0);
   const [customDate, setCustomDate] = useState<Date | null>(null);
@@ -454,7 +456,13 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
               <span>Available Time Slots</span>
             </label>
 
-            {allSlots.length === 0 ? (
+            {isLoading ? (
+              <div className="grid grid-cols-2 gap-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="h-10 rounded-xl bg-muted/60 animate-pulse border border-border/40" />
+                ))}
+              </div>
+            ) : allSlots.length === 0 ? (
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-dashed border-border text-center space-y-1">
                 <AlertCircle className="h-5 w-5 text-muted-foreground mx-auto" />
                 <p className="text-xs font-semibold text-foreground">

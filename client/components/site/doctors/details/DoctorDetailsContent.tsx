@@ -17,7 +17,7 @@ export const DoctorDetailsContent: React.FC<DoctorDetailsContentProps> = ({
   idOrSlug,
 }) => {
   const { data: doctor, isLoading } = useDoctorDetails(idOrSlug);
-  const { data: apiAvailability } = useDoctorAvailability(idOrSlug);
+  const { data: apiAvailability, isLoading: isAvailLoading } = useDoctorAvailability(idOrSlug);
 
   const availabilities =
     apiAvailability && apiAvailability.length > 0
@@ -114,6 +114,7 @@ export const DoctorDetailsContent: React.FC<DoctorDetailsContentProps> = ({
             <DoctorBookingSidebar
               doctor={doctor}
               availabilities={availabilities}
+              isLoading={isAvailLoading && availabilities.length === 0}
             />
           </div>
         </div>

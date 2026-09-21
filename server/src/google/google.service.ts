@@ -55,17 +55,57 @@ export class GoogleService {
   /**
    * Exchanges authorization code for tokens and saves Google account
    */
-  async handleOAuthCallback(code: string, userId: string) {
+  async handleOAuthCallback(code: string, userId: string, redirectUri?: string) {
     if (!this.clientId || !this.clientSecret) {
       throw new BadRequestException(
         'Google OAuth client credentials are not configured on the server',
       );
     }
 
-    const oauth2Client = this.getOAuth2Client();
+    let tokens;
+    let oauth2Client: InstanceType<typeof google.auth.OAuth2> | null = null;
+
+    // Prioritize postmessage (GIS code flow) or explicitly passed redirectUri, with fallback
+    const candidateUris = Array.from(
+      new Set(
+        [redirectUri, 'postmessage', this.redirectUri].filter(
+          Boolean,
+        ) as string[],
+      ),
+    );
+
+    let lastError: any = null;
+    for (const uri of candidateUris) {
+      try {
+        const client = new google.auth.OAuth2(
+          this.clientId,
+          this.clientSecret,
+          uri,
+        );
+        const res = await client.getToken(code);
+        if (res.tokens) {
+          tokens = res.tokens;
+          oauth2Client = client;
+          break;
+        }
+      } catch (err) {
+        lastError = err;
+      }
+    }
+
+    if (!tokens || !oauth2Client) {
+      this.logger.error(
+        'Failed to exchange Google authorization code with candidate redirect URIs:',
+        lastError,
+      );
+      throw new BadRequestException(
+        lastError?.response?.data?.error_description ||
+          lastError?.message ||
+          'Failed to exchange authorization code with Google',
+      );
+    }
 
     try {
-      const { tokens } = await oauth2Client.getToken(code);
       oauth2Client.setCredentials(tokens);
 
       const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
@@ -110,8 +150,8 @@ export class GoogleService {
         message: 'Google Calendar & Meet successfully connected',
       };
     } catch (error) {
-      this.logger.error('Failed to exchange Google authorization code:', error);
-      throw new BadRequestException('Failed to exchange authorization code with Google');
+      this.logger.error('Failed to save Google account credentials:', error);
+      throw new BadRequestException('Failed to process Google account information');
     }
   }
 

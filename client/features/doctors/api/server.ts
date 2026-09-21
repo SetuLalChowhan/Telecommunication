@@ -1,10 +1,16 @@
 import { serverFetch, ServerFetchOptions } from "@/lib/api/server-fetch";
+import { cookies } from "next/headers";
 import {
   Specialty,
   DoctorProfile,
   DoctorQueryParams,
   DoctorAvailability,
   PaginationMeta,
+  DoctorDashboardData,
+  DoctorBookingsQueryParams,
+  DoctorBookingsResponse,
+  DoctorDayOff,
+  DoctorPatientRegistryItem,
 } from "../types";
 
 export interface DoctorsServerResponse {
@@ -140,6 +146,240 @@ export async function getSpecialtiesServer(
       : (data as unknown as { data?: Specialty[] })?.data || [];
   } catch {
     return [];
+  }
+}
+
+/**
+ * Server-Side fetcher for doctor dashboard overview data
+ */
+export async function getDoctorDashboardServer(
+  options?: ServerFetchOptions
+): Promise<DoctorDashboardData | null> {
+  try {
+    let cookieHeader = "";
+    try {
+      const cookieStore = await cookies();
+      cookieHeader = cookieStore.toString();
+    } catch {}
+
+    const response = await serverFetch<{
+      success: boolean;
+      data: DoctorDashboardData;
+    }>("/doctors/dashboard", {
+      headers: {
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
+      cache: "no-store",
+      ...options,
+    });
+
+    return response.data || null;
+  } catch (error) {
+    console.error("Failed to fetch doctor dashboard on server:", error);
+    return null;
+  }
+}
+
+/**
+ * Server-Side fetcher for doctor consultation bookings
+ */
+export async function getDoctorBookingsServer(
+  params?: DoctorBookingsQueryParams,
+  options?: ServerFetchOptions
+): Promise<DoctorBookingsResponse> {
+  try {
+    let cookieHeader = "";
+    try {
+      const cookieStore = await cookies();
+      cookieHeader = cookieStore.toString();
+    } catch {}
+
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.set("status", params.status);
+    if (params?.page) queryParams.set("page", String(params.page));
+    if (params?.limit) queryParams.set("limit", String(params.limit));
+
+    const queryStr = queryParams.toString();
+    const endpoint = queryStr
+      ? `/appointments/my-bookings?${queryStr}`
+      : "/appointments/my-bookings";
+
+    const response = await serverFetch<{
+      success: boolean;
+      data: any;
+      meta?: any;
+    }>(endpoint, {
+      headers: {
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
+      cache: "no-store",
+      ...options,
+    });
+
+    const body = response.data;
+    if (body && typeof body === "object" && "data" in body && Array.isArray(body.data)) {
+      return {
+        data: body.data,
+        meta: body.meta,
+      };
+    }
+
+    return {
+      data: Array.isArray(body) ? body : [],
+      meta: response.meta,
+    };
+  } catch (error) {
+    console.error("Failed to fetch doctor bookings on server:", error);
+    return {
+      data: [],
+    };
+  }
+}
+
+/**
+ * Server-Side fetcher for doctor's own recurring availability schedule
+ */
+export async function getMyDoctorScheduleServer(
+  options?: ServerFetchOptions
+): Promise<DoctorAvailability[]> {
+  try {
+    let cookieHeader = "";
+    try {
+      const cookieStore = await cookies();
+      cookieHeader = cookieStore.toString();
+    } catch {}
+
+    const response = await serverFetch<{
+      success: boolean;
+      data: DoctorAvailability[];
+    }>("/doctors/me/availability", {
+      headers: {
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
+      cache: "no-store",
+      ...options,
+    });
+
+    const body = response.data;
+    if (Array.isArray(body)) return body;
+    if (body && typeof body === "object" && "data" in body && Array.isArray((body as any).data)) {
+      return (body as any).data;
+    }
+    return [];
+  } catch (error) {
+    console.error("Failed to fetch doctor schedule on server:", error);
+    return [];
+  }
+}
+
+/**
+ * Server-Side fetcher for doctor's planned days off
+ */
+export async function getMyDoctorDaysOffServer(
+  options?: ServerFetchOptions
+): Promise<DoctorDayOff[]> {
+  try {
+    let cookieHeader = "";
+    try {
+      const cookieStore = await cookies();
+      cookieHeader = cookieStore.toString();
+    } catch {}
+
+    const response = await serverFetch<{
+      success: boolean;
+      data: DoctorDayOff[];
+    }>("/doctors/me/days-off", {
+      headers: {
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
+      cache: "no-store",
+      ...options,
+    });
+
+    const body = response.data;
+    if (Array.isArray(body)) return body;
+    if (body && typeof body === "object" && "data" in body && Array.isArray((body as any).data)) {
+      return (body as any).data;
+    }
+    return [];
+  } catch (error) {
+    console.error("Failed to fetch doctor days off on server:", error);
+    return [];
+  }
+}
+
+/**
+ * Server-Side fetcher for doctor's patient registry list
+ */
+export async function getMyDoctorPatientsServer(
+  search?: string,
+  options?: ServerFetchOptions
+): Promise<DoctorPatientRegistryItem[]> {
+  try {
+    let cookieHeader = "";
+    try {
+      const cookieStore = await cookies();
+      cookieHeader = cookieStore.toString();
+    } catch {}
+
+    const queryParams = new URLSearchParams();
+    if (search && search.trim()) queryParams.set("search", search.trim());
+    const queryStr = queryParams.toString();
+    const endpoint = queryStr
+      ? `/doctors/me/patients?${queryStr}`
+      : "/doctors/me/patients";
+
+    const response = await serverFetch<{
+      success: boolean;
+      data: DoctorPatientRegistryItem[];
+    }>(endpoint, {
+      headers: {
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
+      cache: "no-store",
+      ...options,
+    });
+
+    const body = response.data;
+    if (Array.isArray(body)) return body;
+    if (body && typeof body === "object" && "data" in body && Array.isArray((body as any).data)) {
+      return (body as any).data;
+    }
+    return [];
+  } catch (error) {
+    console.error("Failed to fetch doctor patient registry on server:", error);
+    return [];
+  }
+}
+
+/**
+ * Server-Side fetcher for currently logged-in doctor's own profile
+ */
+export async function getMyDoctorProfileServer(
+  options?: ServerFetchOptions
+): Promise<DoctorProfile | null> {
+  try {
+    let cookieHeader = "";
+    try {
+      const cookieStore = await cookies();
+      cookieHeader = cookieStore.toString();
+    } catch {}
+
+    const response = await serverFetch<{
+      success: boolean;
+      data: DoctorProfile;
+    }>("/doctors/me", {
+      headers: {
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
+      cache: "no-store",
+      ...options,
+    });
+
+    return response.data || null;
+  } catch (error) {
+    console.error("Failed to fetch doctor profile on server:", error);
+    return null;
   }
 }
 

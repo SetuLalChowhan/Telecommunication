@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Trash2, Edit2, Clock, Plus } from "lucide-react";
+import { Trash2, Edit2, Clock, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -13,9 +13,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AvailabilitySlot } from "@/lib/doctor-mock-data";
+import { to12Hour } from "@/lib/time-utils";
 
 interface DoctorAvailabilityTableProps {
   slots: AvailabilitySlot[];
+  isLoading?: boolean;
+  updatingSlotId?: string | null;
+  deletingSlotId?: string | null;
   onToggleSlot: (id: string) => void;
   onDeleteSlot: (id: string) => void;
   onEditSlot?: (slot: AvailabilitySlot) => void;
@@ -24,6 +28,9 @@ interface DoctorAvailabilityTableProps {
 
 export const DoctorAvailabilityTable: React.FC<DoctorAvailabilityTableProps> = ({
   slots,
+  isLoading = false,
+  updatingSlotId = null,
+  deletingSlotId = null,
   onToggleSlot,
   onDeleteSlot,
   onEditSlot,
@@ -54,143 +61,230 @@ export const DoctorAvailabilityTable: React.FC<DoctorAvailabilityTableProps> = (
           <Table>
             <TableHeader className="bg-slate-50/60 dark:bg-slate-900/40 border-b border-border/60">
               <TableRow className="hover:bg-transparent">
-                <TableHead className="py-3 px-6 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Day of Week</TableHead>
-                <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Consultation Hours</TableHead>
-                <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Slot Length</TableHead>
-                <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">Availability Status</TableHead>
-                <TableHead className="py-3 px-6 text-right font-semibold text-xs text-muted-foreground uppercase tracking-wider">Actions</TableHead>
+                <TableHead className="py-3 px-6 font-semibold text-xs text-muted-foreground uppercase tracking-wider">
+                  Day of Week
+                </TableHead>
+                <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">
+                  Consultation Hours
+                </TableHead>
+                <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">
+                  Slot Length
+                </TableHead>
+                <TableHead className="py-3 px-4 font-semibold text-xs text-muted-foreground uppercase tracking-wider">
+                  Availability Status
+                </TableHead>
+                <TableHead className="py-3 px-6 text-right font-semibold text-xs text-muted-foreground uppercase tracking-wider">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-border/40">
-              {slots.map((slot) => (
-                <TableRow
-                  key={slot.id}
-                  className={`transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-900/30 ${!slot.isActive ? "opacity-60 bg-muted/20" : ""
-                    }`}
-                >
-                  <TableCell className="py-3.5 px-6 font-bold text-sm text-foreground">
-                    <span className="text-primary font-bold">{slot.dayOfWeek}</span>
-                  </TableCell>
-
-                  <TableCell className="py-3.5 px-4 font-semibold text-sm text-foreground">
-                    {slot.startTime} – {slot.endTime}
-                  </TableCell>
-
-                  <TableCell className="py-3.5 px-4 text-xs sm:text-sm text-secondary-text">
-                    <span className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                      {slot.consultationDuration} mins / visit
-                    </span>
-                  </TableCell>
-
-                  <TableCell className="py-3.5 px-4">
-                    <div className="flex items-center gap-3">
-                      <Switch
-                        checked={slot.isActive}
-                        onCheckedChange={() => onToggleSlot(slot.id)}
-                        aria-label={`Toggle availability for ${slot.dayOfWeek}`}
-                      />
-                      <span
-                        className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border uppercase ${slot.isActive
-                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                            : "bg-muted text-muted-foreground border-border"
-                          }`}
-                      >
-                        {slot.isActive ? "Active" : "Disabled"}
-                      </span>
-                    </div>
-                  </TableCell>
-
-                  <TableCell className="py-3.5 px-6 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      {onEditSlot && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onEditSlot(slot)}
-                          className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                          aria-label={`Edit slot for ${slot.dayOfWeek}`}
-                        >
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onDeleteSlot(slot.id)}
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                        aria-label={`Delete slot for ${slot.dayOfWeek}`}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+              {isLoading ? (
+                [1, 2, 3].map((i) => (
+                  <TableRow key={i} className="animate-pulse">
+                    <TableCell className="py-4 px-6">
+                      <div className="h-4 w-24 bg-muted rounded" />
+                    </TableCell>
+                    <TableCell className="py-4 px-4">
+                      <div className="h-4 w-32 bg-muted rounded" />
+                    </TableCell>
+                    <TableCell className="py-4 px-4">
+                      <div className="h-4 w-28 bg-muted rounded" />
+                    </TableCell>
+                    <TableCell className="py-4 px-4">
+                      <div className="h-5 w-20 bg-muted rounded-full" />
+                    </TableCell>
+                    <TableCell className="py-4 px-6 text-right">
+                      <div className="h-8 w-16 bg-muted rounded-lg ml-auto" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : slots.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className="py-10 text-center text-xs sm:text-sm text-secondary-text"
+                  >
+                    No recurring availability slots configured yet. Click &quot;Add Slot&quot; above to set your hours.
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                slots.map((slot) => {
+                  const isUpdatingThis = updatingSlotId === slot.id;
+                  const isDeletingThis = deletingSlotId === slot.id;
+
+                  return (
+                    <TableRow
+                      key={slot.id}
+                      className={`transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-900/30 ${
+                        !slot.isActive ? "opacity-60 bg-muted/20" : ""
+                      }`}
+                    >
+                      <TableCell className="py-3.5 px-6 font-bold text-sm text-foreground">
+                        <span className="text-primary font-bold">{slot.dayOfWeek}</span>
+                      </TableCell>
+
+                      <TableCell className="py-3.5 px-4 font-semibold text-sm text-foreground">
+                        {to12Hour(slot.startTime)} – {to12Hour(slot.endTime)}
+                      </TableCell>
+
+                      <TableCell className="py-3.5 px-4 text-xs sm:text-sm text-secondary-text">
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                          {slot.consultationDuration} mins / visit
+                        </span>
+                      </TableCell>
+
+                      <TableCell className="py-3.5 px-4">
+                        <div className="flex items-center gap-3">
+                          <Switch
+                            checked={slot.isActive}
+                            disabled={isUpdatingThis || isDeletingThis}
+                            onCheckedChange={() => onToggleSlot(slot.id)}
+                            aria-label={`Toggle availability for ${slot.dayOfWeek}`}
+                          />
+                          {isUpdatingThis ? (
+                            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-primary animate-pulse">
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              <span>Saving...</span>
+                            </span>
+                          ) : (
+                            <span
+                              className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border uppercase ${
+                                slot.isActive
+                                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                  : "bg-muted text-muted-foreground border-border"
+                              }`}
+                            >
+                              {slot.isActive ? "Active" : "Disabled"}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="py-3.5 px-6 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {onEditSlot && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={isUpdatingThis || isDeletingThis}
+                              onClick={() => onEditSlot(slot)}
+                              className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                              aria-label={`Edit slot for ${slot.dayOfWeek}`}
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={isUpdatingThis || isDeletingThis}
+                            onClick={() => onDeleteSlot(slot.id)}
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                            aria-label={`Delete slot for ${slot.dayOfWeek}`}
+                          >
+                            {isDeletingThis ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-destructive" />
+                            ) : (
+                              <Trash2 className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
             </TableBody>
           </Table>
         </div>
 
         {/* Mobile Responsive Stacked Cards */}
         <div className="md:hidden divide-y divide-border/60">
-          {slots.map((slot) => (
-            <div
-              key={slot.id}
-              className={`p-4 space-y-3 transition-colors ${!slot.isActive ? "opacity-60 bg-muted/20" : ""}`}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-primary font-bold text-sm block">{slot.dayOfWeek}</span>
-                  <span className="text-xs font-semibold text-foreground">{slot.startTime} – {slot.endTime}</span>
+          {slots.map((slot) => {
+            const isUpdatingThis = updatingSlotId === slot.id;
+            const isDeletingThis = deletingSlotId === slot.id;
+
+            return (
+              <div
+                key={slot.id}
+                className={`p-4 space-y-3 transition-colors ${
+                  !slot.isActive ? "opacity-60 bg-muted/20" : ""
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-primary font-bold text-sm block">
+                      {slot.dayOfWeek}
+                    </span>
+                    <span className="text-xs font-semibold text-foreground">
+                      {to12Hour(slot.startTime)} – {to12Hour(slot.endTime)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={slot.isActive}
+                      disabled={isUpdatingThis || isDeletingThis}
+                      onCheckedChange={() => onToggleSlot(slot.id)}
+                      aria-label={`Toggle availability for ${slot.dayOfWeek}`}
+                    />
+                    {isUpdatingThis ? (
+                      <span className="flex items-center gap-1 text-[10px] font-semibold text-primary">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      </span>
+                    ) : (
+                      <span
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border uppercase ${
+                          slot.isActive
+                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                            : "bg-muted text-muted-foreground border-border"
+                        }`}
+                      >
+                        {slot.isActive ? "Active" : "Off"}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={slot.isActive}
-                    onCheckedChange={() => onToggleSlot(slot.id)}
-                    aria-label={`Toggle availability for ${slot.dayOfWeek}`}
-                  />
-                  <span
-                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border uppercase ${slot.isActive
-                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                        : "bg-muted text-muted-foreground border-border"
-                      }`}
-                  >
-                    {slot.isActive ? "Active" : "Off"}
+
+                <div className="flex items-center justify-between pt-1 border-t border-border/40 text-xs text-secondary-text">
+                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5" />
+                    {slot.consultationDuration} mins / visit
                   </span>
-                </div>
-              </div>
 
-              <div className="flex items-center justify-between pt-1 border-t border-border/40 text-xs text-secondary-text">
-                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Clock className="h-3.5 w-3.5" />
-                  {slot.consultationDuration} mins / visit
-                </span>
-
-                <div className="flex items-center gap-1">
-                  {onEditSlot && (
+                  <div className="flex items-center gap-1">
+                    {onEditSlot && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={isUpdatingThis || isDeletingThis}
+                        onClick={() => onEditSlot(slot)}
+                        className="h-8 px-2.5 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg"
+                      >
+                        <Edit2 className="h-3.5 w-3.5 mr-1" />
+                        <span>Edit</span>
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => onEditSlot(slot)}
-                      className="h-8 px-2.5 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg"
+                      disabled={isUpdatingThis || isDeletingThis}
+                      onClick={() => onDeleteSlot(slot.id)}
+                      className="h-8 px-2.5 text-xs font-semibold text-destructive hover:bg-destructive/10 rounded-lg"
                     >
-                      <Edit2 className="h-3.5 w-3.5 mr-1" />
-                      <span>Edit</span>
+                      {isDeletingThis ? (
+                        <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin text-destructive" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5 mr-1" />
+                      )}
+                      <span>Delete</span>
                     </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDeleteSlot(slot.id)}
-                    className="h-8 px-2.5 text-xs font-semibold text-destructive hover:bg-destructive/10 rounded-lg"
-                  >
-                    <Trash2 className="h-3.5 w-3.5 mr-1" />
-                    <span>Delete</span>
-                  </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

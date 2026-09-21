@@ -106,6 +106,9 @@ export interface DoctorQueryParams {
 }
 
 export interface UpdateDoctorProfileInput {
+  name?: string;
+  phone?: string;
+  image?: string | File;
   bio?: string;
   experienceYears?: number;
   fee?: number;
@@ -123,6 +126,112 @@ export interface UpdateDoctorProfileInput {
 export interface DoctorsListResponse {
   data: DoctorProfile[];
   meta?: PaginationMeta;
+}
+
+export interface DoctorDashboardStats {
+  totalConsultations: number;
+  todayConsultationsCount: number;
+  pendingConfirmationCount: number;
+  completedConsultationsCount: number;
+  cancelledCount: number;
+  confirmedCount: number;
+  totalPatientsCount: number;
+  activeAvailabilityDaysCount: number;
+}
+
+export interface DoctorDashboardBooking {
+  id: string;
+  doctorId: string;
+  patientId: string;
+  slotStart: string;
+  slotEnd: string;
+  status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
+  meetLink?: string | null;
+  notes?: string | null;
+  createdAt: string;
+  patient: {
+    id: string;
+    userId: string;
+    gender?: string | null;
+    user: {
+      id: string;
+      name?: string | null;
+      email: string;
+      phone?: string | null;
+      image?: string | null;
+      dateOfBirth?: string | null;
+      gender?: string | null;
+    };
+  };
+}
+
+export interface DoctorDashboardData {
+  stats: DoctorDashboardStats;
+  nextAppointment: DoctorDashboardBooking | null;
+  todaySchedule: DoctorDashboardBooking[];
+  activeDaysCount: number;
+  verified: boolean;
+}
+
+export interface DoctorDayOff {
+  id: string;
+  doctorId: string;
+  date: string;
+  reason?: string | null;
+  createdAt: string;
+}
+
+export interface CreateAvailabilityInput {
+  dayOfWeek: "SUNDAY" | "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY";
+  startTime: string;
+  endTime: string;
+  consultationDuration?: number;
+  isActive?: boolean;
+}
+
+export interface UpdateAvailabilityInput {
+  dayOfWeek?: "SUNDAY" | "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY";
+  startTime?: string;
+  endTime?: string;
+  consultationDuration?: number;
+  isActive?: boolean;
+}
+
+export interface CreateDayOffInput {
+  date: string;
+  reason?: string;
+}
+
+export interface DoctorBookingsQueryParams {
+  status?: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
+  page?: number;
+  limit?: number;
+}
+
+export interface DoctorBookingsResponse {
+  data: DoctorDashboardBooking[];
+  meta?: PaginationMeta;
+}
+
+export interface DoctorPatientRegistryItem {
+  patientId: string;
+  name: string;
+  email: string;
+  phone: string;
+  gender?: string | null;
+  bloodGroup?: string | null;
+  image?: string | null;
+  address?: string | null;
+  emergencyContactName?: string | null;
+  lastConsultation: string;
+  lastCondition: string;
+  consultationCount: number;
+  reportsCount: number;
+}
+
+export interface GoogleConnectionStatus {
+  isConnected: boolean;
+  connectedAt?: string | null;
 }
 
 /**
@@ -149,5 +258,18 @@ export const doctorKeys = {
   availability: (idOrSlug: string) =>
     [...doctorKeys.availabilities(), idOrSlug] as const,
   me: () => [...doctorKeys.all, "me"] as const,
+  dashboard: () => [...doctorKeys.all, "dashboard"] as const,
+  mySchedule: () => [...doctorKeys.all, "mySchedule"] as const,
+  myDaysOff: () => [...doctorKeys.all, "myDaysOff"] as const,
+  myBookings: (params?: DoctorBookingsQueryParams) =>
+    [
+      ...doctorKeys.all,
+      "myBookings",
+      params?.status || "ALL",
+      params?.page || 1,
+    ] as const,
+  myPatients: (search?: string) =>
+    [...doctorKeys.all, "myPatients", search ? search.trim().toLowerCase() : ""] as const,
+  googleStatus: () => [...doctorKeys.all, "googleStatus"] as const,
   specialties: () => [...doctorKeys.all, "specialties"] as const,
 };

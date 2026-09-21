@@ -86,8 +86,8 @@ export function PatientAppointmentsClient({
     refetch,
   } = usePatientBookings(queryParams);
 
-  // Show skeleton loading when changing status tab or initial query load
-  const showSkeleton = isQueryLoading || isFetching;
+  // Show skeleton loading ONLY on initial mount when no cached data exists
+  const showSkeleton = isQueryLoading && !bookingsResponse;
 
   const cancelMutation = useCancelPatientBooking();
 
@@ -216,7 +216,13 @@ export function PatientAppointmentsClient({
         </div>
 
         {/* Bookings Table Surface */}
-        <div className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-xs">
+        <div className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-xs relative">
+          {/* Top Progress Loading Indicator when fetching in background */}
+          {isFetching && !showSkeleton && (
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary/20 overflow-hidden z-20">
+              <div className="h-full bg-primary animate-pulse w-full" />
+            </div>
+          )}
           {showSkeleton ? (
             <div className="p-6 space-y-4">
               <div className="hidden md:block">
@@ -265,7 +271,7 @@ export function PatientAppointmentsClient({
               </div>
             </div>
           ) : filteredBookings.length > 0 ? (
-            <>
+            <div className={`transition-opacity duration-200 ${isFetching ? "opacity-75 pointer-events-none" : "opacity-100"}`}>
               {/* Desktop Table View */}
               <div className="hidden md:block">
                 <Table>
@@ -443,7 +449,7 @@ export function PatientAppointmentsClient({
                   </div>
                 ))}
               </div>
-            </>
+            </div>
           ) : (
             <div className="p-10 text-center space-y-3">
               <Calendar className="h-10 w-10 text-muted-foreground mx-auto" />

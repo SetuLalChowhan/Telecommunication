@@ -16,7 +16,12 @@ export class PrismaService
         connectionString: process.env.DATABASE_URL,
         max: Number(process.env.DB_POOL_MAX || 10),
         idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 5000,
+        connectionTimeoutMillis: 10000, // 10s timeout to allow Neon serverless wake-up
+      });
+
+      // Handle unexpected errors on idle database connections to prevent pool crashes
+      PrismaService.pool.on('error', (err) => {
+        console.warn('Postgres connection pool idle error (will reconnect):', err.message);
       });
     }
 

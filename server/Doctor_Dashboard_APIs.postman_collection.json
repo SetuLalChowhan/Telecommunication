@@ -1,0 +1,615 @@
+{
+  "info": {
+    "_postman_id": "9b12a832-15f1-4db3-96b5-telehealth-doc",
+    "name": "Telehealth - Doctor Dashboard & Consultation APIs",
+    "description": "Complete collection for Doctor Dashboard Overview, Consultation Queue, Weekly Schedule, and Days Off management.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "doctorCookie",
+      "value": "better-auth.session_token=YOUR_SESSION_TOKEN_HERE",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Doctor Dashboard Overview",
+      "item": [
+        {
+          "name": "Get Doctor Dashboard Overview (Stats, Next Up, Today Schedule)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "dashboard"]
+            },
+            "description": "Fetches aggregated stats (totalConsultations, todayConsultationsCount, pendingConfirmationCount, completedConsultationsCount), earliest upcoming active consultation, today's schedule array, and active availability days count."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Doctor Dashboard Stats Only",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/dashboard/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "dashboard", "stats"]
+            },
+            "description": "Returns lightweight summary metrics for the doctor."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Consultation Queue (Appointments)",
+      "item": [
+        {
+          "name": "Get All Consultations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/my-bookings?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "my-bookings"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Fetches all consultations scheduled with this doctor."
+          },
+          "response": []
+        },
+        {
+          "name": "Filter by PENDING Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/my-bookings?status=PENDING",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "my-bookings"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PENDING"
+                }
+              ]
+            },
+            "description": "List consultations awaiting doctor confirmation."
+          },
+          "response": []
+        },
+        {
+          "name": "Filter by CONFIRMED Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/my-bookings?status=CONFIRMED",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "my-bookings"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "CONFIRMED"
+                }
+              ]
+            },
+            "description": "List upcoming confirmed consultations with active Meet links."
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm Pending Consultation (Generates Meet Link)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/:bookingId/confirm",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", ":bookingId", "confirm"],
+              "variable": [
+                {
+                  "key": "bookingId",
+                  "value": "REPLACE_WITH_BOOKING_ID"
+                }
+              ]
+            },
+            "description": "Confirms the pending booking, generates Google Meet link, and dispatches notification to patient."
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Consultation as Completed (Done)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/:bookingId/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", ":bookingId", "complete"],
+              "variable": [
+                {
+                  "key": "bookingId",
+                  "value": "REPLACE_WITH_BOOKING_ID"
+                }
+              ]
+            },
+            "description": "Doctor marks the consultation as completed after consultation."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Consultation",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/:bookingId/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", ":bookingId", "cancel"],
+              "variable": [
+                {
+                  "key": "bookingId",
+                  "value": "REPLACE_WITH_BOOKING_ID"
+                }
+              ]
+            },
+            "description": "Cancels an appointment booking."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Availability Schedule",
+      "item": [
+        {
+          "name": "Get My Weekly Availability Slots",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/me/availability",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "me", "availability"]
+            },
+            "description": "Lists all weekly recurring availability slots configured by the doctor."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Weekly Availability Slot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dayOfWeek\": \"MONDAY\",\n  \"startTime\": \"09:00 AM\",\n  \"endTime\": \"01:00 PM\",\n  \"consultationDuration\": 30,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/doctors/me/availability",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "me", "availability"]
+            },
+            "description": "Creates a new recurring schedule slot."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Availability Slot (Toggle Active or Edit Hours)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/doctors/me/availability/:slotId",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "me", "availability", ":slotId"],
+              "variable": [
+                {
+                  "key": "slotId",
+                  "value": "REPLACE_WITH_SLOT_ID"
+                }
+              ]
+            },
+            "description": "Toggles active status or updates consultation hours for a slot."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Availability Slot",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/me/availability/:slotId",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "me", "availability", ":slotId"],
+              "variable": [
+                {
+                  "key": "slotId",
+                  "value": "REPLACE_WITH_SLOT_ID"
+                }
+              ]
+            },
+            "description": "Permanently deletes an availability slot."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Planned Days Off & Vacation",
+      "item": [
+        {
+          "name": "Get Scheduled Days Off",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/me/days-off",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "me", "days-off"]
+            },
+            "description": "Fetches all blocked out days off and vacations."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Day Off / Vacation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2026-09-25\",\n  \"reason\": \"Annual Cardiology Symposium\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/doctors/me/days-off",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "me", "days-off"]
+            },
+            "description": "Blocks a specific calendar date from patient bookings."
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Day Off",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/me/days-off/:dayOffId",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "me", "days-off", ":dayOffId"],
+              "variable": [
+                {
+                  "key": "dayOffId",
+                  "value": "REPLACE_WITH_DAY_OFF_ID"
+                }
+              ]
+            },
+            "description": "Removes a scheduled day off."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Doctor Patients Registry",
+      "item": [
+        {
+          "name": "List Doctor Patients (Search by Name, Phone, Condition)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/me/patients?search=",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "me", "patients"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Optional search term: patient name, phone number, or last condition"
+                }
+              ]
+            },
+            "description": "Fetches doctor's patient registry with total visits, diagnosis condition, last consultation date, and medical report counts."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Doctor Profile & Google Connect",
+      "item": [
+        {
+          "name": "Get Doctor Own Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "me"]
+            },
+            "description": "Retrieves complete doctor profile with user details, specialties, qualifications, and consultation metrics."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Doctor Profile & Avatar (Multipart)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Dr. Setu Lal Chowhan",
+                  "type": "text"
+                },
+                {
+                  "key": "phone",
+                  "value": "+8801700000000",
+                  "type": "text"
+                },
+                {
+                  "key": "designation",
+                  "value": "Associate Professor & Senior Consultant",
+                  "type": "text"
+                },
+                {
+                  "key": "hospitalAffiliation",
+                  "value": "Dhaka Medical College Hospital",
+                  "type": "text"
+                },
+                {
+                  "key": "clinicAddress",
+                  "value": "Green Life Hospital, Green Road, Dhaka",
+                  "type": "text"
+                },
+                {
+                  "key": "fee",
+                  "value": "1200",
+                  "type": "text"
+                },
+                {
+                  "key": "experienceYears",
+                  "value": "12",
+                  "type": "text"
+                },
+                {
+                  "key": "bio",
+                  "value": "Specialized in non-invasive clinical cardiology and hypertension management.",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": "",
+                  "description": "Optional avatar image file (JPG, PNG, WEBP max 5MB)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/doctors/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "me"]
+            },
+            "description": "Updates doctor profile information and optionally uploads avatar to Cloudinary."
+          },
+          "response": []
+        },
+        {
+          "name": "Check Google Calendar & Meet Connection Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/google/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["google", "status"]
+            },
+            "description": "Returns { isConnected: boolean, connectedAt: string | null } indicating if Google OAuth refresh token is active."
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Google OAuth Consent URL",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/google/auth-url",
+              "host": ["{{baseUrl}}"],
+              "path": ["google", "auth-url"]
+            },
+            "description": "Generates the Google OAuth authorization consent URL with Calendar and Meet scopes."
+          },
+          "response": []
+        },
+        {
+          "name": "Disconnect Google Calendar",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{doctorCookie}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/google/disconnect",
+              "host": ["{{baseUrl}}"],
+              "path": ["google", "disconnect"]
+            },
+            "description": "Unlinks doctor's Google Calendar and revokes meeting integration."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

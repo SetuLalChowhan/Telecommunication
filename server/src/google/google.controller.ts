@@ -26,7 +26,11 @@ export class GoogleController {
     @CurrentUser('id') userId: string,
     @Body() dto: ConnectGoogleDto,
   ) {
-    return this.googleService.handleOAuthCallback(dto.code, userId);
+    return this.googleService.handleOAuthCallback(
+      dto.code,
+      userId,
+      dto.redirectUri,
+    );
   }
 
   @Get('status')

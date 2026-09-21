@@ -24,11 +24,27 @@ import { Roles } from '../auth/decorators/roles.decorator.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { CurrentUser } from '../common/decorator/current-user.decorator.js';
 import { ResponseMessage } from '../common/decorator/response-message.decorator.js';
-import { doctorDocumentUploadOptions } from '../common/utils/file-upload.util.js';
+import { doctorDocumentUploadOptions, avatarUploadOptions } from '../common/utils/file-upload.util.js';
 
 @Controller('doctors')
 export class DoctorController {
   constructor(private readonly doctorService: DoctorService) {}
+
+  @Get('dashboard')
+  @Roles('DOCTOR')
+  @UseGuards(RolesGuard)
+  @ResponseMessage('Doctor dashboard data fetched successfully')
+  getDoctorDashboard(@CurrentUser('id') userId: string) {
+    return this.doctorService.getDoctorDashboard(userId);
+  }
+
+  @Get('dashboard/stats')
+  @Roles('DOCTOR')
+  @UseGuards(RolesGuard)
+  @ResponseMessage('Doctor dashboard stats fetched successfully')
+  getDoctorDashboardStats(@CurrentUser('id') userId: string) {
+    return this.doctorService.getDoctorDashboard(userId);
+  }
 
   @Get('me')
   @Roles('DOCTOR')
@@ -41,12 +57,14 @@ export class DoctorController {
   @Patch('me')
   @Roles('DOCTOR')
   @UseGuards(RolesGuard)
+  @UseInterceptors(FileInterceptor('image', avatarUploadOptions))
   @ResponseMessage('Doctor profile updated successfully')
   updateMyProfile(
     @CurrentUser('id') userId: string,
     @Body() dto: UpdateDoctorProfileDto,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.doctorService.updateMyProfile(userId, dto);
+    return this.doctorService.updateMyProfile(userId, dto, file);
   }
 
   @Get('me/availability')

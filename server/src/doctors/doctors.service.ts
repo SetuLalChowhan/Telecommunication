@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DocumentType } from '@prisma/client';
+import { BookingStatus, DocumentType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto.js';
 import { CreateAvailabilityDto } from './dto/create-availability.dto.js';
@@ -95,6 +95,135 @@ export class DoctorService {
     };
   }
 
+  async getDoctorDashboard(userId: string) {
+    const profile = await this.getOwnProfileOrThrow(userId);
+    const doctorId = profile.id;
+    const now = new Date();
+
+    // 24-hour day window centered around local day
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const bookingPatientInclude = {
+      patient: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+              image: true,
+              dateOfBirth: true,
+            },
+          },
+        },
+      },
+    };
+
+    const [
+      totalConsultations,
+      todayConsultationsCount,
+      pendingConfirmationCount,
+      completedConsultationsCount,
+      cancelledCount,
+      confirmedCount,
+      activeAvailabilitySlots,
+      nextAppointment,
+      todaySchedule,
+      distinctPatients,
+    ] = await Promise.all([
+      // 1. Total lifetime consultations
+      this.prisma.booking.count({ where: { doctorId } }),
+
+      // 2. Today's consultations
+      this.prisma.booking.count({
+        where: {
+          doctorId,
+          slotStart: { gte: startOfDay, lte: endOfDay },
+          status: { not: BookingStatus.CANCELLED },
+        },
+      }),
+
+      // 3. Pending confirmations
+      this.prisma.booking.count({
+        where: { doctorId, status: BookingStatus.PENDING },
+      }),
+
+      // 4. Completed consultations
+      this.prisma.booking.count({
+        where: { doctorId, status: BookingStatus.COMPLETED },
+      }),
+
+      // 5. Cancelled consultations
+      this.prisma.booking.count({
+        where: { doctorId, status: BookingStatus.CANCELLED },
+      }),
+
+      // 6. Confirmed consultations
+      this.prisma.booking.count({
+        where: { doctorId, status: BookingStatus.CONFIRMED },
+      }),
+
+      // 7. Active weekly availability slots
+      this.prisma.availability.findMany({
+        where: { doctorId, isActive: true },
+        select: { dayOfWeek: true },
+      }),
+
+      // 8. Next Up consultation (earliest active upcoming booking)
+      this.prisma.booking.findFirst({
+        where: {
+          doctorId,
+          status: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] },
+          slotEnd: { gte: now },
+        },
+        orderBy: { slotStart: 'asc' },
+        include: bookingPatientInclude,
+      }),
+
+      // 9. Today's schedule
+      this.prisma.booking.findMany({
+        where: {
+          doctorId,
+          slotStart: { gte: startOfDay, lte: endOfDay },
+        },
+        orderBy: { slotStart: 'asc' },
+        include: bookingPatientInclude,
+      }),
+
+      // 10. Distinct patients consulted
+      this.prisma.booking.findMany({
+        where: { doctorId, status: { in: [BookingStatus.COMPLETED, BookingStatus.CONFIRMED] } },
+        select: { patientId: true },
+      }),
+    ]);
+
+    const activeDaysSet = new Set(activeAvailabilitySlots.map((s) => s.dayOfWeek));
+    const activeAvailabilityDaysCount = activeDaysSet.size;
+    const uniquePatientIds = new Set(distinctPatients.map((b) => b.patientId));
+    const totalPatientsCount = uniquePatientIds.size;
+
+    return {
+      stats: {
+        totalConsultations,
+        todayConsultationsCount,
+        pendingConfirmationCount,
+        completedConsultationsCount,
+        cancelledCount,
+        confirmedCount,
+        totalPatientsCount,
+        activeAvailabilityDaysCount,
+      },
+      nextAppointment,
+      todaySchedule,
+      activeDaysCount: activeAvailabilityDaysCount,
+      verified: profile.verified,
+    };
+  }
+
   async getMyProfile(userId: string) {
     const profile = await this.getOwnProfileOrThrow(userId);
 
@@ -106,8 +235,47 @@ export class DoctorService {
     return this.enrichDoctorWithConsultationStats(doc);
   }
 
-  async updateMyProfile(userId: string, dto: UpdateDoctorProfileDto) {
+  async updateMyProfile(
+    userId: string,
+    dto: UpdateDoctorProfileDto,
+    file?: Express.Multer.File,
+  ) {
     const profile = await this.getOwnProfileOrThrow(userId);
+
+    let imageUrl: string | undefined = undefined;
+
+    if (file) {
+      const uploadRes = await this.cloudinaryService.uploadFile(
+        file,
+        'telehealth/avatars',
+        {
+          transformation: [
+            { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+          ],
+        },
+      );
+      imageUrl = uploadRes.secureUrl;
+
+      // Clean up previous image if on Cloudinary
+      if (profile.user?.image) {
+        await this.cloudinaryService.deleteFile(profile.user.image);
+      }
+    } else if (dto.image) {
+      imageUrl = dto.image;
+    }
+
+    // Update user fields (name, phone, image)
+    const userUpdateData: Record<string, any> = {};
+    if (dto.name !== undefined) userUpdateData.name = dto.name;
+    if (dto.phone !== undefined) userUpdateData.phone = dto.phone;
+    if (imageUrl !== undefined) userUpdateData.image = imageUrl;
+
+    if (Object.keys(userUpdateData).length > 0) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: userUpdateData,
+      });
+    }
 
     // 1. Gather all specialty IDs to validate
     const targetMainId = dto.mainSpecialtyId;
