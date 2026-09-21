@@ -339,8 +339,11 @@ export class GoogleService {
         meetLink,
         googleEventId: event.data.id || undefined,
       };
-    } catch (error) {
-      this.logger.error('Error creating Google Calendar Meet event:', error);
+    } catch (error: any) {
+      this.logger.error(
+        'Error creating Google Calendar Meet event:',
+        error?.response?.data || error?.message || error,
+      );
       const fallbackMeetLink = `https://meet.google.com/tele-${bookingId.slice(-8)}`;
       return { meetLink: fallbackMeetLink };
     }
