@@ -90,9 +90,8 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
       });
 
       setBookedDetails(booking as unknown as RawBooking);
-      toast.success("Appointment successfully scheduled!");
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || "Failed to schedule appointment");
+    } catch {
+      // Toast already handled by mutation onError in useCreateAppointmentBooking
     }
   };
 
