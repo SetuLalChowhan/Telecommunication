@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import DoctorLayout from "@/layouts/DoctorLayout";
-import { DoctorDashboardView } from "@/components/doctor";
+import { DoctorDashboardView } from "@/features/doctors";
 import { useAuth } from "@/lib/api";
 
 export function DoctorDashboardClient() {
@@ -10,12 +9,10 @@ export function DoctorDashboardClient() {
   const isVerified = user?.doctorProfile?.verified ?? false;
 
   return (
-    <DoctorLayout>
-      <DoctorDashboardView
-        doctorName={user?.name}
-        isVerified={isVerified}
-        isLoading={isSessionLoading}
-      />
-    </DoctorLayout>
+    <DoctorDashboardView
+      doctorName={user?.name}
+      isVerified={isVerified}
+      isLoading={isSessionLoading}
+    />
   );
 }

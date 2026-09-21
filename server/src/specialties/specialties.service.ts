@@ -4,14 +4,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { SpecialtiesRepository } from './specialties.repository.js';
 import { CreateSpecialtyDto } from './dto/create-specialty.dto.js';
 import { UpdateSpecialtyDto } from './dto/update-specialty.dto.js';
 import { SpecialtyQueryDto } from './dto/specialty-query.dto.js';
-import {
-  createPaginationMeta,
-  getPaginationParams,
-} from '../common/pagination/pagination.utils.js';
+import { createPaginationMeta } from '../common/pagination/pagination.utils.js';
 
 function slugify(text: string): string {
   return text
@@ -24,36 +21,12 @@ function slugify(text: string): string {
 
 @Injectable()
 export class SpecialtiesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly repo: SpecialtiesRepository) {}
 
   async findAll(query: SpecialtyQueryDto = {}) {
-    const { skip, take } = getPaginationParams(query.page, query.limit);
+    const { rows, total } = await this.repo.findMany(query);
 
-    const where = {
-      ...(query.isActive !== undefined ? { isActive: query.isActive } : {}),
-      ...(query.search
-        ? {
-            name: { contains: query.search, mode: 'insensitive' as const },
-          }
-        : {}),
-    };
-
-    const [specialties, total] = await Promise.all([
-      this.prisma.specialty.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { name: 'asc' },
-        include: {
-          _count: {
-            select: { doctors: true },
-          },
-        },
-      }),
-      this.prisma.specialty.count({ where }),
-    ]);
-
-    const formatted = specialties.map((s) => ({
+    const data = rows.map((s) => ({
       id: s.id,
       name: s.name,
       slug: s.slug,
@@ -64,37 +37,13 @@ export class SpecialtiesService {
     }));
 
     return {
-      data: formatted,
+      data,
       meta: createPaginationMeta(query.page || 1, query.limit || 10, total),
     };
   }
 
   async findBySlug(slug: string) {
-    const specialty = await this.prisma.specialty.findUnique({
-      where: { slug },
-      include: {
-        doctors: {
-          where: {
-            doctor: { verified: true },
-          },
-          include: {
-            doctor: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    phone: true,
-                    image: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
+    const specialty = await this.repo.findBySlug(slug);
 
     if (!specialty) {
       throw new NotFoundException(`Specialty with slug "${slug}" not found`);
@@ -112,14 +61,7 @@ export class SpecialtiesService {
   }
 
   async findOne(id: string) {
-    const specialty = await this.prisma.specialty.findUnique({
-      where: { id },
-      include: {
-        _count: {
-          select: { doctors: true },
-        },
-      },
-    });
+    const specialty = await this.repo.findById(id);
 
     if (!specialty) {
       throw new NotFoundException(`Specialty with ID "${id}" not found`);
@@ -135,26 +77,18 @@ export class SpecialtiesService {
       throw new BadRequestException('A valid name or slug is required');
     }
 
-    const existingName = await this.prisma.specialty.findUnique({
-      where: { name: dto.name },
-    });
-    if (existingName) {
+    if (await this.repo.findByName(dto.name)) {
       throw new ConflictException('A specialty with this name already exists');
     }
 
-    const existingSlug = await this.prisma.specialty.findUnique({
-      where: { slug },
-    });
-    if (existingSlug) {
+    if (await this.repo.findBySlugUnique(slug)) {
       throw new ConflictException('A specialty with this slug already exists');
     }
 
-    return this.prisma.specialty.create({
-      data: {
-        name: dto.name,
-        slug,
-        isActive: dto.isActive ?? true,
-      },
+    return this.repo.create({
+      name: dto.name,
+      slug,
+      isActive: dto.isActive ?? true,
     });
   }
 
@@ -168,40 +102,25 @@ export class SpecialtiesService {
       slug = slugify(dto.name);
     }
 
-    if (dto.name) {
-      const existingName = await this.prisma.specialty.findFirst({
-        where: { name: dto.name, NOT: { id } },
-      });
-      if (existingName) {
-        throw new ConflictException('A specialty with this name already exists');
-      }
+    if (dto.name && (await this.repo.findByNameExcluding(dto.name, id))) {
+      throw new ConflictException('A specialty with this name already exists');
     }
 
-    if (slug) {
-      const existingSlug = await this.prisma.specialty.findFirst({
-        where: { slug, NOT: { id } },
-      });
-      if (existingSlug) {
-        throw new ConflictException('A specialty with this slug already exists');
-      }
+    if (slug && (await this.repo.findBySlugExcluding(slug, id))) {
+      throw new ConflictException('A specialty with this slug already exists');
     }
 
-    return this.prisma.specialty.update({
-      where: { id },
-      data: {
-        name: dto.name,
-        slug,
-        isActive: dto.isActive,
-      },
+    return this.repo.update(id, {
+      name: dto.name,
+      slug,
+      isActive: dto.isActive,
     });
   }
 
   async remove(id: string) {
-    const specialty = await this.findOne(id);
+    await this.findOne(id);
 
-    const doctorsCount = await this.prisma.doctorSpecialty.count({
-      where: { specialtyId: id },
-    });
+    const doctorsCount = await this.repo.countDoctors(id);
 
     if (doctorsCount > 0) {
       throw new BadRequestException(
@@ -209,8 +128,6 @@ export class SpecialtiesService {
       );
     }
 
-    return this.prisma.specialty.delete({
-      where: { id },
-    });
+    return this.repo.delete(id);
   }
 }

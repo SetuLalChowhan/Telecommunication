@@ -5,30 +5,35 @@ import { NotFoundException } from '@nestjs/common';
 
 describe('Doctor Profile & Slug Characterization', () => {
   let service: DoctorService;
-  let mockPrisma: any;
+  let mockRepo: any;
   let mockCloudinary: any;
 
   beforeEach(() => {
-    mockPrisma = {
-      doctorProfile: {
-        findUnique: vi.fn(),
-        findFirst: vi.fn(),
-        update: vi.fn(),
-      },
-      user: {
-        update: vi.fn(),
-      },
-      specialty: {
-        findMany: vi.fn(),
-      },
-      doctorSpecialty: {
-        deleteMany: vi.fn(),
-        createMany: vi.fn(),
-      },
-      booking: {
-        count: vi.fn().mockResolvedValue(15),
-      },
-      $transaction: vi.fn((cb) => cb(mockPrisma)),
+    mockRepo = {
+      findProfileByUserId: vi.fn(),
+      findProfileById: vi.fn(),
+      findPublicDoctor: vi.fn(),
+      findSlugConflict: vi.fn().mockResolvedValue(null),
+      countActiveSpecialties: vi.fn().mockResolvedValue(0),
+      countCompletedBookings: vi.fn().mockResolvedValue(15),
+      listPublicDoctors: vi.fn(),
+      getDashboardStats: vi.fn(),
+      updateUser: vi.fn().mockResolvedValue({}),
+      updateProfileInTx: vi.fn(),
+      listAvailability: vi.fn(),
+      findAvailabilityById: vi.fn(),
+      createAvailability: vi.fn(),
+      updateAvailability: vi.fn(),
+      deleteAvailability: vi.fn(),
+      findActiveAvailabilityByDay: vi.fn(),
+      listDaysOff: vi.fn(),
+      upsertDayOff: vi.fn(),
+      findDayOffById: vi.fn(),
+      deleteDayOff: vi.fn(),
+      findDayOffForDate: vi.fn(),
+      listFutureDaysOff: vi.fn(),
+      createDocument: vi.fn(),
+      listPatientBookings: vi.fn(),
     };
 
     mockCloudinary = {
@@ -39,7 +44,7 @@ describe('Doctor Profile & Slug Characterization', () => {
       deleteFile: vi.fn(),
     };
 
-    service = new DoctorService(mockPrisma, mockCloudinary);
+    service = new DoctorService(mockRepo, mockCloudinary);
   });
 
   describe('slugify & generateDoctorSlug pure utility', () => {
@@ -57,7 +62,7 @@ describe('Doctor Profile & Slug Characterization', () => {
 
   describe('DoctorService.getMyProfile', () => {
     it('throws NotFoundException if profile does not exist for the user', async () => {
-      mockPrisma.doctorProfile.findUnique.mockResolvedValue(null);
+      mockRepo.findProfileByUserId.mockResolvedValue(null);
 
       await expect(service.getMyProfile('unknown-user')).rejects.toThrow(NotFoundException);
     });
@@ -71,7 +76,8 @@ describe('Doctor Profile & Slug Characterization', () => {
         user: { name: 'Dr. John', email: 'john@example.com' },
         specialties: [],
       };
-      mockPrisma.doctorProfile.findUnique.mockResolvedValue(profile);
+      mockRepo.findProfileByUserId.mockResolvedValue(profile);
+      mockRepo.findProfileById.mockResolvedValue(profile);
 
       const result = await service.getMyProfile('user-1');
       expect(result).toMatchObject({
@@ -83,7 +89,7 @@ describe('Doctor Profile & Slug Characterization', () => {
 
   describe('DoctorService.updateMyProfile', () => {
     it('throws NotFoundException if doctor does not exist', async () => {
-      mockPrisma.doctorProfile.findUnique.mockResolvedValue(null);
+      mockRepo.findProfileByUserId.mockResolvedValue(null);
 
       await expect(
         service.updateMyProfile('user-1', { bio: 'New bio' }),
@@ -97,7 +103,7 @@ describe('Doctor Profile & Slug Characterization', () => {
         slug: 'dr-old-slug',
         user: { name: 'Dr. Old', image: null },
       };
-      mockPrisma.doctorProfile.findUnique.mockResolvedValue(existingProfile);
+      mockRepo.findProfileByUserId.mockResolvedValue(existingProfile);
 
       const updatedProfile = {
         ...existingProfile,
@@ -107,8 +113,9 @@ describe('Doctor Profile & Slug Characterization', () => {
           name: 'Dr. New Name',
           image: 'https://res.cloudinary.com/demo/image/upload/avatar.png',
         },
+        specialties: [],
       };
-      mockPrisma.doctorProfile.update.mockResolvedValue(updatedProfile);
+      mockRepo.updateProfileInTx.mockResolvedValue(updatedProfile);
 
       const dummyFile: any = {
         buffer: Buffer.from('fake-image-data'),
@@ -135,13 +142,11 @@ describe('Doctor Profile & Slug Characterization', () => {
           ]),
         }),
       );
-      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+      expect(mockRepo.updateUser).toHaveBeenCalledWith(
+        'user-1',
         expect.objectContaining({
-          where: { id: 'user-1' },
-          data: expect.objectContaining({
-            name: 'Dr. New Name',
-            image: 'https://res.cloudinary.com/demo/image/upload/avatar.png',
-          }),
+          name: 'Dr. New Name',
+          image: 'https://res.cloudinary.com/demo/image/upload/avatar.png',
         }),
       );
       expect(result).toMatchObject({

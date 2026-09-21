@@ -5,73 +5,38 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { BookingStatus, DocumentType } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { DocumentType } from '@prisma/client';
+import { DoctorRepository } from './doctors.repository.js';
 import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto.js';
 import { CreateAvailabilityDto } from './dto/create-availability.dto.js';
 import { UpdateAvailabilityDto } from './dto/update-availability.dto.js';
 import { DoctorQueryDto } from './dto/doctor-query.dto.js';
 import { CreateDayOffDto } from './dto/create-day-off.dto.js';
-import {
-  createPaginationMeta,
-  getPaginationParams,
-} from '../common/pagination/pagination.utils.js';
-import { generateDoctorSlug, slugify } from '../common/utils/slug.utils.js';
+import { createPaginationMeta } from '../common/pagination/pagination.utils.js';
+import { slugify } from '../common/utils/slug.utils.js';
 import { CloudinaryService } from '../common/cloudinary/cloudinary.service.js';
-
-const DOCTOR_PROFILE_INCLUDE = {
-  user: {
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-      image: true,
-    },
-  },
-  specialties: {
-    include: { specialty: true },
-    orderBy: { isPrimary: 'desc' as const },
-  },
-  qualifications: {
-    orderBy: { passingYear: 'desc' as const },
-  },
-  documents: true,
-  availability: true,
-  daysOff: true,
-} as const;
 
 @Injectable()
 export class DoctorService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repo: DoctorRepository,
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
+  // -- Private helpers -------------------------------------------------------
+
   private async getOwnProfileOrThrow(userId: string) {
-    const profile = await this.prisma.doctorProfile.findUnique({
-      where: { userId },
-      include: { user: true },
-    });
-
+    const profile = await this.repo.findProfileByUserId(userId);
     if (!profile) {
-      throw new NotFoundException(
-        'No doctor profile found for this account',
-      );
+      throw new NotFoundException('No doctor profile found for this account');
     }
-
     return profile;
   }
 
   private async enrichDoctorWithConsultationStats(doctor: any) {
     if (!doctor) return null;
 
-    const totalPatientsConsulted = await this.prisma.booking.count({
-      where: {
-        doctorId: doctor.id,
-        status: 'COMPLETED',
-      },
-    });
+    const totalPatientsConsulted = await this.repo.countCompletedBookings(doctor.id);
 
     const mainSpecialtyItem =
       doctor.specialties?.find((s: any) => s.isPrimary) ||
@@ -95,33 +60,17 @@ export class DoctorService {
     };
   }
 
+  // -- Dashboard -------------------------------------------------------------
+
   async getDoctorDashboard(userId: string) {
     const profile = await this.getOwnProfileOrThrow(userId);
     const doctorId = profile.id;
     const now = new Date();
 
-    // 24-hour day window centered around local day
     const startOfDay = new Date(now);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(now);
     endOfDay.setHours(23, 59, 59, 999);
-
-    const bookingPatientInclude = {
-      patient: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true,
-              image: true,
-              dateOfBirth: true,
-            },
-          },
-        },
-      },
-    };
 
     const [
       totalConsultations,
@@ -134,72 +83,7 @@ export class DoctorService {
       nextAppointment,
       todaySchedule,
       distinctPatients,
-    ] = await Promise.all([
-      // 1. Total lifetime consultations
-      this.prisma.booking.count({ where: { doctorId } }),
-
-      // 2. Today's consultations
-      this.prisma.booking.count({
-        where: {
-          doctorId,
-          slotStart: { gte: startOfDay, lte: endOfDay },
-          status: { not: BookingStatus.CANCELLED },
-        },
-      }),
-
-      // 3. Pending confirmations
-      this.prisma.booking.count({
-        where: { doctorId, status: BookingStatus.PENDING },
-      }),
-
-      // 4. Completed consultations
-      this.prisma.booking.count({
-        where: { doctorId, status: BookingStatus.COMPLETED },
-      }),
-
-      // 5. Cancelled consultations
-      this.prisma.booking.count({
-        where: { doctorId, status: BookingStatus.CANCELLED },
-      }),
-
-      // 6. Confirmed consultations
-      this.prisma.booking.count({
-        where: { doctorId, status: BookingStatus.CONFIRMED },
-      }),
-
-      // 7. Active weekly availability slots
-      this.prisma.availability.findMany({
-        where: { doctorId, isActive: true },
-        select: { dayOfWeek: true },
-      }),
-
-      // 8. Next Up consultation (earliest active upcoming booking)
-      this.prisma.booking.findFirst({
-        where: {
-          doctorId,
-          status: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] },
-          slotEnd: { gte: now },
-        },
-        orderBy: { slotStart: 'asc' },
-        include: bookingPatientInclude,
-      }),
-
-      // 9. Today's schedule
-      this.prisma.booking.findMany({
-        where: {
-          doctorId,
-          slotStart: { gte: startOfDay, lte: endOfDay },
-        },
-        orderBy: { slotStart: 'asc' },
-        include: bookingPatientInclude,
-      }),
-
-      // 10. Distinct patients consulted
-      this.prisma.booking.findMany({
-        where: { doctorId, status: { in: [BookingStatus.COMPLETED, BookingStatus.CONFIRMED] } },
-        select: { patientId: true },
-      }),
-    ]);
+    ] = await this.repo.getDashboardStats(doctorId, startOfDay, endOfDay, now);
 
     const activeDaysSet = new Set(activeAvailabilitySlots.map((s) => s.dayOfWeek));
     const activeAvailabilityDaysCount = activeDaysSet.size;
@@ -224,14 +108,11 @@ export class DoctorService {
     };
   }
 
+  // -- Profile ---------------------------------------------------------------
+
   async getMyProfile(userId: string) {
     const profile = await this.getOwnProfileOrThrow(userId);
-
-    const doc = await this.prisma.doctorProfile.findUnique({
-      where: { id: profile.id },
-      include: DOCTOR_PROFILE_INCLUDE,
-    });
-
+    const doc = await this.repo.findProfileById(profile.id);
     return this.enrichDoctorWithConsultationStats(doc);
   }
 
@@ -242,7 +123,7 @@ export class DoctorService {
   ) {
     const profile = await this.getOwnProfileOrThrow(userId);
 
-    let imageUrl: string | undefined = undefined;
+    let imageUrl: string | undefined;
 
     if (file) {
       const uploadRes = await this.cloudinaryService.uploadFile(
@@ -255,8 +136,6 @@ export class DoctorService {
         },
       );
       imageUrl = uploadRes.secureUrl;
-
-      // Clean up previous image if on Cloudinary
       if (profile.user?.image) {
         await this.cloudinaryService.deleteFile(profile.user.image);
       }
@@ -264,39 +143,31 @@ export class DoctorService {
       imageUrl = dto.image;
     }
 
-    // Update user fields (name, phone, image)
+    // User scalar updates
     const userUpdateData: Record<string, any> = {};
     if (dto.name !== undefined) userUpdateData.name = dto.name;
     if (dto.phone !== undefined) userUpdateData.phone = dto.phone;
     if (imageUrl !== undefined) userUpdateData.image = imageUrl;
 
     if (Object.keys(userUpdateData).length > 0) {
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: userUpdateData,
-      });
+      await this.repo.updateUser(userId, userUpdateData);
     }
 
-    // 1. Gather all specialty IDs to validate
+    // Specialty resolution
     const targetMainId = dto.mainSpecialtyId;
     const targetOtherIds = dto.otherSpecialtyIds || [];
     let allSpecialtyIds: string[] = [];
 
     if (targetMainId || targetOtherIds.length > 0) {
       allSpecialtyIds = Array.from(
-        new Set([
-          ...(targetMainId ? [targetMainId] : []),
-          ...targetOtherIds,
-        ]),
+        new Set([...(targetMainId ? [targetMainId] : []), ...targetOtherIds]),
       );
     } else if (dto.specialtyIds) {
       allSpecialtyIds = dto.specialtyIds;
     }
 
     if (allSpecialtyIds.length > 0) {
-      const validCount = await this.prisma.specialty.count({
-        where: { id: { in: allSpecialtyIds }, isActive: true },
-      });
+      const validCount = await this.repo.countActiveSpecialties(allSpecialtyIds);
       if (validCount !== allSpecialtyIds.length) {
         throw new NotFoundException(
           'One or more specialty IDs are invalid or inactive',
@@ -304,116 +175,94 @@ export class DoctorService {
       }
     }
 
-    let sanitizedSlug: string | undefined = undefined;
+    // Slug conflict check
+    let sanitizedSlug: string | undefined;
     if (dto.slug) {
       sanitizedSlug = slugify(dto.slug);
-      const existing = await this.prisma.doctorProfile.findFirst({
-        where: {
-          slug: sanitizedSlug,
-          id: { not: profile.id },
-        },
-      });
-      if (existing) {
+      if (await this.repo.findSlugConflict(sanitizedSlug, profile.id)) {
         throw new ConflictException(
           'This doctor slug is already taken. Please choose another.',
         );
       }
     }
 
-    const updatedProfile = await this.prisma.$transaction(async (tx) => {
-      // Manage Specialties
-      if (
-        dto.mainSpecialtyId !== undefined ||
-        dto.otherSpecialtyIds !== undefined ||
-        dto.specialtyIds !== undefined
-      ) {
-        await (tx as any).doctorSpecialty.deleteMany({
-          where: { doctorId: profile.id },
-        });
+    // Build specialty payload
+    const specialtyPayload =
+      dto.mainSpecialtyId !== undefined ||
+      dto.otherSpecialtyIds !== undefined ||
+      dto.specialtyIds !== undefined
+        ? targetMainId || targetOtherIds.length > 0
+          ? ({
+              mode: 'primary-other' as const,
+              mainId: targetMainId,
+              otherIds: targetOtherIds,
+            })
+          : dto.specialtyIds && dto.specialtyIds.length > 0
+            ? ({ mode: 'list' as const, ids: dto.specialtyIds })
+            : null
+        : null;
 
-        if (targetMainId || targetOtherIds.length > 0) {
-          const specialtyData = [
-            ...(targetMainId
-              ? [{ doctorId: profile.id, specialtyId: targetMainId, isPrimary: true }]
-              : []),
-            ...targetOtherIds
-              .filter((id) => id !== targetMainId)
-              .map((id) => ({
-                doctorId: profile.id,
-                specialtyId: id,
-                isPrimary: false,
-              })),
-          ];
+    const qualifications = dto.qualifications !== undefined
+      ? dto.qualifications.map((q) => ({
+          degree: q.degree,
+          field: q.field as string,
+          institute: q.institute,
+          passingYear: q.passingYear as number,
+          result: q.result,
+        }))
+      : null;
 
-          if (specialtyData.length > 0) {
-            await (tx as any).doctorSpecialty.createMany({
-              data: specialtyData,
-            });
-          }
-        } else if (dto.specialtyIds && dto.specialtyIds.length > 0) {
-          await (tx as any).doctorSpecialty.createMany({
-            data: dto.specialtyIds.map((specialtyId, index) => ({
-              doctorId: profile.id,
-              specialtyId,
-              isPrimary: index === 0,
-            })),
-          });
-        }
-      }
+    const profileData: Record<string, any> = {
+      ...(dto.bio !== undefined && { bio: dto.bio }),
+      ...(dto.experienceYears !== undefined && { experienceYears: dto.experienceYears }),
+      ...(dto.fee !== undefined && { fee: dto.fee }),
+      ...(dto.bmdcNumber !== undefined && { bmdcNumber: dto.bmdcNumber }),
+      ...(dto.designation !== undefined && { designation: dto.designation }),
+      ...(dto.hospitalAffiliation !== undefined && { hospitalAffiliation: dto.hospitalAffiliation }),
+      ...(dto.clinicAddress !== undefined && { clinicAddress: dto.clinicAddress }),
+      ...(sanitizedSlug && { slug: sanitizedSlug }),
+    };
 
-      // Manage Qualifications
-      if (dto.qualifications !== undefined) {
-        await (tx as any).doctorQualification.deleteMany({
-          where: { doctorId: profile.id },
-        });
-
-        if (dto.qualifications.length > 0) {
-          await (tx as any).doctorQualification.createMany({
-            data: dto.qualifications.map((q) => ({
-              doctorId: profile.id,
-              degree: q.degree,
-              field: q.field,
-              institute: q.institute,
-              passingYear: q.passingYear,
-              result: q.result,
-            })),
-          });
-        }
-      }
-
-      return (tx as any).doctorProfile.update({
-        where: { id: profile.id },
-        data: {
-          ...(dto.bio !== undefined ? { bio: dto.bio } : {}),
-          ...(dto.experienceYears !== undefined
-            ? { experienceYears: dto.experienceYears }
-            : {}),
-          ...(dto.fee !== undefined ? { fee: dto.fee } : {}),
-          ...(dto.bmdcNumber !== undefined ? { bmdcNumber: dto.bmdcNumber } : {}),
-          ...(dto.designation !== undefined
-            ? { designation: dto.designation }
-            : {}),
-          ...(dto.hospitalAffiliation !== undefined
-            ? { hospitalAffiliation: dto.hospitalAffiliation }
-            : {}),
-          ...(dto.clinicAddress !== undefined
-            ? { clinicAddress: dto.clinicAddress }
-            : {}),
-          ...(sanitizedSlug ? { slug: sanitizedSlug } : {}),
-        },
-        include: DOCTOR_PROFILE_INCLUDE,
-      });
-    });
+    const updatedProfile = await this.repo.updateProfileInTx(
+      profile.id,
+      profileData,
+      specialtyPayload,
+      qualifications,
+    );
 
     return this.enrichDoctorWithConsultationStats(updatedProfile);
   }
 
+  // -- Public listing --------------------------------------------------------
+
+  async listPublicDoctors(query: DoctorQueryDto) {
+    const { rows, total } = await this.repo.listPublicDoctors(query);
+
+    const enriched = await Promise.all(
+      rows.map((doc) => this.enrichDoctorWithConsultationStats(doc)),
+    );
+
+    return {
+      data: enriched,
+      meta: createPaginationMeta(query.page || 1, query.limit || 10, total),
+    };
+  }
+
+  async getPublicDoctorById(idOrSlug: string) {
+    const doctor = await this.repo.findPublicDoctor(idOrSlug);
+
+    if (!doctor) {
+      throw new NotFoundException('Doctor not found');
+    }
+
+    return this.enrichDoctorWithConsultationStats(doctor);
+  }
+
+  // -- Availability ----------------------------------------------------------
+
   async listMyAvailability(userId: string) {
     const profile = await this.getOwnProfileOrThrow(userId);
-    return this.prisma.availability.findMany({
-      where: { doctorId: profile.id },
-      orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
-    });
+    return this.repo.listAvailability(profile.id);
   }
 
   async createAvailability(userId: string, dto: CreateAvailabilityDto) {
@@ -423,16 +272,7 @@ export class DoctorService {
       throw new ForbiddenException('startTime must be earlier than endTime');
     }
 
-    return this.prisma.availability.create({
-      data: {
-        doctorId: profile.id,
-        dayOfWeek: dto.dayOfWeek,
-        startTime: dto.startTime,
-        endTime: dto.endTime,
-        consultationDuration: dto.consultationDuration ?? 30,
-        isActive: dto.isActive ?? true,
-      },
-    });
+    return this.repo.createAvailability(profile.id, dto);
   }
 
   async updateAvailability(
@@ -442,28 +282,56 @@ export class DoctorService {
   ) {
     const profile = await this.getOwnProfileOrThrow(userId);
     await this.assertOwnsAvailability(profile.id, availabilityId);
-
-    return this.prisma.availability.update({
-      where: { id: availabilityId },
-      data: dto,
-    });
+    return this.repo.updateAvailability(availabilityId, dto);
   }
 
   async deleteAvailability(userId: string, availabilityId: string) {
     const profile = await this.getOwnProfileOrThrow(userId);
     await this.assertOwnsAvailability(profile.id, availabilityId);
-
-    return this.prisma.availability.delete({ where: { id: availabilityId } });
+    return this.repo.deleteAvailability(availabilityId);
   }
 
   private async assertOwnsAvailability(doctorId: string, availabilityId: string) {
-    const row = await this.prisma.availability.findUnique({
-      where: { id: availabilityId },
-    });
+    const row = await this.repo.findAvailabilityById(availabilityId);
     if (!row || row.doctorId !== doctorId) {
       throw new NotFoundException('Availability slot not found');
     }
   }
+
+  async getPublicDoctorAvailability(idOrSlug: string) {
+    const doctor = await this.getPublicDoctorById(idOrSlug);
+    return this.repo.listAvailability(doctor.id);
+  }
+
+  // -- Days Off --------------------------------------------------------------
+
+  async listMyDaysOff(userId: string) {
+    const profile = await this.getOwnProfileOrThrow(userId);
+    return this.repo.listDaysOff(profile.id);
+  }
+
+  async createDayOff(userId: string, dto: CreateDayOffDto) {
+    const profile = await this.getOwnProfileOrThrow(userId);
+    return this.repo.upsertDayOff(profile.id, new Date(dto.date), dto.reason);
+  }
+
+  async deleteDayOff(userId: string, dayOffId: string) {
+    const profile = await this.getOwnProfileOrThrow(userId);
+    const dayOff = await this.repo.findDayOffById(dayOffId);
+
+    if (!dayOff || dayOff.doctorId !== profile.id) {
+      throw new NotFoundException('Day off entry not found');
+    }
+
+    return this.repo.deleteDayOff(dayOffId);
+  }
+
+  async getPublicDoctorDaysOff(idOrSlug: string) {
+    const doctor = await this.getPublicDoctorById(idOrSlug);
+    return this.repo.listFutureDaysOff(doctor.id);
+  }
+
+  // -- Document upload -------------------------------------------------------
 
   async uploadDocument(
     userId: string,
@@ -478,198 +346,14 @@ export class DoctorService {
       { resourceType: 'auto' },
     );
 
-    return this.prisma.doctorDocument.create({
-      data: {
-        doctorId: profile.id,
-        docType,
-        fileUrl: uploadRes.secureUrl,
-      },
-    });
+    return this.repo.createDocument(profile.id, docType, uploadRes.secureUrl);
   }
 
-  /**
-   * Public search — only ever returns verified doctors.
-   */
-  async listPublicDoctors(query: DoctorQueryDto) {
-    const { skip, take } = getPaginationParams(query.page, query.limit);
-
-    const minExp = query.minExperience ?? query.experience;
-
-    const where = {
-      verified: true,
-      ...(query.specialtySlug && {
-        specialties: { some: { specialty: { slug: query.specialtySlug } } },
-      }),
-      ...(query.search && {
-        OR: [
-          {
-            user: {
-              OR: [
-                { name: { contains: query.search, mode: 'insensitive' as const } },
-                { firstName: { contains: query.search, mode: 'insensitive' as const } },
-                { lastName: { contains: query.search, mode: 'insensitive' as const } },
-              ],
-            },
-          },
-          {
-            designation: { contains: query.search, mode: 'insensitive' as const },
-          },
-          {
-            specialties: {
-              some: {
-                specialty: {
-                  name: { contains: query.search, mode: 'insensitive' as const },
-                },
-              },
-            },
-          },
-        ],
-      }),
-      ...(query.minFee !== undefined || query.maxFee !== undefined
-        ? {
-            fee: {
-              ...(query.minFee !== undefined && { gte: query.minFee }),
-              ...(query.maxFee !== undefined && { lte: query.maxFee }),
-            },
-          }
-        : {}),
-      ...(minExp !== undefined
-        ? {
-            experienceYears: { gte: minExp },
-          }
-        : {}),
-    };
-
-    const orderBy =
-      query.sortBy === 'fee'
-        ? { fee: 'asc' as const }
-        : query.sortBy === 'experience'
-          ? { experienceYears: 'desc' as const }
-          : query.sortBy === 'rating'
-            ? { rating: 'desc' as const }
-            : { createdAt: 'desc' as const };
-
-    const [doctors, total] = await Promise.all([
-      this.prisma.doctorProfile.findMany({
-        where,
-        skip,
-        take,
-        orderBy,
-        include: DOCTOR_PROFILE_INCLUDE,
-      }),
-      this.prisma.doctorProfile.count({ where }),
-    ]);
-
-    const enrichedDoctors = await Promise.all(
-      doctors.map((doc) => this.enrichDoctorWithConsultationStats(doc)),
-    );
-
-    return {
-      data: enrichedDoctors,
-      meta: createPaginationMeta(query.page || 1, query.limit || 10, total),
-    };
-  }
-
-  /**
-   * Public doctor profile lookup by either CUID ID or SEO slug
-   */
-  async getPublicDoctorById(idOrSlug: string) {
-    const doctor = await this.prisma.doctorProfile.findFirst({
-      where: {
-        verified: true,
-        OR: [{ id: idOrSlug }, { slug: idOrSlug }],
-      },
-      include: DOCTOR_PROFILE_INCLUDE,
-    });
-
-    if (!doctor) {
-      throw new NotFoundException('Doctor not found');
-    }
-
-    return this.enrichDoctorWithConsultationStats(doctor);
-  }
-
-  async listMyDaysOff(userId: string) {
-    const profile = await this.getOwnProfileOrThrow(userId);
-    return this.prisma.doctorDayOff.findMany({
-      where: { doctorId: profile.id },
-      orderBy: { date: 'asc' },
-    });
-  }
-
-  async createDayOff(userId: string, dto: CreateDayOffDto) {
-    const profile = await this.getOwnProfileOrThrow(userId);
-    const dateObj = new Date(dto.date);
-
-    return this.prisma.doctorDayOff.upsert({
-      where: {
-        doctorId_date: {
-          doctorId: profile.id,
-          date: dateObj,
-        },
-      },
-      update: {
-        reason: dto.reason,
-      },
-      create: {
-        doctorId: profile.id,
-        date: dateObj,
-        reason: dto.reason,
-      },
-    });
-  }
-
-  async deleteDayOff(userId: string, dayOffId: string) {
-    const profile = await this.getOwnProfileOrThrow(userId);
-    const dayOff = await this.prisma.doctorDayOff.findUnique({
-      where: { id: dayOffId },
-    });
-
-    if (!dayOff || dayOff.doctorId !== profile.id) {
-      throw new NotFoundException('Day off entry not found');
-    }
-
-    return this.prisma.doctorDayOff.delete({
-      where: { id: dayOffId },
-    });
-  }
-
-  async getPublicDoctorAvailability(idOrSlug: string) {
-    const doctor = await this.getPublicDoctorById(idOrSlug);
-
-    return this.prisma.availability.findMany({
-      where: { doctorId: doctor.id, isActive: true },
-      orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
-    });
-  }
-
-  async getPublicDoctorDaysOff(idOrSlug: string) {
-    const doctor = await this.getPublicDoctorById(idOrSlug);
-
-    return this.prisma.doctorDayOff.findMany({
-      where: {
-        doctorId: doctor.id,
-        date: { gte: new Date() },
-      },
-      orderBy: { date: 'asc' },
-    });
-  }
+  // -- Patients --------------------------------------------------------------
 
   async listMyPatients(userId: string, search?: string) {
     const profile = await this.getOwnProfileOrThrow(userId);
-
-    const bookings = await this.prisma.booking.findMany({
-      where: { doctorId: profile.id },
-      include: {
-        patient: {
-          include: {
-            user: true,
-            medicalReports: true,
-          },
-        },
-      },
-      orderBy: { slotStart: 'desc' },
-    });
+    const bookings = await this.repo.listPatientBookings(profile.id);
 
     const patientMap = new Map<string, any>();
 
@@ -681,24 +365,27 @@ export class DoctorService {
           patientId: b.patient.id,
           name: b.patient.user.name || 'Patient',
           email: b.patient.user.email,
-          phone: b.patient.user.phone || b.patient.emergencyContactPhone || 'N/A',
-          gender: b.patient.gender || 'OTHER',
-          bloodGroup: b.patient.bloodGroup || 'N/A',
+          phone:
+            b.patient.user.phone ||
+            (b.patient as any).emergencyContactPhone ||
+            'N/A',
+          gender: (b.patient as any).gender || 'OTHER',
+          bloodGroup: (b.patient as any).bloodGroup || 'N/A',
           image: b.patient.user.image,
-          address: b.patient.address,
-          emergencyContactName: b.patient.emergencyContactName,
+          address: (b.patient as any).address,
+          emergencyContactName: (b.patient as any).emergencyContactName,
           lastConsultation: b.slotStart,
           lastCondition: b.notes || 'Routine Consultation',
           consultationCount: 1,
-          reportsCount: b.patient.medicalReports?.length || 0,
+          reportsCount: (b.patient as any).medicalReports?.length || 0,
         });
       } else {
-        const existing = patientMap.get(pid);
-        existing.consultationCount += 1;
+        patientMap.get(pid).consultationCount += 1;
       }
     }
 
     let result = Array.from(patientMap.values());
+
     if (search && search.trim() !== '') {
       const q = search.toLowerCase().trim();
       result = result.filter(

@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoctorService } from './doctors.service.js';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { DoctorRepository } from './doctors.repository.js';
 import { CloudinaryService } from '../common/cloudinary/cloudinary.service.js';
+import { vi } from 'vitest';
 
 describe('DoctorService', () => {
   let service: DoctorService;
@@ -11,13 +12,18 @@ describe('DoctorService', () => {
       providers: [
         DoctorService,
         {
-          provide: PrismaService,
-          useValue: {},
+          provide: DoctorRepository,
+          useValue: {
+            findProfileByUserId: vi.fn(),
+            findProfileById: vi.fn(),
+            findPublicDoctor: vi.fn(),
+            countCompletedBookings: vi.fn(),
+          },
         },
         {
           provide: CloudinaryService,
           useValue: {
-            uploadBuffer: vi.fn(),
+            uploadFile: vi.fn(),
             deleteFile: vi.fn(),
           },
         },

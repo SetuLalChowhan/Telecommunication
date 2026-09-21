@@ -82,6 +82,7 @@ export interface DoctorProfile {
   qualifications?: DoctorQualification[];
   availabilities?: DoctorAvailability[];
   reviews?: DoctorReview[];
+  documents?: any[];
 }
 
 export interface PaginationMeta {

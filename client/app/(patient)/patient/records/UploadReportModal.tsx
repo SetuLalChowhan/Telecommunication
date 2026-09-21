@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   Upload,
   FileText,
   Loader2,
   X,
-  FileSpreadsheet,
 } from "lucide-react";
 import {
   Dialog,
@@ -27,6 +29,14 @@ import {
 } from "@/components/ui/select";
 import { usePatientBookings } from "@/features/patients/api/queries";
 import { useUploadMedicalReport } from "@/features/medical-reports/api/queries";
+import { toast } from "react-toastify";
+
+const uploadReportSchema = z.object({
+  fileName: z.string().min(2, "Document title must be at least 2 characters"),
+  bookingId: z.string().optional(),
+});
+
+type UploadReportFormValues = z.infer<typeof uploadReportSchema>;
 
 interface UploadReportModalProps {
   open: boolean;
@@ -37,23 +47,34 @@ export function UploadReportModal({ open, onOpenChange }: UploadReportModalProps
   const { data: bookingsData } = usePatientBookings({ limit: 50 });
   const uploadMutation = useUploadMedicalReport();
 
-  const [bookingId, setBookingId] = useState<string>("none");
-  const [fileName, setFileName] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
   const bookings = bookingsData?.data || [];
 
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    control,
+    reset,
+    formState: { errors },
+  } = useForm<UploadReportFormValues>({
+    resolver: zodResolver(uploadReportSchema),
+    defaultValues: {
+      fileName: "",
+      bookingId: "none",
+    },
+  });
+
   const handleFile = (file: File) => {
     if (file.size > 10 * 1024 * 1024) {
-      alert("File size exceeds 10MB limit");
+      toast.error("File size exceeds 10MB limit");
       return;
     }
     setSelectedFile(file);
-    if (!fileName.trim()) {
-      const cleanName = file.name.replace(/\.[^/.]+$/, "");
-      setFileName(cleanName);
-    }
+    const cleanName = file.name.replace(/\.[^/.]+$/, "");
+    setValue("fileName", cleanName, { shouldValidate: true });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,13 +89,15 @@ export function UploadReportModal({ open, onOpenChange }: UploadReportModalProps
     if (file) handleFile(file);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedFile) return;
+  const onSubmit = (data: UploadReportFormValues) => {
+    if (!selectedFile) {
+      toast.error("Please select a document file to upload");
+      return;
+    }
 
     const extMatch = selectedFile.name.match(/\.([a-zA-Z0-9]+)$/);
     const ext = extMatch ? `.${extMatch[1]}` : "";
-    let finalTitle = fileName.trim() || selectedFile.name;
+    let finalTitle = data.fileName.trim() || selectedFile.name;
     if (ext && !finalTitle.toLowerCase().endsWith(ext.toLowerCase())) {
       finalTitle = `${finalTitle}${ext}`;
     }
@@ -82,26 +105,38 @@ export function UploadReportModal({ open, onOpenChange }: UploadReportModalProps
     const formData = new FormData();
     formData.append("file", selectedFile);
     formData.append("fileName", finalTitle);
-    if (bookingId && bookingId !== "none") {
-      formData.append("bookingId", bookingId);
+    if (data.bookingId && data.bookingId !== "none") {
+      formData.append("bookingId", data.bookingId);
     }
 
     uploadMutation.mutate(formData, {
       onSuccess: () => {
+        toast.success("Medical document uploaded successfully");
         setSelectedFile(null);
-        setFileName("");
-        setBookingId("none");
+        reset();
         onOpenChange(false);
       },
+      onError: (err: any) => {
+        toast.error(err?.response?.data?.message || err?.message || "Failed to upload report");
+      },
     });
+  };
+
+  const handleClose = (val: boolean) => {
+    if (!uploadMutation.isPending) {
+      if (!val) {
+        setSelectedFile(null);
+        reset();
+      }
+      onOpenChange(val);
+    }
   };
 
   const isUploading = uploadMutation.isPending;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[440px] p-5 sm:p-6 rounded-2xl border border-border bg-card shadow-xl gap-0">
-        {/* Simple, Humanized Header */}
         <DialogHeader className="pb-4">
           <DialogTitle className="text-base font-semibold text-foreground">
             Upload Medical Document
@@ -111,8 +146,8 @@ export function UploadReportModal({ open, onOpenChange }: UploadReportModalProps
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* File Upload Drop Area - Minimal & Compact */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          {/* File Upload Drop Area */}
           <div className="space-y-1.5">
             <Label className="text-xs font-medium text-foreground">
               Document File <span className="text-destructive">*</span>
@@ -158,7 +193,6 @@ export function UploadReportModal({ open, onOpenChange }: UploadReportModalProps
               >
                 <input
                   type="file"
-                  required
                   accept=".pdf,image/png,image/jpeg,image/jpg"
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   onChange={handleFileChange}
@@ -186,12 +220,16 @@ export function UploadReportModal({ open, onOpenChange }: UploadReportModalProps
             <Input
               id="fileName"
               type="text"
-              required
               placeholder="e.g. Blood Test, Chest X-Ray"
-              value={fileName}
-              onChange={(e) => setFileName(e.target.value)}
-              className="h-9 text-xs rounded-lg border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50"
+              disabled={isUploading}
+              className={`h-9 text-xs rounded-lg ${
+                errors.fileName ? "border-error focus-visible:ring-error" : "border-border/80"
+              }`}
+              {...register("fileName")}
             />
+            {errors.fileName && (
+              <p className="text-xs text-error font-medium">{errors.fileName.message}</p>
+            )}
           </div>
 
           {/* Link Consultation (Optional) */}
@@ -199,28 +237,38 @@ export function UploadReportModal({ open, onOpenChange }: UploadReportModalProps
             <Label htmlFor="bookingSelect" className="text-xs font-medium text-foreground">
               Associated Consultation <span className="text-muted-foreground text-[11px] font-normal">(Optional)</span>
             </Label>
-            <Select value={bookingId} onValueChange={setBookingId}>
-              <SelectTrigger id="bookingSelect" className="h-9 text-xs rounded-lg border-border/80 focus:ring-1 focus:ring-primary/50">
-                <SelectValue placeholder="General Record (No Consultation)" />
-              </SelectTrigger>
-              <SelectContent className="max-h-56 rounded-xl">
-                <SelectItem value="none" className="text-xs">
-                  None (General Record)
-                </SelectItem>
-                {bookings.map((b) => {
-                  const docName = b.doctor?.user?.name || "Doctor";
-                  const dateStr = new Date(b.slotStart).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  });
-                  return (
-                    <SelectItem key={b.id} value={b.id} className="text-xs">
-                      {dateStr} &bull; {docName} ({b.status.toLowerCase()})
+            <Controller
+              name="bookingId"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  value={field.value || "none"}
+                  onValueChange={field.onChange}
+                  disabled={isUploading}
+                >
+                  <SelectTrigger id="bookingSelect" className="h-9 text-xs rounded-lg border-border/80 focus:ring-1 focus:ring-primary/50">
+                    <SelectValue placeholder="General Record (No Consultation)" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-56 rounded-xl">
+                    <SelectItem value="none" className="text-xs">
+                      None (General Record)
                     </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+                    {bookings.map((b) => {
+                      const docName = b.doctor?.user?.name || "Doctor";
+                      const dateStr = new Date(b.slotStart).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      });
+                      return (
+                        <SelectItem key={b.id} value={b.id} className="text-xs">
+                          {dateStr} &bull; {docName} ({b.status.toLowerCase()})
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
 
           {/* Clean Footer Buttons */}
@@ -229,7 +277,7 @@ export function UploadReportModal({ open, onOpenChange }: UploadReportModalProps
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => onOpenChange(false)}
+              onClick={() => handleClose(false)}
               disabled={isUploading}
               className="h-8.5 px-3 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground"
             >

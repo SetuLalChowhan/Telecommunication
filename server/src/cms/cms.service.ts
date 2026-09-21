@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { CmsRepository } from './cms.repository.js';
 import {
   CreateWebsiteSectionDto,
   UpdateWebsiteSectionDto,
@@ -7,30 +7,21 @@ import {
 
 @Injectable()
 export class CmsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly repo: CmsRepository) {}
 
   async getAllSections() {
-    const sections = await this.prisma.websiteSection.findMany({
-      where: { isActive: true },
-      orderBy: { createdAt: 'asc' },
-    });
+    const sections = await this.repo.findAllActive();
 
-    // Also return a keyed dictionary for direct frontend consumption
-    const keyed: Record<string, any> = {};
+    const keyed: Record<string, unknown> = {};
     for (const sec of sections) {
       keyed[sec.key] = sec;
     }
 
-    return {
-      list: sections,
-      sections: keyed,
-    };
+    return { list: sections, sections: keyed };
   }
 
   async getSectionByKey(key: string) {
-    const section = await this.prisma.websiteSection.findUnique({
-      where: { key },
-    });
+    const section = await this.repo.findByKey(key);
 
     if (!section) {
       throw new NotFoundException(`Website section not found: ${key}`);
@@ -40,35 +31,20 @@ export class CmsService {
   }
 
   async upsertSection(key: string, dto: UpdateWebsiteSectionDto) {
-    return this.prisma.websiteSection.upsert({
-      where: { key },
-      update: {
-        ...dto,
-      },
-      create: {
-        key,
-        ...dto,
-      },
-    });
+    return this.repo.upsert(key, dto);
   }
 
   async createSection(dto: CreateWebsiteSectionDto) {
-    return this.prisma.websiteSection.create({
-      data: dto,
-    });
+    return this.repo.create(dto);
   }
 
   async deleteSection(key: string) {
-    const section = await this.prisma.websiteSection.findUnique({
-      where: { key },
-    });
+    const section = await this.repo.findByKey(key);
 
     if (!section) {
       throw new NotFoundException(`Website section not found: ${key}`);
     }
 
-    return this.prisma.websiteSection.delete({
-      where: { key },
-    });
+    return this.repo.delete(key);
   }
 }

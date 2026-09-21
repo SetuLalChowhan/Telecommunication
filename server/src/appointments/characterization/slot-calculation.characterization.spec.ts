@@ -1,46 +1,41 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AppointmentsService } from '../appointments.service.js';
-import { PrismaService } from '../../prisma/prisma.service.js';
-import { GoogleService } from '../../google/google.service.js';
-import { NotificationsService } from '../../notifications/notifications.service.js';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { DayOfWeek } from '@prisma/client';
 
 describe('AppointmentsService - Slot Calculation Characterization', () => {
   let service: AppointmentsService;
-  let mockPrisma: any;
+  let mockRepo: any;
   let mockGoogle: any;
   let mockNotifications: any;
 
   beforeEach(() => {
-    mockPrisma = {
-      doctorProfile: {
-        findFirst: vi.fn(),
-      },
-      doctorDayOff: {
-        findFirst: vi.fn(),
-      },
-      availability: {
-        findMany: vi.fn(),
-      },
-      booking: {
-        findMany: vi.fn(),
-      },
+    mockRepo = {
+      findVerifiedDoctor: vi.fn(),
+      findDoctorById: vi.fn(),
+      findOrCreatePatient: vi.fn(),
+      findPatientByUserId: vi.fn(),
+      findDoctorProfileByUserId: vi.fn(),
+      findDayOff: vi.fn().mockResolvedValue(null),
+      findActiveSchedules: vi.fn().mockResolvedValue([]),
+      findActiveBookingsForDate: vi.fn().mockResolvedValue([]),
+      findConflictInTx: vi.fn().mockResolvedValue(null),
+      createBookingInTx: vi.fn(),
+      acquireAdvisoryLock: vi.fn().mockResolvedValue(undefined),
+      findBookings: vi.fn(),
+      findBookingById: vi.fn(),
+      updateBooking: vi.fn(),
+      runTransaction: vi.fn((fn) => fn(mockRepo)),
     };
 
-    mockGoogle = {
-      createMeetingEvent: vi.fn(),
-    };
+    mockGoogle = { createMeetingEvent: vi.fn() };
+    mockNotifications = { createNotification: vi.fn() };
 
-    mockNotifications = {
-      createNotification: vi.fn(),
-    };
-
-    service = new AppointmentsService(mockPrisma, mockGoogle, mockNotifications);
+    service = new AppointmentsService(mockRepo, mockGoogle, mockNotifications);
   });
 
   it('throws NotFoundException if doctor is not found or not verified', async () => {
-    mockPrisma.doctorProfile.findFirst.mockResolvedValue(null);
+    mockRepo.findVerifiedDoctor.mockResolvedValue(null);
 
     await expect(
       service.getAvailableSlots({ doctorId: 'doc-123', date: '2026-09-25' }),
@@ -48,7 +43,7 @@ describe('AppointmentsService - Slot Calculation Characterization', () => {
   });
 
   it('throws BadRequestException on malformed date string', async () => {
-    mockPrisma.doctorProfile.findFirst.mockResolvedValue({ id: 'doc-123', verified: true });
+    mockRepo.findVerifiedDoctor.mockResolvedValue({ id: 'doc-123', verified: true });
 
     await expect(
       service.getAvailableSlots({ doctorId: 'doc-123', date: 'invalid-date' }),
@@ -56,8 +51,8 @@ describe('AppointmentsService - Slot Calculation Characterization', () => {
   });
 
   it('returns empty slots and isDayOff=true when doctor has scheduled a day off', async () => {
-    mockPrisma.doctorProfile.findFirst.mockResolvedValue({ id: 'doc-123', verified: true });
-    mockPrisma.doctorDayOff.findFirst.mockResolvedValue({
+    mockRepo.findVerifiedDoctor.mockResolvedValue({ id: 'doc-123', verified: true });
+    mockRepo.findDayOff.mockResolvedValue({
       id: 'day-off-1',
       doctorId: 'doc-123',
       date: new Date('2026-09-25T00:00:00.000Z'),
@@ -75,11 +70,11 @@ describe('AppointmentsService - Slot Calculation Characterization', () => {
   });
 
   it('generates 30-minute interval slots and marks overlapping bookings as unavailable', async () => {
-    mockPrisma.doctorProfile.findFirst.mockResolvedValue({ id: 'doc-123', verified: true });
-    mockPrisma.doctorDayOff.findFirst.mockResolvedValue(null);
+    mockRepo.findVerifiedDoctor.mockResolvedValue({ id: 'doc-123', verified: true });
+    mockRepo.findDayOff.mockResolvedValue(null);
 
     // 2026-09-25 is Friday
-    mockPrisma.availability.findMany.mockResolvedValue([
+    mockRepo.findActiveSchedules.mockResolvedValue([
       {
         id: 'avail-1',
         doctorId: 'doc-123',
@@ -92,7 +87,7 @@ describe('AppointmentsService - Slot Calculation Characterization', () => {
     ]);
 
     // Existing booking from 09:30 to 10:00
-    mockPrisma.booking.findMany.mockResolvedValue([
+    mockRepo.findActiveBookingsForDate.mockResolvedValue([
       {
         slotStart: new Date('2026-09-25T09:30:00.000Z'),
         slotEnd: new Date('2026-09-25T10:00:00.000Z'),
@@ -133,9 +128,9 @@ describe('AppointmentsService - Slot Calculation Characterization', () => {
   });
 
   it('returns empty slots when doctor has no active schedule for that day of week', async () => {
-    mockPrisma.doctorProfile.findFirst.mockResolvedValue({ id: 'doc-123', verified: true });
-    mockPrisma.doctorDayOff.findFirst.mockResolvedValue(null);
-    mockPrisma.availability.findMany.mockResolvedValue([]);
+    mockRepo.findVerifiedDoctor.mockResolvedValue({ id: 'doc-123', verified: true });
+    mockRepo.findDayOff.mockResolvedValue(null);
+    mockRepo.findActiveSchedules.mockResolvedValue([]);
 
     const result = await service.getAvailableSlots({
       doctorId: 'doc-123',

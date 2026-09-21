@@ -3,19 +3,15 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { BlogsRepository } from './blogs.repository.js';
 import { BlogQueryDto, BlogSortBy } from './dto/blog-query.dto.js';
 import { CreateBlogDto } from './dto/create-blog.dto.js';
 import { UpdateBlogDto } from './dto/update-blog.dto.js';
-import {
-  createPaginationMeta,
-  getPaginationParams,
-} from '../common/pagination/pagination.utils.js';
+import { createPaginationMeta } from '../common/pagination/pagination.utils.js';
 
 @Injectable()
 export class BlogsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly repo: BlogsRepository) {}
 
   private generateSlug(title: string): string {
     return title
@@ -26,138 +22,49 @@ export class BlogsService {
       .replace(/^-+|-+$/g, '');
   }
 
-  // --- Public APIs ---
+  // -- Public APIs -----------------------------------------------------------
 
   async listPublicBlogs(query: BlogQueryDto) {
     const { page = 1, limit = 10, search, category, sortBy = BlogSortBy.NEWEST } = query;
-    const { skip, take } = getPaginationParams(page, limit);
-
-    const where: Prisma.BlogPostWhereInput = {
-      published: true,
-    };
-
-    if (search && search.trim() !== '') {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { excerpt: { contains: search, mode: 'insensitive' } },
-        { authorName: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-
-    if (category && category !== 'All Articles') {
-      where.category = { equals: category, mode: 'insensitive' };
-    }
-
-    let orderBy: Prisma.BlogPostOrderByWithRelationInput = { publishedAt: 'desc' };
-    if (sortBy === BlogSortBy.OLDEST) {
-      orderBy = { publishedAt: 'asc' };
-    } else if (sortBy === BlogSortBy.POPULAR) {
-      orderBy = { viewsCount: 'desc' };
-    }
-
-    const [items, total] = await Promise.all([
-      this.prisma.blogPost.findMany({
-        where,
-        skip,
-        take,
-        orderBy,
-      }),
-      this.prisma.blogPost.count({ where }),
-    ]);
+    const { rows, total } = await this.repo.findMany({ page, limit, search, category, sortBy, publishedOnly: true });
 
     return {
-      items,
+      items: rows,
       meta: createPaginationMeta(page, limit, total),
     };
   }
 
   async getFeaturedBlogs() {
-    return this.prisma.blogPost.findMany({
-      where: {
-        published: true,
-        featured: true,
-      },
-      take: 4,
-      orderBy: { publishedAt: 'desc' },
-    });
+    return this.repo.findFeatured();
   }
 
   async getBlogBySlug(slug: string) {
-    const post = await this.prisma.blogPost.findUnique({
-      where: { slug },
-    });
+    const post = await this.repo.findBySlug(slug);
 
     if (!post || !post.published) {
       throw new NotFoundException(`Blog post not found: ${slug}`);
     }
 
-    // Increment views count
-    await this.prisma.blogPost.update({
-      where: { id: post.id },
-      data: { viewsCount: { increment: 1 } },
-    });
+    await this.repo.incrementViews(post.id);
 
-    // Fetch related articles
-    const relatedPosts = await this.prisma.blogPost.findMany({
-      where: {
-        published: true,
-        category: post.category,
-        id: { not: post.id },
-      },
-      take: 3,
-      orderBy: { publishedAt: 'desc' },
-    });
+    const relatedPosts = await this.repo.findRelated(post.category, post.id);
 
-    return {
-      post,
-      relatedPosts,
-    };
+    return { post, relatedPosts };
   }
 
   async getBlogCategories() {
-    const categories = await this.prisma.blogPost.groupBy({
-      by: ['category'],
-      where: { published: true },
-      _count: { id: true },
-    });
-
-    return categories.map((c) => ({
-      name: c.category,
-      count: c._count.id,
-    }));
+    const categories = await this.repo.getCategories();
+    return categories.map((c) => ({ name: c.category, count: c._count.id }));
   }
 
-  // --- Admin CMS APIs ---
+  // -- Admin CMS APIs --------------------------------------------------------
 
   async adminListBlogs(query: BlogQueryDto) {
     const { page = 1, limit = 10, search, category } = query;
-    const { skip, take } = getPaginationParams(page, limit);
-
-    const where: Prisma.BlogPostWhereInput = {};
-
-    if (search && search.trim() !== '') {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { authorName: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-
-    if (category) {
-      where.category = { equals: category, mode: 'insensitive' };
-    }
-
-    const [items, total] = await Promise.all([
-      this.prisma.blogPost.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.blogPost.count({ where }),
-    ]);
+    const { rows, total } = await this.repo.findMany({ page, limit, search, category, publishedOnly: false });
 
     return {
-      items,
+      items: rows,
       meta: createPaginationMeta(page, limit, total),
     };
   }
@@ -165,30 +72,20 @@ export class BlogsService {
   async adminCreateBlog(dto: CreateBlogDto) {
     const slug = dto.slug ? this.generateSlug(dto.slug) : this.generateSlug(dto.title);
 
-    const existing = await this.prisma.blogPost.findUnique({
-      where: { slug },
-    });
-
+    const existing = await this.repo.findBySlug(slug);
     if (existing) {
       throw new BadRequestException(`A blog post with slug '${slug}' already exists`);
     }
 
-    const publishedAt = dto.published ? new Date() : null;
-
-    return this.prisma.blogPost.create({
-      data: {
-        ...dto,
-        slug,
-        publishedAt,
-      },
+    return this.repo.create({
+      ...dto,
+      slug,
+      publishedAt: dto.published ? new Date() : null,
     });
   }
 
   async adminUpdateBlog(id: string, dto: UpdateBlogDto) {
-    const post = await this.prisma.blogPost.findUnique({
-      where: { id },
-    });
-
+    const post = await this.repo.findById(id);
     if (!post) {
       throw new NotFoundException(`Blog post not found with ID: ${id}`);
     }
@@ -196,9 +93,7 @@ export class BlogsService {
     let slug = post.slug;
     if (dto.slug && dto.slug !== post.slug) {
       slug = this.generateSlug(dto.slug);
-      const existing = await this.prisma.blogPost.findUnique({
-        where: { slug },
-      });
+      const existing = await this.repo.findBySlug(slug);
       if (existing && existing.id !== id) {
         throw new BadRequestException(`A blog post with slug '${slug}' already exists`);
       }
@@ -213,46 +108,27 @@ export class BlogsService {
       }
     }
 
-    return this.prisma.blogPost.update({
-      where: { id },
-      data: {
-        ...dto,
-        slug,
-        publishedAt,
-      },
-    });
+    return this.repo.update(id, { ...dto, slug, publishedAt });
   }
 
   async adminDeleteBlog(id: string) {
-    const post = await this.prisma.blogPost.findUnique({
-      where: { id },
-    });
-
+    const post = await this.repo.findById(id);
     if (!post) {
       throw new NotFoundException(`Blog post not found with ID: ${id}`);
     }
-
-    return this.prisma.blogPost.delete({
-      where: { id },
-    });
+    return this.repo.delete(id);
   }
 
   async adminTogglePublish(id: string) {
-    const post = await this.prisma.blogPost.findUnique({
-      where: { id },
-    });
-
+    const post = await this.repo.findById(id);
     if (!post) {
       throw new NotFoundException(`Blog post not found with ID: ${id}`);
     }
 
     const nextPublished = !post.published;
-    return this.prisma.blogPost.update({
-      where: { id },
-      data: {
-        published: nextPublished,
-        publishedAt: nextPublished ? new Date() : null,
-      },
+    return this.repo.update(id, {
+      published: nextPublished,
+      publishedAt: nextPublished ? new Date() : null,
     });
   }
 }

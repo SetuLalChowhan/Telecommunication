@@ -10,60 +10,61 @@ import {
 
 describe('AppointmentsService - Booking Transitions Characterization', () => {
   let service: AppointmentsService;
-  let mockPrisma: any;
+  let mockRepo: any;
   let mockGoogle: any;
   let mockNotifications: any;
 
+  const existingBooking = {
+    id: 'booking-101',
+    status: BookingStatus.PENDING,
+    doctor: { userId: 'user-doc-1', user: { name: 'Dr. Bob' } },
+    patient: { userId: 'user-pat-1', user: { name: 'Alice', email: 'alice@example.com' } },
+    slotStart: new Date('2026-09-25T10:00:00.000Z'),
+    slotEnd: new Date('2026-09-25T10:30:00.000Z'),
+    meetLink: null,
+    googleEventId: null,
+    notes: null,
+  };
+
   beforeEach(() => {
-    mockPrisma = {
-      patientProfile: {
-        findUnique: vi.fn(),
-        create: vi.fn(),
-      },
-      doctorProfile: {
-        findFirst: vi.fn(),
-        findUnique: vi.fn(),
-      },
-      doctorDayOff: {
-        findFirst: vi.fn().mockResolvedValue(null),
-      },
-      availability: {
-        findMany: vi.fn().mockResolvedValue([
-          {
-            dayOfWeek: 'FRIDAY',
-            startTime: '09:00',
-            endTime: '12:00',
-            consultationDuration: 30,
-            isActive: true,
-          },
-        ]),
-      },
-      booking: {
-        findFirst: vi.fn(),
-        findUnique: vi.fn(),
-        findMany: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
-      },
-      $executeRaw: vi.fn().mockResolvedValue(1),
-      $transaction: vi.fn((cb) => cb(mockPrisma)),
+    mockRepo = {
+      findVerifiedDoctor: vi.fn(),
+      findDoctorById: vi.fn(),
+      findOrCreatePatient: vi.fn(),
+      findPatientByUserId: vi.fn(),
+      findDoctorProfileByUserId: vi.fn(),
+      findDayOff: vi.fn().mockResolvedValue(null),
+      findActiveSchedules: vi.fn().mockResolvedValue([
+        {
+          dayOfWeek: 'FRIDAY',
+          startTime: '09:00',
+          endTime: '12:00',
+          consultationDuration: 30,
+          isActive: true,
+        },
+      ]),
+      findActiveBookingsForDate: vi.fn().mockResolvedValue([]),
+      findConflictInTx: vi.fn().mockResolvedValue(null),
+      createBookingInTx: vi.fn(),
+      acquireAdvisoryLock: vi.fn().mockResolvedValue(undefined),
+      findBookings: vi.fn(),
+      findBookingById: vi.fn(),
+      updateBooking: vi.fn(),
+      runTransaction: vi.fn((fn) => fn(mockRepo)),
     };
 
-    mockGoogle = {
-      createMeetingEvent: vi.fn(),
-    };
-
+    mockGoogle = { createMeetingEvent: vi.fn() };
     mockNotifications = {
       createNotification: vi.fn().mockResolvedValue({ id: 'notif-1' }),
     };
 
-    service = new AppointmentsService(mockPrisma, mockGoogle, mockNotifications);
+    service = new AppointmentsService(mockRepo, mockGoogle, mockNotifications);
   });
 
   describe('createBooking', () => {
     it('throws NotFoundException when doctor does not exist or is unverified', async () => {
-      mockPrisma.patientProfile.findUnique.mockResolvedValue({ id: 'pat-1', userId: 'user-pat-1' });
-      mockPrisma.doctorProfile.findUnique.mockResolvedValue(null);
+      mockRepo.findOrCreatePatient.mockResolvedValue({ id: 'pat-1', userId: 'user-pat-1', user: { name: 'Alice' } });
+      mockRepo.findDoctorById.mockResolvedValue(null);
 
       await expect(
         service.createBooking('user-pat-1', {
@@ -75,14 +76,9 @@ describe('AppointmentsService - Booking Transitions Characterization', () => {
     });
 
     it('throws ConflictException when requested slot has an overlapping active booking', async () => {
-      mockPrisma.patientProfile.findUnique.mockResolvedValue({ id: 'pat-1', userId: 'user-pat-1' });
-      mockPrisma.doctorProfile.findUnique.mockResolvedValue({ id: 'doc-1', verified: true, userId: 'user-doc-1' });
-
-      // Simulate active conflict in DB inside transaction
-      mockPrisma.booking.findFirst.mockResolvedValue({
-        id: 'existing-booking',
-        status: BookingStatus.PENDING,
-      });
+      mockRepo.findOrCreatePatient.mockResolvedValue({ id: 'pat-1', userId: 'user-pat-1', user: { name: 'Alice' } });
+      mockRepo.findDoctorById.mockResolvedValue({ id: 'doc-1', verified: true, userId: 'user-doc-1', user: { name: 'Dr. Bob' } });
+      mockRepo.findConflictInTx.mockResolvedValue({ id: 'existing-booking', status: BookingStatus.PENDING });
 
       await expect(
         service.createBooking('user-pat-1', {
@@ -94,18 +90,18 @@ describe('AppointmentsService - Booking Transitions Characterization', () => {
     });
 
     it('successfully creates PENDING booking and dispatches notifications', async () => {
-      mockPrisma.patientProfile.findUnique.mockResolvedValue({
+      mockRepo.findOrCreatePatient.mockResolvedValue({
         id: 'pat-1',
         userId: 'user-pat-1',
         user: { name: 'Alice Patient' },
       });
-      mockPrisma.doctorProfile.findUnique.mockResolvedValue({
+      mockRepo.findDoctorById.mockResolvedValue({
         id: 'doc-1',
         userId: 'user-doc-1',
         verified: true,
         user: { name: 'Dr. Bob' },
       });
-      mockPrisma.booking.findFirst.mockResolvedValue(null); // No conflict
+      mockRepo.findConflictInTx.mockResolvedValue(null);
 
       const createdBooking = {
         id: 'booking-101',
@@ -115,7 +111,7 @@ describe('AppointmentsService - Booking Transitions Characterization', () => {
         slotEnd: new Date('2026-09-25T10:30:00.000Z'),
         status: BookingStatus.PENDING,
       };
-      mockPrisma.booking.create.mockResolvedValue(createdBooking);
+      mockRepo.createBookingInTx.mockResolvedValue(createdBooking);
 
       const result = await service.createBooking('user-pat-1', {
         doctorId: 'doc-1',
@@ -129,19 +125,8 @@ describe('AppointmentsService - Booking Transitions Characterization', () => {
   });
 
   describe('confirmBooking', () => {
-    const existingBooking = {
-      id: 'booking-101',
-      status: BookingStatus.PENDING,
-      doctor: { userId: 'user-doc-1', user: { name: 'Dr. Bob' } },
-      patient: { userId: 'user-pat-1', user: { name: 'Alice', email: 'alice@example.com' } },
-      slotStart: new Date('2026-09-25T10:00:00.000Z'),
-      slotEnd: new Date('2026-09-25T10:30:00.000Z'),
-      meetLink: null,
-      googleEventId: null,
-    };
-
     it('throws ForbiddenException when a different doctor attempts confirmation', async () => {
-      mockPrisma.booking.findUnique.mockResolvedValue(existingBooking);
+      mockRepo.findBookingById.mockResolvedValue(existingBooking);
 
       await expect(
         service.confirmBooking('booking-101', 'intruder-doc-user', 'DOCTOR'),
@@ -149,7 +134,7 @@ describe('AppointmentsService - Booking Transitions Characterization', () => {
     });
 
     it('throws BadRequestException when confirming an already confirmed booking', async () => {
-      mockPrisma.booking.findUnique.mockResolvedValue({
+      mockRepo.findBookingById.mockResolvedValue({
         ...existingBooking,
         status: BookingStatus.CONFIRMED,
       });
@@ -160,7 +145,7 @@ describe('AppointmentsService - Booking Transitions Characterization', () => {
     });
 
     it('throws BadRequestException when confirming a cancelled booking', async () => {
-      mockPrisma.booking.findUnique.mockResolvedValue({
+      mockRepo.findBookingById.mockResolvedValue({
         ...existingBooking,
         status: BookingStatus.CANCELLED,
       });
@@ -171,12 +156,12 @@ describe('AppointmentsService - Booking Transitions Characterization', () => {
     });
 
     it('transitions PENDING to CONFIRMED with Google Meet link', async () => {
-      mockPrisma.booking.findUnique.mockResolvedValue(existingBooking);
+      mockRepo.findBookingById.mockResolvedValue(existingBooking);
       mockGoogle.createMeetingEvent.mockResolvedValue({
         meetLink: 'https://meet.google.com/abc-defg-hij',
         googleEventId: 'google-evt-1',
       });
-      mockPrisma.booking.update.mockResolvedValue({
+      mockRepo.updateBooking.mockResolvedValue({
         ...existingBooking,
         status: BookingStatus.CONFIRMED,
         meetLink: 'https://meet.google.com/abc-defg-hij',
@@ -185,12 +170,11 @@ describe('AppointmentsService - Booking Transitions Characterization', () => {
       const result = await service.confirmBooking('booking-101', 'user-doc-1', 'DOCTOR');
 
       expect(result.status).toBe(BookingStatus.CONFIRMED);
-      expect(mockPrisma.booking.update).toHaveBeenCalledWith(
+      expect(mockRepo.updateBooking).toHaveBeenCalledWith(
+        'booking-101',
         expect.objectContaining({
-          data: expect.objectContaining({
-            status: BookingStatus.CONFIRMED,
-            meetLink: 'https://meet.google.com/abc-defg-hij',
-          }),
+          status: BookingStatus.CONFIRMED,
+          meetLink: 'https://meet.google.com/abc-defg-hij',
         }),
       );
       expect(mockNotifications.createNotification).toHaveBeenCalledWith(
@@ -204,7 +188,7 @@ describe('AppointmentsService - Booking Transitions Characterization', () => {
 
   describe('cancelBooking', () => {
     it('throws BadRequestException if booking is already completed', async () => {
-      mockPrisma.booking.findUnique.mockResolvedValue({
+      mockRepo.findBookingById.mockResolvedValue({
         id: 'booking-101',
         status: BookingStatus.COMPLETED,
         doctor: { userId: 'user-doc-1' },
@@ -217,7 +201,7 @@ describe('AppointmentsService - Booking Transitions Characterization', () => {
     });
 
     it('throws BadRequestException if booking is already cancelled', async () => {
-      mockPrisma.booking.findUnique.mockResolvedValue({
+      mockRepo.findBookingById.mockResolvedValue({
         id: 'booking-101',
         status: BookingStatus.CANCELLED,
         doctor: { userId: 'user-doc-1' },
@@ -230,14 +214,14 @@ describe('AppointmentsService - Booking Transitions Characterization', () => {
     });
 
     it('transitions to CANCELLED and dispatches cancellation notification to counterpart', async () => {
-      mockPrisma.booking.findUnique.mockResolvedValue({
+      mockRepo.findBookingById.mockResolvedValue({
         id: 'booking-101',
         status: BookingStatus.CONFIRMED,
         doctor: { userId: 'user-doc-1', user: { name: 'Dr. Bob' } },
         patient: { userId: 'user-pat-1', user: { name: 'Alice' } },
         slotStart: new Date('2026-09-25T10:00:00.000Z'),
       });
-      mockPrisma.booking.update.mockResolvedValue({
+      mockRepo.updateBooking.mockResolvedValue({
         id: 'booking-101',
         status: BookingStatus.CANCELLED,
       });
@@ -255,7 +239,7 @@ describe('AppointmentsService - Booking Transitions Characterization', () => {
 
   describe('completeBooking', () => {
     it('throws ForbiddenException if a non-assigned user tries to complete', async () => {
-      mockPrisma.booking.findUnique.mockResolvedValue({
+      mockRepo.findBookingById.mockResolvedValue({
         id: 'booking-101',
         status: BookingStatus.CONFIRMED,
         doctor: { userId: 'user-doc-1' },
@@ -268,7 +252,7 @@ describe('AppointmentsService - Booking Transitions Characterization', () => {
     });
 
     it('throws BadRequestException if attempting to complete a cancelled booking', async () => {
-      mockPrisma.booking.findUnique.mockResolvedValue({
+      mockRepo.findBookingById.mockResolvedValue({
         id: 'booking-101',
         status: BookingStatus.CANCELLED,
         doctor: { userId: 'user-doc-1' },
@@ -281,13 +265,13 @@ describe('AppointmentsService - Booking Transitions Characterization', () => {
     });
 
     it('successfully transitions CONFIRMED booking to COMPLETED', async () => {
-      mockPrisma.booking.findUnique.mockResolvedValue({
+      mockRepo.findBookingById.mockResolvedValue({
         id: 'booking-101',
         status: BookingStatus.CONFIRMED,
         doctor: { userId: 'user-doc-1' },
         patient: { userId: 'user-pat-1' },
       });
-      mockPrisma.booking.update.mockResolvedValue({
+      mockRepo.updateBooking.mockResolvedValue({
         id: 'booking-101',
         status: BookingStatus.COMPLETED,
       });

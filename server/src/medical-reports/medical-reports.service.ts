@@ -4,35 +4,18 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { MedicalReportsRepository } from './medical-reports.repository.js';
 import { UploadReportDto } from './dto/upload-report.dto.js';
 import { CloudinaryService } from '../common/cloudinary/cloudinary.service.js';
-import {
-  createPaginationMeta,
-  getPaginationParams,
-} from '../common/pagination/pagination.utils.js';
+import { createPaginationMeta } from '../common/pagination/pagination.utils.js';
 import { PaginationDto } from '../common/pagination/pagination.dto.js';
 
 @Injectable()
 export class MedicalReportsService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repo: MedicalReportsRepository,
     private readonly cloudinaryService: CloudinaryService,
   ) {}
-
-  private async getOrCreatePatient(userId: string) {
-    let patient = await this.prisma.patientProfile.findUnique({
-      where: { userId },
-    });
-
-    if (!patient) {
-      patient = await this.prisma.patientProfile.create({
-        data: { userId },
-      });
-    }
-
-    return patient;
-  }
 
   async uploadReport(
     userId: string,
@@ -53,10 +36,7 @@ export class MedicalReportsService {
         );
       }
 
-      const booking = await this.prisma.booking.findUnique({
-        where: { id: dto.bookingId },
-        include: { doctor: true },
-      });
+      const booking = await this.repo.findBookingForDoctor(dto.bookingId);
 
       if (!booking) {
         throw new NotFoundException(`Booking with ID "${dto.bookingId}" not found`);
@@ -71,13 +51,11 @@ export class MedicalReportsService {
       patientId = booking.patientId;
     } else {
       // Patient upload
-      const patient = await this.getOrCreatePatient(userId);
+      const patient = await this.repo.findOrCreatePatient(userId);
       patientId = patient.id;
 
       if (dto.bookingId) {
-        const booking = await this.prisma.booking.findUnique({
-          where: { id: dto.bookingId },
-        });
+        const booking = await this.repo.findBookingById(dto.bookingId);
 
         if (!booking) {
           throw new NotFoundException(`Booking with ID "${dto.bookingId}" not found`);
@@ -107,92 +85,28 @@ export class MedicalReportsService {
       displayName = `Prescription - ${displayName}`;
     }
 
-    return this.prisma.medicalReport.create({
-      data: {
-        patientId,
-        bookingId: dto.bookingId || null,
-        fileUrl,
-        fileName: displayName,
-      },
-      include: {
-        booking: {
-          select: {
-            id: true,
-            slotStart: true,
-            status: true,
-            doctor: {
-              select: {
-                id: true,
-                slug: true,
-                designation: true,
-                hospitalAffiliation: true,
-                user: {
-                  select: { name: true, email: true, image: true },
-                },
-                specialties: {
-                  include: { specialty: true },
-                },
-              },
-            },
-          },
-        },
-      },
+    return this.repo.createReport({
+      patientId,
+      bookingId: dto.bookingId,
+      fileUrl,
+      fileName: displayName,
     });
   }
 
   async getMyReports(userId: string, query: PaginationDto = {}) {
-    const patient = await this.getOrCreatePatient(userId);
-    const { skip, take } = getPaginationParams(query.page, query.limit);
-
-    const [reports, total] = await Promise.all([
-      this.prisma.medicalReport.findMany({
-        where: { patientId: patient.id },
-        skip,
-        take,
-        orderBy: { uploadedAt: 'desc' },
-        include: {
-          booking: {
-            select: {
-              id: true,
-              slotStart: true,
-              status: true,
-              doctor: {
-                select: {
-                  id: true,
-                  slug: true,
-                  designation: true,
-                  hospitalAffiliation: true,
-                  user: {
-                    select: { name: true, email: true, image: true },
-                  },
-                  specialties: {
-                    include: { specialty: true },
-                  },
-                },
-              },
-            },
-          },
-        },
-      }),
-      this.prisma.medicalReport.count({
-        where: { patientId: patient.id },
-      }),
-    ]);
+    const patient = await this.repo.findOrCreatePatient(userId);
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const { rows, total } = await this.repo.findByPatient(patient.id, query);
 
     return {
-      data: reports,
-      meta: createPaginationMeta(query.page || 1, query.limit || 10, total),
+      data: rows,
+      meta: createPaginationMeta(page, limit, total),
     };
   }
 
   async getReportsByBooking(bookingId: string, userId: string, role: string) {
-    const booking = await this.prisma.booking.findUnique({
-      where: { id: bookingId },
-      include: {
-        doctor: true,
-        patient: true,
-      },
-    });
+    const booking = await this.repo.findByBookingWithParties(bookingId);
 
     if (!booking) {
       throw new NotFoundException(`Booking with ID "${bookingId}" not found`);
@@ -209,19 +123,11 @@ export class MedicalReportsService {
       }
     }
 
-    return this.prisma.medicalReport.findMany({
-      where: { bookingId },
-      orderBy: { uploadedAt: 'desc' },
-    });
+    return this.repo.findByBooking(bookingId);
   }
 
   async deleteReport(reportId: string, userId: string, role: string) {
-    const report = await this.prisma.medicalReport.findUnique({
-      where: { id: reportId },
-      include: {
-        patient: true,
-      },
-    });
+    const report = await this.repo.findReportById(reportId);
 
     if (!report) {
       throw new NotFoundException(`Report with ID "${reportId}" not found`);
@@ -237,9 +143,7 @@ export class MedicalReportsService {
       await this.cloudinaryService.deleteFile(report.fileUrl);
     }
 
-    return this.prisma.medicalReport.delete({
-      where: { id: reportId },
-    });
+    return this.repo.deleteReport(reportId);
   }
 
   async streamReportFile(
@@ -247,9 +151,7 @@ export class MedicalReportsService {
     action: 'view' | 'download',
     res: any,
   ) {
-    const report = await this.prisma.medicalReport.findUnique({
-      where: { id: reportId },
-    });
+    const report = await this.repo.findReportById(reportId);
 
     if (!report || !report.fileUrl) {
       throw new NotFoundException('Medical report file not found');
@@ -284,7 +186,6 @@ export class MedicalReportsService {
     const fallbackName = isPdf ? 'medical-report.pdf' : 'medical-document';
     const rawFileName = report.fileName || fallbackName;
 
-    // Detect extension from filename, url or content type
     let ext = '';
     const extMatch = rawFileName.match(/\.([a-zA-Z0-9]+)$/);
     if (extMatch) {

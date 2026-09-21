@@ -1,12 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import DoctorLayout from "@/layouts/DoctorLayout";
 import { AvailabilitySlot } from "@/lib/doctor-mock-data";
-import { DoctorAvailabilityTable } from "@/components/dashboard/doctor/DoctorAvailabilityTable";
-import { DoctorDaysOffCalendar, DayOffItem } from "@/components/dashboard/doctor/DoctorDaysOffCalendar";
-import { AddWeeklySlotDialog } from "@/components/dashboard/shared/AddWeeklySlotDialog";
-import { EditWeeklySlotDialog } from "@/components/dashboard/shared/EditWeeklySlotDialog";
+import { DoctorAvailabilityTable, DoctorDaysOffCalendar, DayOffItem } from "@/features/doctors";
+import { AddWeeklySlotDialog, EditWeeklySlotDialog } from "@/features/appointments/components";
 import {
   useMyDoctorSchedule,
   useCreateAvailabilitySlot,
@@ -203,59 +200,57 @@ export function DoctorScheduleClient() {
   };
 
   return (
-    <DoctorLayout>
-      <div className="w-full space-y-6 sm:space-y-7">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-border/70">
-          <div className="space-y-1.5">
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
-              Availability & Leave Schedule
-            </h1>
-            <p className="text-xs sm:text-sm text-secondary-text">
-              Configure your regular consultation hours and manage planned leaves.
-            </p>
-          </div>
+    <div className="w-full space-y-6 sm:space-y-7">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-border/70">
+        <div className="space-y-1.5">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+            Availability & Leave Schedule
+          </h1>
+          <p className="text-xs sm:text-sm text-secondary-text">
+            Configure your regular consultation hours and manage planned leaves.
+          </p>
         </div>
-
-        {/* 1. Weekly Consultation Schedule Table */}
-        <DoctorAvailabilityTable
-          slots={slots}
-          isLoading={isSlotsLoading && slots.length === 0}
-          updatingSlotId={updatingSlotId}
-          deletingSlotId={deletingSlotId}
-          onToggleSlot={handleToggleSlot}
-          onDeleteSlot={handleDeleteSlot}
-          onEditSlot={handleOpenEditSlot}
-          onOpenAddModal={() => setAddSlotOpen(true)}
-        />
-
-        {/* 2. Planned Days Off Calendar */}
-        <DoctorDaysOffCalendar
-          daysOff={daysOff}
-          isAddingDayOff={createDayOffMutation.isPending}
-          deletingDayOffId={deletingDayOffId}
-          onAddDayOff={handleAddDayOff}
-          onRemoveDayOff={handleRemoveDayOff}
-        />
-
-        {/* Add Slot Modal */}
-        <AddWeeklySlotDialog
-          open={addSlotOpen}
-          onOpenChange={setAddSlotOpen}
-          onAddSlot={handleAddSlot}
-          isLoading={createSlotMutation.isPending}
-        />
-
-        {/* Edit Slot Modal */}
-        <EditWeeklySlotDialog
-          slot={editingSlot}
-          open={editSlotOpen}
-          onOpenChange={setEditSlotOpen}
-          onUpdateSlot={handleUpdateSlot}
-          isLoading={updateSlotMutation.isPending && editSlotOpen}
-        />
       </div>
-    </DoctorLayout>
+
+      {/* 1. Weekly Consultation Schedule Table */}
+      <DoctorAvailabilityTable
+        slots={slots}
+        isLoading={isSlotsLoading && slots.length === 0}
+        updatingSlotId={updatingSlotId}
+        deletingSlotId={deletingSlotId}
+        onToggleSlot={handleToggleSlot}
+        onDeleteSlot={handleDeleteSlot}
+        onEditSlot={handleOpenEditSlot}
+        onOpenAddModal={() => setAddSlotOpen(true)}
+      />
+
+      {/* 2. Planned Days Off Calendar */}
+      <DoctorDaysOffCalendar
+        daysOff={daysOff}
+        isAddingDayOff={createDayOffMutation.isPending}
+        deletingDayOffId={deletingDayOffId}
+        onAddDayOff={handleAddDayOff}
+        onRemoveDayOff={handleRemoveDayOff}
+      />
+
+      {/* Add Slot Modal */}
+      <AddWeeklySlotDialog
+        open={addSlotOpen}
+        onOpenChange={setAddSlotOpen}
+        onAddSlot={handleAddSlot}
+        isLoading={createSlotMutation.isPending}
+      />
+
+      {/* Edit Slot Modal */}
+      <EditWeeklySlotDialog
+        slot={editingSlot}
+        open={editSlotOpen}
+        onOpenChange={setEditSlotOpen}
+        onUpdateSlot={handleUpdateSlot}
+        isLoading={updateSlotMutation.isPending && editSlotOpen}
+      />
+    </div>
   );
 }
 

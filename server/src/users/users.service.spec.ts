@@ -1,20 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service.js';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { UsersRepository } from './users.repository.js';
 import { CloudinaryService } from '../common/cloudinary/cloudinary.service.js';
 
 describe('UsersService', () => {
   let service: UsersService;
 
-  const mockPrismaService = {
-    user: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      count: vi.fn(),
-    },
+  const mockUsersRepository = {
+    findMany: vi.fn(),
+    findById: vi.fn(),
+    findByEmail: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
   };
 
   beforeEach(async () => {
@@ -22,8 +20,8 @@ describe('UsersService', () => {
       providers: [
         UsersService,
         {
-          provide: PrismaService,
-          useValue: mockPrismaService,
+          provide: UsersRepository,
+          useValue: mockUsersRepository,
         },
         {
           provide: CloudinaryService,

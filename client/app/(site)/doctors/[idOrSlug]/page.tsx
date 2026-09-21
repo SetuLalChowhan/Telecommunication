@@ -1,4 +1,5 @@
 import React, { Suspense } from "react";
+import type { Metadata } from "next";
 import {
   dehydrate,
   HydrationBoundary,
@@ -13,6 +14,57 @@ import { DoctorDetailsContent } from "@/components/site/doctors/details/DoctorDe
 
 interface DoctorDetailsPageProps {
   params: Promise<{ idOrSlug: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: DoctorDetailsPageProps): Promise<Metadata> {
+  const resolvedParams = await params;
+  const idOrSlug = resolvedParams.idOrSlug;
+
+  try {
+    const doctor = await getDoctorByIdOrSlugServer(idOrSlug);
+    if (!doctor) {
+      return {
+        title: "Doctor Profile | DocConnect",
+        description: "View doctor credentials and book an appointment.",
+      };
+    }
+
+    const docName = doctor.user?.name || "Doctor";
+    const specialtyName =
+      doctor.mainSpecialty?.name ||
+      doctor.specialties?.[0]?.specialty?.name ||
+      "Specialist";
+    const title = `${docName} - ${specialtyName} | DocConnect`;
+    const description =
+      doctor.bio ||
+      `Book an online consultation with ${docName}, ${specialtyName} with ${doctor.experienceYears || 0} years experience.`;
+
+    const avatarUrl = doctor.user?.image ? [doctor.user.image] : [];
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        type: "profile",
+        images: avatarUrl,
+      },
+      twitter: {
+        card: "summary",
+        title,
+        description,
+        images: avatarUrl,
+      },
+    };
+  } catch {
+    return {
+      title: "Doctor Profile | DocConnect",
+      description: "View doctor credentials and book an appointment.",
+    };
+  }
 }
 
 export default async function DoctorDetailsPage({

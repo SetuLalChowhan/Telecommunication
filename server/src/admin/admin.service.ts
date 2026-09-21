@@ -1,76 +1,25 @@
 import {
-  BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { DocumentStatus } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { AdminRepository } from './admin.repository.js';
 import { AdminDoctorQueryDto } from './dto/admin-doctor-query.dto.js';
 import { RejectDoctorDto } from './dto/reject-doctor.dto.js';
-import {
-  createPaginationMeta,
-  getPaginationParams,
-} from '../common/pagination/pagination.utils.js';
-
-const ADMIN_DOCTOR_INCLUDE = {
-  user: {
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-      image: true,
-      createdAt: true,
-    },
-  },
-  specialties: { include: { specialty: true } },
-  documents: {
-    orderBy: { uploadedAt: 'desc' as const },
-  },
-  verifiedBy: {
-    select: {
-      id: true,
-      name: true,
-      email: true,
-    },
-  },
-  _count: {
-    select: { bookings: true },
-  },
-} as const;
+import { createPaginationMeta } from '../common/pagination/pagination.utils.js';
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly repo: AdminRepository) {}
 
   async listDoctors(query: AdminDoctorQueryDto = {}) {
-    const { skip, take } = getPaginationParams(query.page, query.limit);
-
-    const where = {
-      ...(query.verified !== undefined ? { verified: query.verified } : {}),
-      ...(query.search
-        ? {
-          user: {
-            name: { contains: query.search, mode: 'insensitive' as const },
-          },
-        }
-        : {}),
-    };
-
-    const [doctors, total] = await Promise.all([
-      this.prisma.doctorProfile.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
-        include: ADMIN_DOCTOR_INCLUDE,
-      }),
-      this.prisma.doctorProfile.count({ where }),
-    ]);
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const { rows, total } = await this.repo.findDoctors(query);
 
     return {
-      data: doctors,
-      meta: createPaginationMeta(query.page || 1, query.limit || 10, total),
+      data: rows,
+      meta: createPaginationMeta(page, limit, total),
     };
   }
 
@@ -79,14 +28,7 @@ export class AdminService {
   }
 
   async getDoctorDetails(doctorId: string) {
-    const doctor = await this.prisma.doctorProfile.findUnique({
-      where: { id: doctorId },
-      include: {
-        ...ADMIN_DOCTOR_INCLUDE,
-        availability: true,
-        daysOff: true,
-      },
-    });
+    const doctor = await this.repo.findDoctorById(doctorId);
 
     if (!doctor) {
       throw new NotFoundException(`Doctor with ID "${doctorId}" not found`);
@@ -96,79 +38,37 @@ export class AdminService {
   }
 
   async approveDoctor(doctorId: string, adminUserId: string) {
-    const doctor = await this.prisma.doctorProfile.findUnique({
-      where: { id: doctorId },
-      include: { documents: true },
-    });
+    const doctor = await this.repo.findDoctorWithDocs(doctorId);
 
     if (!doctor) {
       throw new NotFoundException(`Doctor with ID "${doctorId}" not found`);
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      // Mark all pending documents as APPROVED
-      await tx.doctorDocument.updateMany({
-        where: { doctorId, status: DocumentStatus.PENDING },
-        data: { status: DocumentStatus.APPROVED },
-      });
-
-      return tx.doctorProfile.update({
-        where: { id: doctorId },
-        data: {
-          verified: true,
-          verifiedAt: new Date(),
-          verifiedById: adminUserId,
-        },
-        include: ADMIN_DOCTOR_INCLUDE,
-      });
-    });
+    return this.repo.approveDoctorInTx(doctorId, adminUserId);
   }
 
   async rejectDoctor(
     doctorId: string,
-    adminUserId: string,
+    _adminUserId: string,
     _dto: RejectDoctorDto,
   ) {
-    const doctor = await this.prisma.doctorProfile.findUnique({
-      where: { id: doctorId },
-    });
+    const doctor = await this.repo.findDoctorById(doctorId);
 
     if (!doctor) {
       throw new NotFoundException(`Doctor with ID "${doctorId}" not found`);
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      // Mark all documents as REJECTED
-      await tx.doctorDocument.updateMany({
-        where: { doctorId },
-        data: { status: DocumentStatus.REJECTED },
-      });
-
-      return tx.doctorProfile.update({
-        where: { id: doctorId },
-        data: {
-          verified: false,
-          verifiedAt: null,
-          verifiedById: null,
-        },
-        include: ADMIN_DOCTOR_INCLUDE,
-      });
-    });
+    return this.repo.rejectDoctorInTx(doctorId);
   }
 
   async updateDocumentStatus(documentId: string, status: DocumentStatus) {
-    const doc = await this.prisma.doctorDocument.findUnique({
-      where: { id: documentId },
-    });
+    const doc = await this.repo.findDocumentById(documentId);
 
     if (!doc) {
       throw new NotFoundException(`Document with ID "${documentId}" not found`);
     }
 
-    return this.prisma.doctorDocument.update({
-      where: { id: documentId },
-      data: { status },
-    });
+    return this.repo.updateDocumentStatus(documentId, status);
   }
 
   async getDashboardMetrics() {
@@ -186,23 +86,7 @@ export class AdminService {
       totalSpecialties,
       totalBookings,
       todayBookings,
-    ] = await Promise.all([
-      this.prisma.user.count(),
-      this.prisma.doctorProfile.count(),
-      this.prisma.doctorProfile.count({ where: { verified: true } }),
-      this.prisma.doctorProfile.count({ where: { verified: false } }),
-      this.prisma.patientProfile.count(),
-      this.prisma.specialty.count({ where: { isActive: true } }),
-      this.prisma.booking.count(),
-      this.prisma.booking.count({
-        where: {
-          slotStart: {
-            gte: today,
-            lt: tomorrow,
-          },
-        },
-      }),
-    ]);
+    ] = await this.repo.getDashboardMetrics(today, tomorrow);
 
     return {
       totalUsers,
@@ -217,66 +101,18 @@ export class AdminService {
   }
 
   async listPatients(query: { search?: string; page?: number; limit?: number } = {}) {
-    const { skip, take } = getPaginationParams(query.page, query.limit);
-
-    const where = query.search
-      ? {
-          user: {
-            name: { contains: query.search, mode: 'insensitive' as const },
-          },
-        }
-      : {};
-
-    const [patients, total] = await Promise.all([
-      this.prisma.patientProfile.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true,
-              image: true,
-              createdAt: true,
-            },
-          },
-          _count: {
-            select: { bookings: true, medicalReports: true },
-          },
-        },
-      }),
-      this.prisma.patientProfile.count({ where }),
-    ]);
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const { rows, total } = await this.repo.findPatients(query);
 
     return {
-      data: patients,
-      meta: createPaginationMeta(query.page || 1, query.limit || 10, total),
+      data: rows,
+      meta: createPaginationMeta(page, limit, total),
     };
   }
 
   async getPatientDetails(patientId: string) {
-    const patient = await this.prisma.patientProfile.findUnique({
-      where: { id: patientId },
-      include: {
-        user: true,
-        bookings: {
-          orderBy: { slotStart: 'desc' },
-          take: 10,
-          include: {
-            doctor: {
-              include: { user: { select: { name: true, email: true } } },
-            },
-          },
-        },
-        medicalReports: {
-          orderBy: { uploadedAt: 'desc' },
-        },
-      },
-    });
+    const patient = await this.repo.findPatientById(patientId);
 
     if (!patient) {
       throw new NotFoundException(`Patient with ID "${patientId}" not found`);
@@ -292,76 +128,24 @@ export class AdminService {
     page?: number;
     limit?: number;
   } = {}) {
-    const { skip, take } = getPaginationParams(query.page, query.limit);
-
-    const where: any = {};
-    if (query.status) where.status = query.status;
-    if (query.doctorId) where.doctorId = query.doctorId;
-    if (query.patientId) where.patientId = query.patientId;
-
-    const [bookings, total] = await Promise.all([
-      this.prisma.booking.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { slotStart: 'desc' },
-        include: {
-          doctor: {
-            include: {
-              user: { select: { name: true, email: true, phone: true } },
-            },
-          },
-          patient: {
-            include: {
-              user: { select: { name: true, email: true, phone: true } },
-            },
-          },
-          reports: true,
-          review: true,
-        },
-      }),
-      this.prisma.booking.count({ where }),
-    ]);
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const { rows, total } = await this.repo.findAppointments(query);
 
     return {
-      data: bookings,
-      meta: createPaginationMeta(query.page || 1, query.limit || 10, total),
+      data: rows,
+      meta: createPaginationMeta(page, limit, total),
     };
   }
 
   async listReviews(query: { doctorId?: string; page?: number; limit?: number } = {}) {
-    const { skip, take } = getPaginationParams(query.page, query.limit);
-
-    const where = query.doctorId
-      ? { booking: { doctorId: query.doctorId } }
-      : {};
-
-    const [reviews, total] = await Promise.all([
-      this.prisma.review.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          booking: {
-            select: {
-              slotStart: true,
-              doctor: {
-                include: { user: { select: { name: true } } },
-              },
-              patient: {
-                include: { user: { select: { name: true } } },
-              },
-            },
-          },
-        },
-      }),
-      this.prisma.review.count({ where }),
-    ]);
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const { rows, total } = await this.repo.findReviews(query);
 
     return {
-      data: reviews,
-      meta: createPaginationMeta(query.page || 1, query.limit || 10, total),
+      data: rows,
+      meta: createPaginationMeta(page, limit, total),
     };
   }
 }

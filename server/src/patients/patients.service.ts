@@ -1,58 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { BookingStatus } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PatientsRepository } from './patients.repository.js';
 import { UpdatePatientProfileDto } from './dto/update-patient-profile.dto.js';
 import { CloudinaryService } from '../common/cloudinary/cloudinary.service.js';
-
-const PATIENT_PROFILE_INCLUDE = {
-  user: {
-    select: {
-      id: true,
-      name: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      phone: true,
-      image: true,
-      dateOfBirth: true,
-      role: true,
-      createdAt: true,
-    },
-  },
-  _count: {
-    select: {
-      bookings: true,
-      medicalReports: true,
-    },
-  },
-} as const;
 
 @Injectable()
 export class PatientsService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repo: PatientsRepository,
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
-  private async getOwnProfileOrThrow(userId: string) {
-    let profile = await this.prisma.patientProfile.findUnique({
-      where: { userId },
-      include: PATIENT_PROFILE_INCLUDE,
-    });
-
-    // In case profile was not created by hook
-    if (!profile) {
-      profile = await this.prisma.patientProfile.create({
-        data: { userId },
-        include: PATIENT_PROFILE_INCLUDE,
-      });
-    }
-
-    return profile;
-  }
-
   async getMyProfile(userId: string) {
-    return this.getOwnProfileOrThrow(userId);
+    return this.repo.findOrCreateProfile(userId);
   }
 
   async updateMyProfile(
@@ -60,7 +20,7 @@ export class PatientsService {
     dto: UpdatePatientProfileDto,
     file?: Express.Multer.File,
   ) {
-    const profile = await this.getOwnProfileOrThrow(userId);
+    const profile = await this.repo.findOrCreateProfile(userId);
 
     let imageUrl: string | undefined = undefined;
 
@@ -96,10 +56,7 @@ export class PatientsService {
     }
 
     if (Object.keys(userUpdateData).length > 0) {
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: userUpdateData,
-      });
+      await this.repo.updateUser(userId, userUpdateData);
     }
 
     // 2. Update patient profile fields if provided
@@ -114,33 +71,11 @@ export class PatientsService {
       profileUpdateData.emergencyContactPhone = dto.emergencyContactPhone;
     }
 
-    return this.prisma.patientProfile.update({
-      where: { id: profile.id },
-      data: profileUpdateData,
-      include: PATIENT_PROFILE_INCLUDE,
-    });
+    return this.repo.updateProfile(profile.id, profileUpdateData);
   }
 
   async getPatientById(patientId: string) {
-    const patient = await this.prisma.patientProfile.findUnique({
-      where: { id: patientId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            image: true,
-            dateOfBirth: true,
-          },
-        },
-        medicalReports: {
-          orderBy: { uploadedAt: 'desc' },
-          take: 10,
-        },
-      },
-    });
+    const patient = await this.repo.findById(patientId);
 
     if (!patient) {
       throw new NotFoundException(`Patient with ID "${patientId}" not found`);
@@ -157,7 +92,7 @@ export class PatientsService {
    * - Top recommended doctors
    */
   async getPatientDashboard(userId: string) {
-    const profile = await this.getOwnProfileOrThrow(userId);
+    const profile = await this.repo.findOrCreateProfile(userId);
     const patientId = profile.id;
     const now = new Date();
 
@@ -171,122 +106,12 @@ export class PatientsService {
       nextUpcomingBooking,
       recentBookings,
       topDoctors,
-    ] = await Promise.all([
-      // 1. Total consultations
-      this.prisma.booking.count({ where: { patientId } }),
-
-      // 2. Confirmed upcoming consultations
-      this.prisma.booking.count({
-        where: {
-          patientId,
-          status: BookingStatus.CONFIRMED,
-          slotEnd: { gte: now },
-        },
-      }),
-
-      // 3. Pending consultations awaiting doctor confirmation
-      this.prisma.booking.count({
-        where: {
-          patientId,
-          status: BookingStatus.PENDING,
-        },
-      }),
-
-      // 4. Completed consultations
-      this.prisma.booking.count({
-        where: {
-          patientId,
-          status: BookingStatus.COMPLETED,
-        },
-      }),
-
-      // 5. Cancelled consultations
-      this.prisma.booking.count({
-        where: {
-          patientId,
-          status: BookingStatus.CANCELLED,
-        },
-      }),
-
-      // 6. Medical records count
-      this.prisma.medicalReport.count({
-        where: { patientId },
-      }),
-
-      // 7. Earliest active upcoming consultation
-      this.prisma.booking.findFirst({
-        where: {
-          patientId,
-          status: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] },
-          slotEnd: { gte: now },
-        },
-        orderBy: { slotStart: 'asc' },
-        include: {
-          doctor: {
-            include: {
-              user: {
-                select: { id: true, name: true, image: true, email: true, phone: true },
-              },
-              specialties: { include: { specialty: true } },
-              qualifications: true,
-            },
-          },
-        },
-      }),
-
-      // 8. Recent consultations (last 6)
-      this.prisma.booking.findMany({
-        where: { patientId },
-        orderBy: { slotStart: 'desc' },
-        take: 6,
-        include: {
-          doctor: {
-            include: {
-              user: {
-                select: { id: true, name: true, image: true, email: true, phone: true },
-              },
-              specialties: { include: { specialty: true } },
-              qualifications: true,
-            },
-          },
-        },
-      }),
-
-      // 9. Recommended top verified doctors
-      this.prisma.doctorProfile.findMany({
-        where: { verified: true },
-        take: 4,
-        orderBy: { rating: 'desc' },
-        include: {
-          user: {
-            select: { id: true, name: true, image: true },
-          },
-          specialties: { include: { specialty: true } },
-        },
-      }),
-    ]);
+    ] = await this.repo.getDashboardStats(patientId, now);
 
     // Fallback: if no future booking, check if any active booking exists
     let nextConsultationRaw = nextUpcomingBooking;
     if (!nextConsultationRaw) {
-      nextConsultationRaw = await this.prisma.booking.findFirst({
-        where: {
-          patientId,
-          status: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] },
-        },
-        orderBy: { slotStart: 'desc' },
-        include: {
-          doctor: {
-            include: {
-              user: {
-                select: { id: true, name: true, image: true, email: true, phone: true },
-              },
-              specialties: { include: { specialty: true } },
-              qualifications: true,
-            },
-          },
-        },
-      });
+      nextConsultationRaw = await this.repo.findLatestActiveBooking(patientId);
     }
 
     const formatConsultation = (b: typeof nextUpcomingBooking) => {

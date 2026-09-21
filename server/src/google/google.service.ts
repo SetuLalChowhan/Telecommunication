@@ -4,7 +4,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { google } from 'googleapis';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { GoogleRepository } from './google.repository.js';
 
 const GOOGLE_CALENDAR_PROVIDER = 'google-calendar';
 
@@ -19,7 +19,7 @@ export class GoogleService {
     process.env.GOOGLE_REDIRECT_URI ||
     'http://localhost:3000/api/google/callback';
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly repo: GoogleRepository) {}
 
   /**
    * Creates an OAuth2 client instance
@@ -146,14 +146,16 @@ export class GoogleService {
         : null;
 
       // 1. Check if a google-calendar integration account already exists with this Google account ID
-      const existingByGoogleId = await this.prisma.account.findFirst({
-        where: { providerId: GOOGLE_CALENDAR_PROVIDER, accountId: googleAccountId },
-      });
+      const existingByGoogleId = await this.repo.findAccountByGoogleId(
+        GOOGLE_CALENDAR_PROVIDER,
+        googleAccountId,
+      );
 
       // 2. Check if the current doctor user already has a google-calendar integration account linked
-      const existingByUser = await this.prisma.account.findFirst({
-        where: { userId, providerId: GOOGLE_CALENDAR_PROVIDER },
-      });
+      const existingByUser = await this.repo.findAccountByUserIdAndProvider(
+        userId,
+        GOOGLE_CALENDAR_PROVIDER,
+      );
 
       if (
         existingByGoogleId &&
@@ -161,39 +163,32 @@ export class GoogleService {
         existingByGoogleId.id !== existingByUser.id
       ) {
         // If there are two separate rows, delete the old user row to prevent unique constraint conflicts
-        await this.prisma.account.delete({
-          where: { id: existingByUser.id },
-        });
+        await this.repo.deleteAccount(existingByUser.id);
       }
 
       const targetAccount = existingByGoogleId || existingByUser;
 
       if (targetAccount) {
-        await this.prisma.account.update({
-          where: { id: targetAccount.id },
-          data: {
-            userId,
-            providerId: GOOGLE_CALENDAR_PROVIDER,
-            accountId: googleAccountId,
-            accessToken: tokens.access_token || targetAccount.accessToken,
-            refreshToken: tokens.refresh_token || targetAccount.refreshToken,
-            idToken: tokens.id_token || targetAccount.idToken,
-            accessTokenExpiresAt: expiresAt || targetAccount.accessTokenExpiresAt,
-            scope: tokens.scope || targetAccount.scope,
-          },
+        await this.repo.updateAccount(targetAccount.id, {
+          user: { connect: { id: userId } },
+          providerId: GOOGLE_CALENDAR_PROVIDER,
+          accountId: googleAccountId,
+          accessToken: tokens.access_token || targetAccount.accessToken,
+          refreshToken: tokens.refresh_token || targetAccount.refreshToken,
+          idToken: tokens.id_token || targetAccount.idToken,
+          accessTokenExpiresAt: expiresAt || targetAccount.accessTokenExpiresAt,
+          scope: tokens.scope || targetAccount.scope,
         });
       } else {
-        await this.prisma.account.create({
-          data: {
-            userId,
-            providerId: GOOGLE_CALENDAR_PROVIDER,
-            accountId: googleAccountId,
-            accessToken: tokens.access_token,
-            refreshToken: tokens.refresh_token,
-            idToken: tokens.id_token,
-            accessTokenExpiresAt: expiresAt,
-            scope: tokens.scope,
-          },
+        await this.repo.createAccount({
+          user: { connect: { id: userId } },
+          providerId: GOOGLE_CALENDAR_PROVIDER,
+          accountId: googleAccountId,
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token,
+          idToken: tokens.id_token,
+          accessTokenExpiresAt: expiresAt,
+          scope: tokens.scope,
         });
       }
 
@@ -218,13 +213,10 @@ export class GoogleService {
    * Authenticates an OAuth2 client with doctor's saved tokens
    */
   private async getAuthenticatedClient(userId: string) {
-    const account = await this.prisma.account.findFirst({
-      where: {
-        userId,
-        providerId: { in: [GOOGLE_CALENDAR_PROVIDER, 'google'] },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const account = await this.repo.findFirstAccountForUser(userId, [
+      GOOGLE_CALENDAR_PROVIDER,
+      'google',
+    ]);
 
     if (!account || (!account.refreshToken && !account.accessToken)) {
       return null;
@@ -242,15 +234,12 @@ export class GoogleService {
     // Handle automatic token refresh events to keep DB in sync
     oauth2Client.on('tokens', async (tokens) => {
       try {
-        await this.prisma.account.update({
-          where: { id: account.id },
-          data: {
-            accessToken: tokens.access_token || account.accessToken,
-            refreshToken: tokens.refresh_token || account.refreshToken,
-            accessTokenExpiresAt: tokens.expiry_date
-              ? new Date(tokens.expiry_date)
-              : account.accessTokenExpiresAt,
-          },
+        await this.repo.updateAccount(account.id, {
+          accessToken: tokens.access_token || account.accessToken,
+          refreshToken: tokens.refresh_token || account.refreshToken,
+          accessTokenExpiresAt: tokens.expiry_date
+            ? new Date(tokens.expiry_date)
+            : account.accessTokenExpiresAt,
         });
       } catch (err) {
         this.logger.warn('Failed to update refreshed tokens in DB:', err);
@@ -353,13 +342,10 @@ export class GoogleService {
    * Check connection status
    */
   async getConnectionStatus(userId: string) {
-    const account = await this.prisma.account.findFirst({
-      where: {
-        userId,
-        providerId: { in: [GOOGLE_CALENDAR_PROVIDER, 'google'] },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const account = await this.repo.findFirstAccountForUser(userId, [
+      GOOGLE_CALENDAR_PROVIDER,
+      'google',
+    ]);
 
     return {
       isConnected: Boolean(
@@ -373,12 +359,10 @@ export class GoogleService {
    * Disconnect Google Calendar
    */
   async disconnect(userId: string) {
-    await this.prisma.account.deleteMany({
-      where: {
-        userId,
-        providerId: { in: [GOOGLE_CALENDAR_PROVIDER, 'google'] },
-      },
-    });
+    await this.repo.deleteAccountsForUser(userId, [
+      GOOGLE_CALENDAR_PROVIDER,
+      'google',
+    ]);
 
     return { message: 'Google account disconnected successfully' };
   }

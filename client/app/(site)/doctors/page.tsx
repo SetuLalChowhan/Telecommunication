@@ -1,4 +1,5 @@
 import React, { Suspense } from "react";
+import type { Metadata } from "next";
 import {
   dehydrate,
   HydrationBoundary,
@@ -10,6 +11,26 @@ import {
 } from "@/features/doctors/api/server";
 import { doctorKeys } from "@/features/doctors/types";
 import { DoctorList } from "@/components/site/doctors/DoctorList";
+
+export const metadata: Metadata = {
+  title: "Find Doctors & Book Appointments | DocConnect",
+  description:
+    "Search top certified doctors and medical specialists by specialty, consultation fee, and experience. Book video appointments instantly.",
+  keywords: [
+    "find doctors",
+    "book doctor online",
+    "specialist doctors",
+    "telemedicine appointment",
+    "verified physicians",
+    "doctor consultations",
+  ],
+  openGraph: {
+    title: "Find Doctors & Book Appointments | DocConnect",
+    description:
+      "Search top certified doctors and medical specialists by specialty, consultation fee, and experience.",
+    type: "website",
+  },
+};
 
 interface DoctorsPageProps {
   searchParams: Promise<{

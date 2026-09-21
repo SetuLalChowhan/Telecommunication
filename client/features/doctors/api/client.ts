@@ -299,3 +299,16 @@ export async function disconnectGoogle(): Promise<{ message: string }> {
   const response = await apiClient.delete<{ data: { message: string } }>("/google/disconnect");
   return response.data?.data || response.data;
 }
+
+/**
+ * Upload doctor verification document (BMDC License, Degree, NID, etc.)
+ */
+export async function uploadDoctorDocument(
+  formData: FormData
+): Promise<{ success: boolean; message?: string; data?: any }> {
+  const response = await apiClient.post("/doctors/me/documents", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+}
+

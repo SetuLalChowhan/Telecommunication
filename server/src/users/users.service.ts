@@ -3,79 +3,35 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, Role } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { Role } from '@prisma/client';
+import { UsersRepository } from './users.repository.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateProfileDto } from './dto/update-profile.dto.js';
 import { AdminUpdateUserDto } from './dto/admin-update-user.dto.js';
 import { CloudinaryService } from '../common/cloudinary/cloudinary.service.js';
-import {
-  PaginationDto,
-} from '../common/pagination/pagination.dto.js';
-import {
-  createPaginationMeta,
-  getPaginationParams,
-} from '../common/pagination/pagination.utils.js';
+import { PaginationDto } from '../common/pagination/pagination.dto.js';
+import { createPaginationMeta } from '../common/pagination/pagination.utils.js';
 
 @Injectable()
 export class UsersService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repo: UsersRepository,
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async findAll(query: PaginationDto = {}) {
-    const { skip, take } = getPaginationParams(query.page, query.limit);
-
-    const [users, total] = await Promise.all([
-      this.prisma.user.findMany({
-        skip,
-        take,
-        orderBy: {
-          createdAt: 'desc',
-        },
-        select: {
-          id: true,
-          name: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          emailVerified: true,
-          image: true,
-          dateOfBirth: true,
-          phone: true,
-          role: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      }),
-      this.prisma.user.count(),
-    ]);
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const { rows, total } = await this.repo.findMany(query);
 
     return {
-      data: users,
-      meta: createPaginationMeta(query.page || 1, query.limit || 10, total),
+      data: rows,
+      meta: createPaginationMeta(page, limit, total),
     };
   }
 
   async findOne(id: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        name: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        emailVerified: true,
-        image: true,
-        dateOfBirth: true,
-        phone: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    const user = await this.repo.findById(id);
 
     if (!user) {
       throw new NotFoundException(`User with ID "${id}" not found`);
@@ -85,9 +41,7 @@ export class UsersService {
   }
 
   async create(dto: CreateUserDto) {
-    const existing = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-    });
+    const existing = await this.repo.findByEmail(dto.email);
 
     if (existing) {
       throw new ConflictException('A user with this email already exists');
@@ -98,30 +52,14 @@ export class UsersService {
       [dto.firstName, dto.lastName].filter(Boolean).join(' ') ||
       null;
 
-    return this.prisma.user.create({
-      data: {
-        name: fullName,
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        email: dto.email,
-        dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
-        phone: dto.phone,
-        role: dto.role ?? Role.PATIENT,
-      },
-      select: {
-        id: true,
-        name: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        emailVerified: true,
-        image: true,
-        dateOfBirth: true,
-        phone: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+    return this.repo.create({
+      name: fullName,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      email: dto.email,
+      dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
+      phone: dto.phone,
+      role: dto.role ?? Role.PATIENT,
     });
   }
 
@@ -159,30 +97,13 @@ export class UsersService {
       [updatedFirstName, updatedLastName].filter(Boolean).join(' ') ||
       user.name;
 
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        name: computedName,
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        phone: dto.phone,
-        dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
-        image: imageUrl,
-      },
-      select: {
-        id: true,
-        name: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        emailVerified: true,
-        image: true,
-        dateOfBirth: true,
-        phone: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+    return this.repo.update(userId, {
+      name: computedName,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      phone: dto.phone,
+      dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
+      image: imageUrl,
     });
   }
 
@@ -197,9 +118,7 @@ export class UsersService {
     const user = await this.findOne(id);
 
     if (dto.email && dto.email !== user.email) {
-      const emailExists = await this.prisma.user.findUnique({
-        where: { email: dto.email },
-      });
+      const emailExists = await this.repo.findByEmail(dto.email);
       if (emailExists) {
         throw new ConflictException('A user with this email already exists');
       }
@@ -228,33 +147,16 @@ export class UsersService {
       [updatedFirstName, updatedLastName].filter(Boolean).join(' ') ||
       user.name;
 
-    return this.prisma.user.update({
-      where: { id },
-      data: {
-        name: computedName,
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        email: dto.email,
-        emailVerified: dto.emailVerified,
-        phone: dto.phone,
-        dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
-        role: dto.role,
-        image: imageUrl,
-      },
-      select: {
-        id: true,
-        name: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        emailVerified: true,
-        image: true,
-        dateOfBirth: true,
-        phone: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+    return this.repo.update(id, {
+      name: computedName,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      email: dto.email,
+      emailVerified: dto.emailVerified,
+      phone: dto.phone,
+      dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
+      role: dto.role,
+      image: imageUrl,
     });
   }
 
@@ -265,13 +167,6 @@ export class UsersService {
       await this.cloudinaryService.deleteFile(user.image);
     }
 
-    return this.prisma.user.delete({
-      where: { id },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-      },
-    });
+    return this.repo.delete(id);
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { DashboardShell } from "@/components/dashboard";
+import { DashboardShell } from "@/components/layout";
 
 interface PatientLayoutProps {
   children: React.ReactNode;

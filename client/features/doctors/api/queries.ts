@@ -25,6 +25,7 @@ import {
   fetchGoogleConnectionStatus,
   fetchGoogleAuthUrl,
   disconnectGoogle,
+  uploadDoctorDocument,
   DoctorsListResponse,
 } from "./client";
 import {
@@ -367,5 +368,20 @@ export function useDisconnectGoogle() {
     },
   });
 }
+
+/**
+ * Hook to upload doctor verification document
+ */
+export function useUploadDoctorDocument() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (formData: FormData) => uploadDoctorDocument(formData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: doctorKeys.me() });
+    },
+  });
+}
+
 
 
