@@ -12,6 +12,7 @@ import { PatientAvatarEditor } from "@/features/patients/components/profile/Pati
 import {
   PatientPersonalInfoFields,
   PatientProfileFormData,
+  normalizeBloodGroup,
 } from "@/features/patients/components/profile/PatientPersonalInfoFields";
 import { PatientEmergencyContactFields } from "@/features/patients/components/profile/PatientEmergencyContactFields";
 
@@ -50,7 +51,7 @@ export function PatientProfileClient() {
         email: u?.email || "",
         dateOfBirth: dobStr,
         gender: profile.gender || "",
-        bloodGroup: profile.bloodGroup || "",
+        bloodGroup: normalizeBloodGroup(profile.bloodGroup) || "",
         address: profile.address || "",
         emergencyContactName: profile.emergencyContactName || "",
         emergencyContactPhone: profile.emergencyContactPhone || "",

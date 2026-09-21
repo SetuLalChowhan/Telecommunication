@@ -63,7 +63,9 @@ export const DoctorPatientDetailDialog: React.FC<DoctorPatientDetailDialogProps>
             {patient.bloodGroup && (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Droplet className="h-3.5 w-3.5 text-red-600" />
-                <span className="font-medium text-foreground">Blood: {patient.bloodGroup}</span>
+                <span className="font-medium text-foreground">
+                  Blood: {patient.bloodGroup.replace("_POSITIVE", "+").replace("_NEGATIVE", "-").replace("_", " ")}
+                </span>
               </div>
             )}
             {patient.address && (

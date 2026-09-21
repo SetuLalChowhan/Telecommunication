@@ -17,6 +17,21 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
+function formatBloodGroup(bg?: string | null): string {
+  if (!bg) return "Unknown";
+  const map: Record<string, string> = {
+    A_POSITIVE: "A+",
+    A_NEGATIVE: "A-",
+    B_POSITIVE: "B+",
+    B_NEGATIVE: "B-",
+    AB_POSITIVE: "AB+",
+    AB_NEGATIVE: "AB-",
+    O_POSITIVE: "O+",
+    O_NEGATIVE: "O-",
+  };
+  return map[bg] || bg.replace("_", " ");
+}
+
 export function DoctorPatientsClient() {
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -135,7 +150,7 @@ export function DoctorPatientsClient() {
                         {/* Blood Group */}
                         <TableCell className="py-3 px-4">
                           <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 border border-rose-500/20">
-                            {patient.bloodGroup ? patient.bloodGroup.replace("_", " ") : "Unknown"}
+                            {formatBloodGroup(patient.bloodGroup)}
                           </span>
                         </TableCell>
 
@@ -193,7 +208,7 @@ export function DoctorPatientsClient() {
                             {patientName}
                           </p>
                           <p className="text-[11px] text-muted-foreground truncate">
-                            {patient.gender || "Patient"} &bull; {patient.bloodGroup ? patient.bloodGroup.replace("_", " ") : ""}
+                            {patient.gender || "Patient"} &bull; {patient.bloodGroup ? formatBloodGroup(patient.bloodGroup) : ""}
                           </p>
                         </div>
                       </div>

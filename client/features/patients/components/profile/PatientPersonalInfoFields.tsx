@@ -24,6 +24,33 @@ export interface PatientProfileFormData {
   emergencyContactPhone: string;
 }
 
+export const BLOOD_GROUPS = [
+  { label: "A+", value: "A_POSITIVE" },
+  { label: "A-", value: "A_NEGATIVE" },
+  { label: "B+", value: "B_POSITIVE" },
+  { label: "B-", value: "B_NEGATIVE" },
+  { label: "AB+", value: "AB_POSITIVE" },
+  { label: "AB-", value: "AB_NEGATIVE" },
+  { label: "O+", value: "O_POSITIVE" },
+  { label: "O-", value: "O_NEGATIVE" },
+];
+
+const BLOOD_GROUP_SHORT_MAP: Record<string, string> = {
+  "A+": "A_POSITIVE",
+  "A-": "A_NEGATIVE",
+  "B+": "B_POSITIVE",
+  "B-": "B_NEGATIVE",
+  "AB+": "AB_POSITIVE",
+  "AB-": "AB_NEGATIVE",
+  "O+": "O_POSITIVE",
+  "O-": "O_NEGATIVE",
+};
+
+export const normalizeBloodGroup = (bg?: string | null): string => {
+  if (!bg) return "";
+  return BLOOD_GROUP_SHORT_MAP[bg] || bg;
+};
+
 interface PatientPersonalInfoFieldsProps {
   formData: PatientProfileFormData;
   onChange: (field: keyof PatientProfileFormData, value: string) => void;
@@ -112,24 +139,22 @@ export const PatientPersonalInfoFields: React.FC<PatientPersonalInfoFieldsProps>
 
       <div className="space-y-2">
         <Label className="text-xs font-semibold text-foreground">Blood Group</Label>
-        <div className="relative">
-          <Select
-            value={formData.bloodGroup}
-            onValueChange={(val) => onChange("bloodGroup", val)}
-            disabled={disabled}
-          >
-            <SelectTrigger className="h-10 rounded-xl">
-              <SelectValue placeholder="Select blood group" />
-            </SelectTrigger>
-            <SelectContent>
-              {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bg) => (
-                <SelectItem key={bg} value={bg}>
-                  {bg}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Select
+          value={normalizeBloodGroup(formData.bloodGroup)}
+          onValueChange={(val) => onChange("bloodGroup", val)}
+          disabled={disabled}
+        >
+          <SelectTrigger className="h-10 rounded-xl">
+            <SelectValue placeholder="Select blood group" />
+          </SelectTrigger>
+          <SelectContent>
+            {BLOOD_GROUPS.map((bg) => (
+              <SelectItem key={bg.value} value={bg.value}>
+                {bg.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-2 md:col-span-2">
