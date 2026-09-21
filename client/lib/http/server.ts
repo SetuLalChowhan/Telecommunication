@@ -13,7 +13,10 @@ export async function serverFetch<T>(
   options: ServerFetchOptions = {},
 ): Promise<T> {
   const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
+  const cookieHeader = cookieStore
+    .getAll()
+    .map((c) => `${c.name}=${c.value}`)
+    .join('; ');
 
   let url = `${env.NEXT_PUBLIC_API_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
@@ -77,7 +80,10 @@ export async function serverFetchPage<T>(
   options: ServerFetchOptions = {},
 ): Promise<PaginatedResult<T>> {
   const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
+  const cookieHeader = cookieStore
+    .getAll()
+    .map((c) => `${c.name}=${c.value}`)
+    .join('; ');
 
   let url = `${env.NEXT_PUBLIC_API_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 

@@ -1,5 +1,4 @@
 import { serverFetch, ServerFetchOptions } from "@/lib/api/server-fetch";
-import { cookies } from "next/headers";
 import {
   Specialty,
   DoctorProfile,
@@ -156,19 +155,10 @@ export async function getDoctorDashboardServer(
   options?: ServerFetchOptions
 ): Promise<DoctorDashboardData | null> {
   try {
-    let cookieHeader = "";
-    try {
-      const cookieStore = await cookies();
-      cookieHeader = cookieStore.toString();
-    } catch {}
-
     const response = await serverFetch<{
       success: boolean;
       data: DoctorDashboardData;
     }>("/doctors/dashboard", {
-      headers: {
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
       cache: "no-store",
       ...options,
     });
@@ -188,12 +178,6 @@ export async function getDoctorBookingsServer(
   options?: ServerFetchOptions
 ): Promise<DoctorBookingsResponse> {
   try {
-    let cookieHeader = "";
-    try {
-      const cookieStore = await cookies();
-      cookieHeader = cookieStore.toString();
-    } catch {}
-
     const queryParams = new URLSearchParams();
     if (params?.status) queryParams.set("status", params.status);
     if (params?.page) queryParams.set("page", String(params.page));
@@ -209,9 +193,6 @@ export async function getDoctorBookingsServer(
       data: any;
       meta?: any;
     }>(endpoint, {
-      headers: {
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
       cache: "no-store",
       ...options,
     });
@@ -243,19 +224,10 @@ export async function getMyDoctorScheduleServer(
   options?: ServerFetchOptions
 ): Promise<DoctorAvailability[]> {
   try {
-    let cookieHeader = "";
-    try {
-      const cookieStore = await cookies();
-      cookieHeader = cookieStore.toString();
-    } catch {}
-
     const response = await serverFetch<{
       success: boolean;
       data: DoctorAvailability[];
     }>("/doctors/me/availability", {
-      headers: {
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
       cache: "no-store",
       ...options,
     });
@@ -279,19 +251,10 @@ export async function getMyDoctorDaysOffServer(
   options?: ServerFetchOptions
 ): Promise<DoctorDayOff[]> {
   try {
-    let cookieHeader = "";
-    try {
-      const cookieStore = await cookies();
-      cookieHeader = cookieStore.toString();
-    } catch {}
-
     const response = await serverFetch<{
       success: boolean;
       data: DoctorDayOff[];
     }>("/doctors/me/days-off", {
-      headers: {
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
       cache: "no-store",
       ...options,
     });
@@ -316,12 +279,6 @@ export async function getMyDoctorPatientsServer(
   options?: ServerFetchOptions
 ): Promise<DoctorPatientRegistryItem[]> {
   try {
-    let cookieHeader = "";
-    try {
-      const cookieStore = await cookies();
-      cookieHeader = cookieStore.toString();
-    } catch {}
-
     const queryParams = new URLSearchParams();
     if (search && search.trim()) queryParams.set("search", search.trim());
     const queryStr = queryParams.toString();
@@ -333,9 +290,6 @@ export async function getMyDoctorPatientsServer(
       success: boolean;
       data: DoctorPatientRegistryItem[];
     }>(endpoint, {
-      headers: {
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
       cache: "no-store",
       ...options,
     });
@@ -359,19 +313,10 @@ export async function getMyDoctorProfileServer(
   options?: ServerFetchOptions
 ): Promise<DoctorProfile | null> {
   try {
-    let cookieHeader = "";
-    try {
-      const cookieStore = await cookies();
-      cookieHeader = cookieStore.toString();
-    } catch {}
-
     const response = await serverFetch<{
       success: boolean;
       data: DoctorProfile;
     }>("/doctors/me", {
-      headers: {
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
       cache: "no-store",
       ...options,
     });
@@ -382,4 +327,3 @@ export async function getMyDoctorProfileServer(
     return null;
   }
 }
-

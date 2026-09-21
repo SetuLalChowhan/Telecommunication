@@ -152,7 +152,7 @@ export function useDoctorDashboard(options?: {
     queryKey: doctorKeys.dashboard(),
     queryFn: fetchDoctorDashboard,
     initialData: options?.initialData,
-    staleTime: 1000 * 30, // 30 seconds
+    staleTime: 1000 * 60 * 2, // 2 minutes
   });
 }
 
@@ -163,7 +163,7 @@ export function useDoctorDashboardStats() {
   return useQuery({
     queryKey: [...doctorKeys.dashboard(), "stats"],
     queryFn: fetchDoctorDashboardStats,
-    staleTime: 1000 * 30,
+    staleTime: 1000 * 60 * 2, // 2 minutes
   });
 }
 
@@ -177,8 +177,9 @@ export function useDoctorBookings(
   return useQuery({
     queryKey: doctorKeys.myBookings(params),
     queryFn: () => fetchDoctorBookings(params),
+    placeholderData: (prev) => prev,
     initialData: options?.initialData,
-    staleTime: 1000 * 30,
+    staleTime: 1000 * 60 * 2, // 2 minutes
   });
 }
 

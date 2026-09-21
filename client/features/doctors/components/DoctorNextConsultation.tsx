@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Calendar, Video, Check } from "lucide-react";
+import { Calendar, Video, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DoctorScheduleItem } from "@/lib/dashboard-mock-data";
@@ -10,13 +10,17 @@ interface DoctorNextConsultationProps {
   appointment?: DoctorScheduleItem;
   onMarkComplete: (id: string) => void;
   onConfirm?: (id: string) => void;
+  actionLoadingId?: string | null;
 }
 
 export const DoctorNextConsultation: React.FC<DoctorNextConsultationProps> = ({
   appointment,
   onMarkComplete,
   onConfirm,
+  actionLoadingId = null,
 }) => {
+  const isLoadingThis = appointment ? actionLoadingId === appointment.id : false;
+
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between">
@@ -83,11 +87,16 @@ export const DoctorNextConsultation: React.FC<DoctorNextConsultationProps> = ({
             <div className="flex items-center gap-2.5 self-start lg:self-auto shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-border/50 w-full lg:w-auto justify-end">
               {appointment.status === "PENDING" && onConfirm && (
                 <Button
+                  disabled={isLoadingThis}
                   onClick={() => onConfirm(appointment.id)}
                   className="w-full sm:w-auto h-9 sm:h-10 px-4 sm:px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold gap-2 shadow-xs cursor-pointer"
                 >
-                  <Check className="h-4 w-4" />
-                  <span>Confirm Appointment</span>
+                  {isLoadingThis ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
+                  <span>{isLoadingThis ? "Confirming..." : "Confirm Appointment"}</span>
                 </Button>
               )}
 
@@ -108,11 +117,16 @@ export const DoctorNextConsultation: React.FC<DoctorNextConsultationProps> = ({
               {appointment.status === "CONFIRMED" && (
                 <Button
                   variant="outline"
+                  disabled={isLoadingThis}
                   onClick={() => onMarkComplete(appointment.id)}
                   className="h-9 sm:h-10 px-3.5 sm:px-4 rounded-xl text-xs sm:text-sm font-medium border-border hover:border-emerald-500 hover:text-emerald-600"
                 >
-                  <Check className="h-4 w-4 mr-1.5 text-muted-foreground" />
-                  <span>Complete</span>
+                  {isLoadingThis ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                  ) : (
+                    <Check className="h-4 w-4 mr-1.5 text-muted-foreground" />
+                  )}
+                  <span>{isLoadingThis ? "Completing..." : "Complete"}</span>
                 </Button>
               )}
             </div>

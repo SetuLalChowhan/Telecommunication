@@ -111,13 +111,9 @@ export function UploadReportModal({ open, onOpenChange }: UploadReportModalProps
 
     uploadMutation.mutate(formData, {
       onSuccess: () => {
-        toast.success("Medical document uploaded successfully");
         setSelectedFile(null);
         reset();
         onOpenChange(false);
-      },
-      onError: (err: any) => {
-        toast.error(err?.response?.data?.message || err?.message || "Failed to upload report");
       },
     });
   };

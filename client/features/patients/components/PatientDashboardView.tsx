@@ -116,6 +116,7 @@ export const PatientDashboardView: React.FC<PatientDashboardViewProps> = ({
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onCancelAppointment={handleCancelAppointment}
+        isCancelling={cancelMutation.isPending}
       />
     </div>
   );

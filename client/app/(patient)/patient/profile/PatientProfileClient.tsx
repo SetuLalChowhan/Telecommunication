@@ -86,15 +86,14 @@ export function PatientProfileClient() {
 
     try {
       await updateMutation.mutateAsync(data);
-      toast.success("Profile successfully updated");
       setAvatarFile(null);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || "Failed to update profile");
+    } catch {
+      // Toast already shown in mutation onError
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Patient Profile Settings</h1>
         <p className="text-sm text-muted-foreground">

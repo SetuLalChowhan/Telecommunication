@@ -70,19 +70,26 @@ function adaptBookingToScheduleItem(booking: DoctorDashboardBooking): DoctorSche
 export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
   isLoading: isParentLoading = false,
 }) => {
-  const [selectedAppt] = useState<DashboardAppointment | null>(null);
+  const [selectedAppt, setSelectedAppt] = useState<DashboardAppointment | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   const { data: dashboardData, isLoading: isDashboardLoading } = useDoctorDashboard();
   const confirmMutation = useConfirmDoctorBooking();
   const completeMutation = useCompleteDoctorBooking();
 
   const handleConfirmAppointment = (id: string) => {
-    confirmMutation.mutate(id);
+    setActionLoadingId(id);
+    confirmMutation.mutate(id, {
+      onSettled: () => setActionLoadingId(null),
+    });
   };
 
   const handleMarkComplete = (id: string) => {
-    completeMutation.mutate(id);
+    setActionLoadingId(id);
+    completeMutation.mutate(id, {
+      onSettled: () => setActionLoadingId(null),
+    });
   };
 
   const nextApptAdapted = dashboardData?.nextAppointment
@@ -103,6 +110,7 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
         appointment={nextApptAdapted}
         onMarkComplete={handleMarkComplete}
         onConfirm={handleConfirmAppointment}
+        actionLoadingId={actionLoadingId}
       />
 
       {/* 3. Today's Consultations Queue */}
@@ -110,6 +118,7 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
         schedule={todayScheduleAdapted}
         onMarkComplete={handleMarkComplete}
         onConfirm={handleConfirmAppointment}
+        actionLoadingId={actionLoadingId}
       />
 
       {/* 4. Practice Availability Summary Card */}
@@ -144,7 +153,11 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
         appointment={selectedAppt}
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
+        onConfirmAppointment={handleConfirmAppointment}
+        onCompleteAppointment={handleMarkComplete}
         isDoctorView={true}
+        isConfirming={actionLoadingId === selectedAppt?.id && confirmMutation.isPending}
+        isCompleting={actionLoadingId === selectedAppt?.id && completeMutation.isPending}
       />
     </div>
   );

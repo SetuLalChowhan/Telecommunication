@@ -8,6 +8,21 @@ export type ServerFetchOptions = RequestInit & {
 };
 
 /**
+ * Helper to serialize ReadonlyRequestCookies into a valid HTTP Cookie header string
+ */
+export async function getSerializedCookies(): Promise<string> {
+  try {
+    const cookieStore = await cookies();
+    return cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join("; ");
+  } catch {
+    return "";
+  }
+}
+
+/**
  * Server-Side Fetch Utility for Next.js Server Components.
  * Automatically injects authentication cookies and provides fail-safe timeouts.
  */
@@ -15,21 +30,14 @@ export async function serverFetch<T>(
   endpoint: string,
   options: ServerFetchOptions = {}
 ): Promise<T> {
-  const { revalidate, tags, timeoutMs = 4000, ...fetchOptions } = options;
+  const { revalidate, tags, timeoutMs = 8000, ...fetchOptions } = options;
   const baseUrl =
     process.env.API_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
     "http://localhost:5000";
 
   const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-
-  let cookieHeader = "";
-  try {
-    const cookieStore = await cookies();
-    cookieHeader = cookieStore.toString();
-  } catch {
-    // No-op if outside request context
-  }
+  const cookieHeader = await getSerializedCookies();
 
   const nextOptions: { revalidate?: number; tags?: string[] } = {};
   if (revalidate !== undefined) nextOptions.revalidate = revalidate;

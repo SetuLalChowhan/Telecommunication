@@ -39,7 +39,8 @@ export function usePatientBookings(params?: PatientBookingsQueryParams) {
   return useQuery<PatientBookingsResponse>({
     queryKey: patientKeys.bookings(params),
     queryFn: () => fetchPatientBookings(params),
-    staleTime: 1000 * 30, // 30 seconds
+    placeholderData: (prev) => prev,
+    staleTime: 1000 * 60 * 2, // 2 minutes
   });
 }
 

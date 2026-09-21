@@ -11,6 +11,8 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { makeQueryClient } from '@/lib/query/query-client';
 import { env } from '@/lib/config/env';
 
+import { TopProgressBar } from '@/components/common/TopProgressBar';
+
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => makeQueryClient());
 
@@ -22,6 +24,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <GoogleOAuthProvider clientId={googleClientId}>
       <QueryClientProvider client={queryClient}>
         <Provider store={store}>
+          <TopProgressBar />
           {children}
           <ToastContainer position="top-right" autoClose={3000} />
           {process.env.NODE_ENV === 'development' && (

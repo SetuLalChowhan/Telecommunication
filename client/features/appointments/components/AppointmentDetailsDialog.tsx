@@ -28,8 +28,11 @@ interface AppointmentDetailsDialogProps {
   onOpenChange: (open: boolean) => void;
   onCancelAppointment?: (id: string) => void;
   onConfirmAppointment?: (id: string) => void;
+  onCompleteAppointment?: (id: string) => void;
   isDoctorView?: boolean;
   isCancelling?: boolean;
+  isCompleting?: boolean;
+  isConfirming?: boolean;
 }
 
 export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> = ({
@@ -38,8 +41,11 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
   onOpenChange,
   onCancelAppointment,
   onConfirmAppointment,
+  onCompleteAppointment,
   isDoctorView = false,
   isCancelling = false,
+  isCompleting = false,
+  isConfirming = false,
 }) => {
   const [confirmCancel, setConfirmCancel] = useState(false);
 
@@ -210,14 +216,37 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
             {isDoctorView && appointment.status === "PENDING" && onConfirmAppointment && (
               <Button
                 size="sm"
+                disabled={isConfirming}
                 onClick={() => {
                   onConfirmAppointment(appointment.id);
-                  onOpenChange(false);
                 }}
                 className="h-8.5 px-3.5 text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-xs"
               >
-                <Check className="h-3.5 w-3.5" />
-                <span>Confirm Appointment</span>
+                {isConfirming ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Check className="h-3.5 w-3.5" />
+                )}
+                <span>{isConfirming ? "Confirming..." : "Confirm Appointment"}</span>
+              </Button>
+            )}
+
+            {isDoctorView && appointment.status === "CONFIRMED" && onCompleteAppointment && (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isCompleting}
+                onClick={() => {
+                  onCompleteAppointment(appointment.id);
+                }}
+                className="h-8.5 px-3.5 text-xs font-semibold gap-1.5 border-border hover:border-emerald-500 hover:text-emerald-600 cursor-pointer"
+              >
+                {isCompleting ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Check className="h-3.5 w-3.5 text-muted-foreground" />
+                )}
+                <span>{isCompleting ? "Completing..." : "Complete Consultation"}</span>
               </Button>
             )}
 

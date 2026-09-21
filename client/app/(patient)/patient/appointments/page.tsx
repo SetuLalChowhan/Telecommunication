@@ -6,7 +6,7 @@ import {
   QueryClient,
 } from "@tanstack/react-query";
 import { getPatientBookingsServer } from "@/features/patients/api/server";
-import { patientKeys, PatientBookingsQueryParams } from "@/features/patients/types";
+import { patientKeys } from "@/features/patients/types";
 import { PatientAppointmentsClient } from "./PatientAppointmentsClient";
 
 export const metadata: Metadata = {
@@ -25,19 +25,13 @@ export default async function PatientAppointmentsPage({
   searchParams,
 }: PatientAppointmentsPageProps) {
   const resolvedParams = await searchParams;
-  const statusParam = resolvedParams.status;
-  const pageParam = resolvedParams.page ? Number(resolvedParams.page) : 1;
-
-  const queryParams: PatientBookingsQueryParams = {
-    status: statusParam && statusParam !== "ALL" ? statusParam : undefined,
-    page: pageParam,
-  };
+  const statusParam = resolvedParams?.status;
 
   const queryClient = new QueryClient();
 
   await queryClient.prefetchQuery({
-    queryKey: patientKeys.bookings(queryParams),
-    queryFn: () => getPatientBookingsServer(queryParams),
+    queryKey: patientKeys.bookings({ limit: 100 }),
+    queryFn: () => getPatientBookingsServer({ limit: 100 }),
   });
 
   return (

@@ -1,9 +1,9 @@
 import { serverFetch, ServerFetchOptions } from "@/lib/api/server-fetch";
-import { cookies } from "next/headers";
 import {
   PatientDashboardData,
   PatientBookingsQueryParams,
   PatientBookingsResponse,
+  PatientProfileData,
 } from "../types";
 
 /**
@@ -13,20 +13,10 @@ export async function getPatientDashboardServer(
   options?: ServerFetchOptions
 ): Promise<PatientDashboardData | null> {
   try {
-    let cookieHeader = "";
-    try {
-      const cookieStore = await cookies();
-      cookieHeader = cookieStore.toString();
-    } catch {}
-
     const response = await serverFetch<{
       success: boolean;
       data: PatientDashboardData;
     }>("/patients/dashboard", {
-      headers: {
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
-      // Do not cache personalized dashboard data across users
       cache: "no-store",
       ...options,
     });
@@ -46,12 +36,6 @@ export async function getPatientBookingsServer(
   options?: ServerFetchOptions
 ): Promise<PatientBookingsResponse> {
   try {
-    let cookieHeader = "";
-    try {
-      const cookieStore = await cookies();
-      cookieHeader = cookieStore.toString();
-    } catch {}
-
     const queryParams = new URLSearchParams();
     if (params?.status) queryParams.set("status", params.status);
     if (params?.page) queryParams.set("page", String(params.page));
@@ -67,9 +51,6 @@ export async function getPatientBookingsServer(
       data: PatientBookingsResponse["data"];
       meta: PatientBookingsResponse["meta"];
     }>(endpoint, {
-      headers: {
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
       cache: "no-store",
       ...options,
     });
@@ -102,21 +83,12 @@ export async function getPatientBookingsServer(
  */
 export async function getPatientProfileServer(
   options?: ServerFetchOptions
-): Promise<import("../types").PatientProfileData | null> {
+): Promise<PatientProfileData | null> {
   try {
-    let cookieHeader = "";
-    try {
-      const cookieStore = await cookies();
-      cookieHeader = cookieStore.toString();
-    } catch {}
-
     const response = await serverFetch<{
       success: boolean;
-      data: import("../types").PatientProfileData;
+      data: PatientProfileData;
     }>("/patients/me", {
-      headers: {
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
       cache: "no-store",
       ...options,
     });
