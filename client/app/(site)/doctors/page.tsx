@@ -34,11 +34,14 @@ export const metadata: Metadata = {
 
 interface DoctorsPageProps {
   searchParams: Promise<{
+    q?: string;
     search?: string;
     specialty?: string;
     specialtySlug?: string;
     minFee?: string;
     maxFee?: string;
+    experience?: string;
+    minExperience?: string;
     sortBy?: "rating" | "fee" | "experience";
     page?: string;
   }>;
@@ -46,12 +49,16 @@ interface DoctorsPageProps {
 
 export default async function DoctorsPage({ searchParams }: DoctorsPageProps) {
   const resolvedParams = await searchParams;
+  // The hero search bar links with `?q=`; accept `search` too for older links.
+  const searchTerm = (resolvedParams.q || resolvedParams.search || "").trim();
   const queryParams = {
-    search: resolvedParams.search ? resolvedParams.search.trim() : undefined,
+    search: searchTerm || undefined,
     specialtySlug:
       resolvedParams.specialtySlug || resolvedParams.specialty || undefined,
     minFee: resolvedParams.minFee ? Number(resolvedParams.minFee) : undefined,
     maxFee: resolvedParams.maxFee ? Number(resolvedParams.maxFee) : undefined,
+    experience:
+      resolvedParams.experience || resolvedParams.minExperience || undefined,
     sortBy:
       (resolvedParams.sortBy as "latest" | "rating" | "fee" | "experience") ||
       "latest",

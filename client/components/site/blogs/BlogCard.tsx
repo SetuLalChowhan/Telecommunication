@@ -10,7 +10,7 @@ interface BlogCardProps {
 
 export const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
   return (
-    <article className="group flex flex-col rounded-2xl border border-border bg-card overflow-hidden shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-200">
+    <article className="group flex flex-col rounded-xl border border-border bg-card overflow-hidden transition-colors hover:border-primary/40">
       {/* Blog Image */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted/40">
         <Image
@@ -33,7 +33,7 @@ export const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
           </div>
 
           {/* Title */}
-          <h3 className="text-base sm:text-lg font-bold text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+          <h3 className="text-base font-semibold text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
             <Link href={`/blogs/${post.slug}`}>
               {post.title}
             </Link>
@@ -51,7 +51,7 @@ export const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
             href={`/blogs/${post.slug}`}
             className="inline-flex items-center text-xs sm:text-sm font-semibold text-primary hover:text-primary-dark transition-colors group/link"
           >
-            <span>Read Full Article</span>
+            <span>Read article</span>
             <ArrowRight className="ml-1.5 h-3.5 w-3.5 transition-transform group-hover/link:translate-x-1" />
           </Link>
         </div>

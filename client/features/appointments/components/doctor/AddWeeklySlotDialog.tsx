@@ -8,6 +8,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogBody,
   DialogTitle,
   DialogDescription,
   DialogFooter,
@@ -102,20 +103,23 @@ export const AddWeeklySlotDialog: React.FC<AddWeeklySlotDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-[440px] p-6 sm:p-7">
-        <DialogHeader className="mb-4">
-          <DialogTitle className="text-lg font-bold text-foreground">
-            Add Availability Window
-          </DialogTitle>
-          <DialogDescription className="text-xs text-secondary-text mt-1">
-            Set your recurring consultation hours for a specific day of the week.
+      <DialogContent className="max-w-[440px]">
+        <DialogHeader>
+          <DialogTitle>Add availability window</DialogTitle>
+          <DialogDescription>
+            Set recurring consultation hours for a day of the week.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-          {/* Day of Week */}
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex min-h-0 flex-1 flex-col"
+          noValidate
+        >
+          <DialogBody>
+          {/* Day of week */}
           <div className="space-y-1.5">
-            <Label htmlFor="day-select">Day of Week</Label>
+            <Label htmlFor="day-select">Day of week</Label>
             <Controller
               name="dayOfWeek"
               control={control}
@@ -125,7 +129,7 @@ export const AddWeeklySlotDialog: React.FC<AddWeeklySlotDialogProps> = ({
                   onValueChange={field.onChange}
                   disabled={isLoading}
                 >
-                  <SelectTrigger id="day-select" className="h-10 text-xs sm:text-sm rounded-xl">
+                  <SelectTrigger id="day-select" className="h-9 rounded-md text-sm">
                     <SelectValue placeholder="Select day" />
                   </SelectTrigger>
                   <SelectContent className="max-h-56">
@@ -143,7 +147,7 @@ export const AddWeeklySlotDialog: React.FC<AddWeeklySlotDialogProps> = ({
           {/* Start & End Times */}
           <div className="grid grid-cols-2 gap-3.5">
             <div className="space-y-1.5">
-              <Label htmlFor="start-time">Start Time</Label>
+              <Label htmlFor="start-time">Start time</Label>
               <Controller
                 name="startTime"
                 control={control}
@@ -153,7 +157,7 @@ export const AddWeeklySlotDialog: React.FC<AddWeeklySlotDialogProps> = ({
                     onValueChange={field.onChange}
                     disabled={isLoading}
                   >
-                    <SelectTrigger id="start-time" className="h-10 text-xs sm:text-sm rounded-xl">
+                    <SelectTrigger id="start-time" className="h-9 rounded-md text-sm">
                       <SelectValue placeholder="Start Time" />
                     </SelectTrigger>
                     <SelectContent className="max-h-56">
@@ -169,7 +173,7 @@ export const AddWeeklySlotDialog: React.FC<AddWeeklySlotDialogProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="end-time">End Time</Label>
+              <Label htmlFor="end-time">End time</Label>
               <Controller
                 name="endTime"
                 control={control}
@@ -181,7 +185,7 @@ export const AddWeeklySlotDialog: React.FC<AddWeeklySlotDialogProps> = ({
                   >
                     <SelectTrigger
                       id="end-time"
-                      className={`h-10 text-xs sm:text-sm rounded-xl ${
+                      className={`h-9 rounded-md text-sm ${
                         errors.endTime ? "border-error focus:ring-error" : ""
                       }`}
                     >
@@ -200,12 +204,14 @@ export const AddWeeklySlotDialog: React.FC<AddWeeklySlotDialogProps> = ({
             </div>
           </div>
           {errors.endTime && (
-            <p className="text-xs text-error font-medium">{errors.endTime.message}</p>
+            <p className="text-[11px] font-medium text-error">
+              {errors.endTime.message}
+            </p>
           )}
 
-          {/* Consultation Duration */}
+          {/* Slot duration */}
           <div className="space-y-1.5">
-            <Label htmlFor="duration-select">Slot Duration</Label>
+            <Label htmlFor="duration-select">Slot duration</Label>
             <Controller
               name="consultationDuration"
               control={control}
@@ -215,7 +221,7 @@ export const AddWeeklySlotDialog: React.FC<AddWeeklySlotDialogProps> = ({
                   onValueChange={field.onChange}
                   disabled={isLoading}
                 >
-                  <SelectTrigger id="duration-select" className="h-10 text-xs sm:text-sm rounded-xl">
+                  <SelectTrigger id="duration-select" className="h-9 rounded-md text-sm">
                     <SelectValue placeholder="Slot duration" />
                   </SelectTrigger>
                   <SelectContent>
@@ -229,15 +235,16 @@ export const AddWeeklySlotDialog: React.FC<AddWeeklySlotDialogProps> = ({
               )}
             />
           </div>
+          </DialogBody>
 
-          <DialogFooter className="mt-6 pt-4 border-t border-border/60">
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
               size="sm"
               disabled={isLoading}
               onClick={() => handleOpenChange(false)}
-              className="h-9 px-4 text-xs rounded-xl"
+              className="h-8 rounded-md px-3 text-xs"
             >
               Cancel
             </Button>
@@ -245,15 +252,15 @@ export const AddWeeklySlotDialog: React.FC<AddWeeklySlotDialogProps> = ({
               type="submit"
               size="sm"
               disabled={isLoading}
-              className="h-9 px-5 text-xs font-semibold rounded-xl shadow-xs"
+              className="h-8 rounded-md px-3 text-xs font-semibold"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  <span>Adding Slot...</span>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Adding…</span>
                 </>
               ) : (
-                "Save Availability"
+                "Save availability"
               )}
             </Button>
           </DialogFooter>

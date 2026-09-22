@@ -49,10 +49,10 @@ export const DoctorHeroCard: React.FC<DoctorHeroCardProps> = ({ doctor }) => {
       ?.filter(Boolean) || [];
 
   return (
-    <div className="rounded-2xl border border-border/70 bg-card p-6 sm:p-7 shadow-xs">
+    <div className="rounded-xl border border-border bg-card p-6">
       <div className="flex flex-col sm:flex-row gap-6 items-start">
         {/* Doctor Photo */}
-        <div className="relative h-28 w-28 sm:h-36 sm:w-36 shrink-0 rounded-2xl overflow-hidden border border-border/70 bg-slate-100 dark:bg-slate-900 shadow-xs">
+        <div className="relative h-28 w-28 sm:h-36 sm:w-36 shrink-0 rounded-xl overflow-hidden border border-border bg-muted">
           <Image
             src={imgSrc}
             alt={doctorName}
@@ -68,7 +68,7 @@ export const DoctorHeroCard: React.FC<DoctorHeroCardProps> = ({ doctor }) => {
           <div className="space-y-1.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+                <h1 className="text-xl sm:text-2xl font-semibold text-foreground tracking-tight">
                   {doctorName}
                 </h1>
                 {doctor.verified && (
@@ -116,7 +116,7 @@ export const DoctorHeroCard: React.FC<DoctorHeroCardProps> = ({ doctor }) => {
               {otherSpecialties.map((spec) => (
                 <span
                   key={spec.id || spec.slug}
-                  className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-muted-foreground text-xs font-medium"
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-muted text-muted-foreground text-xs font-medium"
                 >
                   {spec.name}
                 </span>
@@ -126,7 +126,7 @@ export const DoctorHeroCard: React.FC<DoctorHeroCardProps> = ({ doctor }) => {
 
           {/* Clean Human Metrics Row */}
           <div className="grid grid-cols-3 gap-2.5 pt-3.5 border-t border-border/60">
-            <div className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-900/30 border border-border/50 text-center sm:text-left">
+            <div className="p-2.5 rounded-lg bg-muted/40 border border-border/60 text-center sm:text-left">
               <span className="text-xs text-muted-foreground block font-medium">Rating</span>
               <div className="flex items-center justify-center sm:justify-start gap-1 mt-0.5">
                 <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400 shrink-0" />
@@ -135,14 +135,14 @@ export const DoctorHeroCard: React.FC<DoctorHeroCardProps> = ({ doctor }) => {
               </div>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-900/30 border border-border/50 text-center sm:text-left">
+            <div className="p-2.5 rounded-lg bg-muted/40 border border-border/60 text-center sm:text-left">
               <span className="text-xs text-muted-foreground block font-medium">Experience</span>
               <span className="text-xs sm:text-sm font-bold text-foreground block mt-0.5">
                 {experienceYears > 0 ? `${experienceYears}+ Yrs` : "Certified"}
               </span>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-900/30 border border-border/50 text-center sm:text-left">
+            <div className="p-2.5 rounded-lg bg-muted/40 border border-border/60 text-center sm:text-left">
               <span className="text-xs text-muted-foreground block font-medium">Patients</span>
               <span className="text-xs sm:text-sm font-bold text-foreground block mt-0.5">
                 {patientsConsulted} Consults

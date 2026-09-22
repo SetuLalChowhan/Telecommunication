@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Clock, ArrowRight } from "lucide-react";
+import { ArrowRight, Clock, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DoctorScheduleItem,
@@ -11,7 +11,9 @@ import {
 import { DoctorNextConsultation } from "./DoctorNextConsultation";
 import { DoctorTodayScheduleTable } from "./DoctorTodayScheduleTable";
 import { DoctorStatsCards } from "./DoctorStatsCards";
+import { DoctorQuickActions } from "./DoctorQuickActions";
 import { AppointmentDetailsDialog } from "@/features/appointments/components/AppointmentDetailsDialog";
+import { PageHeader } from "@/components/layout";
 import {
   useDoctorDashboard,
   useConfirmDoctorBooking,
@@ -68,6 +70,8 @@ function adaptBookingToScheduleItem(booking: DoctorDashboardBooking): DoctorSche
 }
 
 export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
+  doctorName,
+  isVerified = true,
   isLoading: isParentLoading = false,
 }) => {
   const [selectedAppt, setSelectedAppt] = useState<DashboardAppointment | null>(null);
@@ -98,59 +102,109 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
     ? adaptBookingToScheduleItem(dashboardData.nextAppointment)
     : undefined;
 
-  const todayScheduleAdapted = (dashboardData?.todaySchedule || []).map(adaptBookingToScheduleItem);
+  const todayScheduleAdapted = (dashboardData?.todaySchedule || []).map(
+    adaptBookingToScheduleItem
+  );
   const activeSlotsCount = dashboardData?.activeDaysCount ?? 0;
   const isLoading = (isParentLoading || isDashboardLoading) && !dashboardData;
 
   return (
-    <div className="w-full space-y-6 sm:space-y-8">
-      {/* 1. Practice Stats Row */}
-      <DoctorStatsCards stats={dashboardData?.stats} isLoading={isLoading} />
-
-      {/* 2. Next Live Consultation Surface */}
-      <DoctorNextConsultation
-        appointment={nextApptAdapted}
-        onMarkComplete={handleMarkComplete}
-        onConfirm={handleConfirmAppointment}
-        actionLoadingId={actionLoadingId}
+    <div className="w-full space-y-4 sm:space-y-5">
+      <PageHeader
+        eyebrow="Clinical workspace"
+        title={doctorName || "Doctor overview"}
+        meta={
+          dashboardData?.stats
+            ? `${dashboardData.stats.todayConsultationsCount} today`
+            : undefined
+        }
+        description="Your queue, patient consultations and practice availability."
+        actions={
+          <Link href="/doctor/appointments">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 rounded-md px-3 text-xs font-semibold"
+            >
+              <span>Consultation queue</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </Link>
+        }
       />
 
-      {/* 3. Today's Consultations Queue */}
-      <DoctorTodayScheduleTable
-        schedule={todayScheduleAdapted}
-        onMarkComplete={handleMarkComplete}
-        onConfirm={handleConfirmAppointment}
-        actionLoadingId={actionLoadingId}
-      />
-
-      {/* 4. Practice Availability Summary Card */}
-      <section className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs hover:border-primary/30 transition-colors">
-        <div className="flex items-center gap-4">
-          <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-            <Clock className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="text-sm sm:text-base font-bold text-foreground">
-              Clinical Availability & Vacation
-            </h3>
-            <p className="text-xs sm:text-sm text-secondary-text mt-0.5">
-              {activeSlotsCount} active days configured for patient appointments.
+      {!isVerified && (
+        <div className="flex flex-col gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2.5">
+            <ShieldAlert className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+              Your BMDC registration is not verified yet — patients cannot book
+              you until verification completes.
             </p>
           </div>
+          <Link href="/doctor-verification" className="shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 rounded-md border-amber-500/40 px-3 text-xs font-semibold text-amber-700 hover:bg-amber-500/10 dark:text-amber-400"
+            >
+              <span>Complete verification</span>
+            </Button>
+          </Link>
+        </div>
+      )}
+
+      {/* Metric strip */}
+      <DoctorStatsCards stats={dashboardData?.stats} isLoading={isLoading} />
+
+      {/* Working grid: today's flow on the left, practice details on the right */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3 xl:gap-5">
+        <div className="space-y-4 xl:col-span-2 xl:space-y-5">
+          <DoctorNextConsultation
+            appointment={nextApptAdapted}
+            onMarkComplete={handleMarkComplete}
+            onConfirm={handleConfirmAppointment}
+            actionLoadingId={actionLoadingId}
+          />
+
+          <DoctorTodayScheduleTable
+            schedule={todayScheduleAdapted}
+            onMarkComplete={handleMarkComplete}
+            onConfirm={handleConfirmAppointment}
+            actionLoadingId={actionLoadingId}
+          />
         </div>
 
-        <Link href="/doctor/schedule" className="shrink-0">
-          <Button
-            variant="outline"
-            className="h-10 px-4 sm:px-5 text-xs sm:text-sm font-semibold rounded-xl gap-1.5 border-border hover:border-primary/50"
-          >
-            <span>Manage Hours & Leaves</span>
-            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-          </Button>
-        </Link>
-      </section>
+        <div className="space-y-4 xl:space-y-5">
+          <section className="panel overflow-hidden">
+            <div className="panel-header">
+              <h2 className="panel-title">Availability</h2>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div className="space-y-3 p-4">
+              <div className="flex items-baseline gap-2">
+                <span className="data-value">{activeSlotsCount}</span>
+                <span className="text-xs text-muted-foreground">
+                  active day{activeSlotsCount === 1 ? "" : "s"} open for bookings
+                </span>
+              </div>
+              <Link href="/doctor/schedule" className="block">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-between rounded-md text-xs font-semibold"
+                >
+                  <span>Manage hours &amp; leaves</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+              </Link>
+            </div>
+          </section>
 
-      {/* Appointment Details Modal */}
+          <DoctorQuickActions />
+        </div>
+      </div>
+
       <AppointmentDetailsDialog
         appointment={selectedAppt}
         open={detailsOpen}

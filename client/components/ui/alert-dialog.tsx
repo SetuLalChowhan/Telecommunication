@@ -24,6 +24,10 @@ const AlertDialogOverlay = React.forwardRef<
 ));
 AlertDialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
+/**
+ * Mirrors `DialogContent`: padding-free shell, sections own their spacing.
+ * Confirmation dialogs have no close button, so the header needs no right gap.
+ */
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
@@ -33,7 +37,7 @@ const AlertDialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-card p-6 shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-100 rounded-2xl",
+        "fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[420px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-border bg-card p-0 shadow-xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-100",
         className
       )}
       {...props}
@@ -47,10 +51,7 @@ const AlertDialogHeader = ({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn(
-      "flex flex-col space-y-2 text-center sm:text-left",
-      className
-    )}
+    className={cn("flex flex-col gap-1.5 px-5 py-4 text-left", className)}
     {...props}
   />
 );
@@ -62,7 +63,7 @@ const AlertDialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 gap-2 sm:gap-0",
+      "flex shrink-0 flex-col-reverse gap-2 border-t border-border bg-muted/40 px-5 py-3 sm:flex-row sm:items-center sm:justify-end",
       className
     )}
     {...props}
@@ -76,7 +77,10 @@ const AlertDialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-bold text-foreground", className)}
+    className={cn(
+      "text-sm font-semibold tracking-tight text-foreground",
+      className
+    )}
     {...props}
   />
 ));
@@ -88,7 +92,7 @@ const AlertDialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-secondary-text leading-relaxed", className)}
+    className={cn("text-xs leading-relaxed text-secondary-text", className)}
     {...props}
   />
 ));
@@ -101,7 +105,11 @@ const AlertDialogAction = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Close
     ref={ref}
-    className={cn(buttonVariants({ variant: "destructive" }), "h-10 rounded-xl px-4 text-sm font-semibold", className)}
+    className={cn(
+      buttonVariants({ variant: "destructive" }),
+      "h-8 gap-1.5 rounded-md px-3 text-xs font-semibold",
+      className
+    )}
     {...props}
   />
 ));
@@ -115,7 +123,7 @@ const AlertDialogCancel = React.forwardRef<
     ref={ref}
     className={cn(
       buttonVariants({ variant: "outline" }),
-      "mt-2 sm:mt-0 h-10 rounded-xl px-4 text-sm font-medium",
+      "h-8 rounded-md px-3 text-xs font-medium",
       className
     )}
     {...props}

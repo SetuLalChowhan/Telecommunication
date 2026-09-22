@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import type { Metadata } from "next";
 import {
   dehydrate,
@@ -33,7 +33,15 @@ export default async function DoctorSettingsPage() {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <DoctorSettingsClient />
+      <Suspense
+        fallback={
+          <div className="w-full py-20 flex items-center justify-center text-sm font-semibold text-primary">
+            Loading settings...
+          </div>
+        }
+      >
+        <DoctorSettingsClient />
+      </Suspense>
     </HydrationBoundary>
   );
 }

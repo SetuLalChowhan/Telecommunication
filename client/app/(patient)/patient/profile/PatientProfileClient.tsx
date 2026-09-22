@@ -15,6 +15,7 @@ import {
   normalizeBloodGroup,
 } from "@/features/patients/components/profile/PatientPersonalInfoFields";
 import { PatientEmergencyContactFields } from "@/features/patients/components/profile/PatientEmergencyContactFields";
+import { PageHeader } from "@/components/layout";
 
 export function PatientProfileClient() {
   const { data: profile, isLoading } = usePatientProfile();
@@ -94,20 +95,19 @@ export function PatientProfileClient() {
   };
 
   return (
-    <div className="w-full space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Patient Profile Settings</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage your personal information, emergency contact, and medical identity.
-        </p>
-      </div>
+    <div className="w-full space-y-4 sm:space-y-5">
+      <PageHeader
+        eyebrow="Account"
+        title="Profile"
+        description="Personal information, emergency contact and medical identity."
+      />
 
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <PatientAvatarEditor
             currentImageUrl={profile?.user?.image}
             previewUrl={avatarPreview}
@@ -133,7 +133,7 @@ export function PatientProfileClient() {
             <Button
               type="submit"
               disabled={updateMutation.isPending}
-              className="h-11 px-6 rounded-xl bg-primary hover:bg-primary-dark text-white font-semibold gap-2 shadow-sm shadow-primary/20"
+              className="h-8 rounded-md px-3 text-xs font-semibold gap-2"
             >
               {updateMutation.isPending ? (
                 <>

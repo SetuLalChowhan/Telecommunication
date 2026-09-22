@@ -60,16 +60,16 @@ export const DoctorPagination: React.FC<DoctorPaginationProps> = ({
           containerClassName="flex items-center gap-1.5 list-none m-0 p-0 select-none"
           // Page item classes
           pageClassName="inline-block"
-          pageLinkClassName="inline-flex items-center justify-center min-w-[36px] h-9 px-2.5 rounded-xl border border-border/80 bg-card text-xs font-semibold text-foreground hover:border-primary/50 hover:text-primary transition-all cursor-pointer shadow-2xs"
+          pageLinkClassName="inline-flex items-center justify-center min-w-[36px] h-9 px-2.5 rounded-lg border border-border bg-card text-xs font-semibold text-foreground hover:border-primary/50 hover:text-primary transition-colors cursor-pointer"
           // Active item classes
           activeClassName="!border-primary"
           activeLinkClassName="!bg-primary !border-primary !text-white !font-bold shadow-xs hover:!bg-primary-dark"
           // Previous button classes
           previousClassName="inline-block"
-          previousLinkClassName="inline-flex items-center justify-center h-9 px-3 rounded-xl border border-border/80 bg-card text-xs font-semibold text-foreground hover:border-primary/50 hover:text-primary transition-all cursor-pointer shadow-2xs"
+          previousLinkClassName="inline-flex items-center justify-center h-9 px-3 rounded-lg border border-border bg-card text-xs font-semibold text-foreground hover:border-primary/50 hover:text-primary transition-colors cursor-pointer"
           // Next button classes
           nextClassName="inline-block"
-          nextLinkClassName="inline-flex items-center justify-center h-9 px-3 rounded-xl border border-border/80 bg-card text-xs font-semibold text-foreground hover:border-primary/50 hover:text-primary transition-all cursor-pointer shadow-2xs"
+          nextLinkClassName="inline-flex items-center justify-center h-9 px-3 rounded-lg border border-border bg-card text-xs font-semibold text-foreground hover:border-primary/50 hover:text-primary transition-colors cursor-pointer"
           // Break classes
           breakClassName="inline-block"
           breakLinkClassName="inline-flex items-center justify-center w-8 h-9 text-xs text-muted-foreground"

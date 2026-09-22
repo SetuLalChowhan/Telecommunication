@@ -30,8 +30,8 @@ export const BookingSlotGrid: React.FC<BookingSlotGridProps> = ({
 }) => {
   return (
     <div className="space-y-2.5">
-      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
-        <span>Available Time Slots</span>
+      <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+        <span>Available time slots</span>
         {!isLoading && slots.length > 0 && (
           <span className="text-[11px] font-semibold text-primary lowercase">
             {slots.length} available
@@ -40,14 +40,14 @@ export const BookingSlotGrid: React.FC<BookingSlotGridProps> = ({
       </label>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-8 rounded-2xl bg-muted/40 border border-border/60">
+        <div className="flex items-center justify-center py-8 rounded-lg bg-muted/40 border border-border">
           <Loader2 className="h-5 w-5 animate-spin text-primary" />
           <span className="text-xs text-muted-foreground ml-2 font-medium">
             Fetching available slots...
           </span>
         </div>
       ) : slots.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-6 px-4 text-center rounded-2xl bg-muted/40 border border-border/60">
+        <div className="flex flex-col items-center justify-center py-6 px-4 text-center rounded-lg bg-muted/40 border border-border">
           <AlertCircle className="h-5 w-5 text-muted-foreground/80 mb-1.5" />
           <p className="text-xs font-semibold text-foreground">No slots available on this date</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -63,10 +63,10 @@ export const BookingSlotGrid: React.FC<BookingSlotGridProps> = ({
                 key={slot.slotStart}
                 type="button"
                 onClick={() => onSelectSlot(slot)}
-                className={`flex items-center justify-center py-2 px-1.5 rounded-xl border text-xs font-semibold transition-all ${
+                className={`flex items-center justify-center py-2 px-1.5 rounded-lg border text-xs font-semibold transition-colors ${
                   isSelected
-                    ? "bg-primary text-white border-primary shadow-xs"
-                    : "bg-card hover:bg-muted/60 border-border/80 text-foreground"
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card hover:bg-muted/60 border-border text-foreground"
                 }`}
               >
                 <Clock className="h-3 w-3 mr-1 opacity-70" />

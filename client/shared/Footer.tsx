@@ -6,11 +6,11 @@ import BrandLogo from "@/components/common/BrandLogo";
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="border-t border-border bg-card/70 backdrop-blur-md">
-      <div className="mx-auto max-w-[1920px] section-padding-x py-14">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 lg:gap-12">
+    <footer className="border-t border-border bg-card">
+      <div className="container-page py-14">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
           {/* Brand & Mission */}
-          <div className="md:col-span-1 space-y-3">
+          <div className="col-span-2 md:col-span-1 space-y-3">
             <BrandLogo showTagline={true} />
             <p className="text-xs sm:text-sm text-secondary-text leading-relaxed pt-2">
               Next-generation telemedicine platform connecting licensed doctors and patients

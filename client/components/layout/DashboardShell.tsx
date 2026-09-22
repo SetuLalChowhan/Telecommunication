@@ -1,30 +1,39 @@
 "use client";
 
 import React from "react";
-import { DashboardSidebar } from "./DashboardSidebar";
+import { DashboardSidebar, type DashboardRole } from "./DashboardSidebar";
 import { DashboardHeader } from "./DashboardHeader";
 
 interface DashboardShellProps {
-  role?: "PATIENT" | "DOCTOR" | "ADMIN";
+  role?: DashboardRole;
   children: React.ReactNode;
 }
 
+/**
+ * Fixed application frame for both portals: a persistent navigation rail, a
+ * compact topbar, and a single scrolling content region.
+ *
+ * All dashboard pages render inside this frame, so vertical rhythm and
+ * horizontal gutters are defined here instead of per page.
+ */
 export const DashboardShell: React.FC<DashboardShellProps> = ({
   role = "PATIENT",
   children,
 }) => {
   return (
-    <div className="flex h-screen min-h-screen w-full bg-background text-foreground overflow-hidden antialiased">
-      {/* Desktop Integrated Sidebar */}
-      <aside className="hidden xl:flex flex-col w-[250px] shrink-0 border-r border-border/40 bg-slate-50/70 dark:bg-slate-900/30">
+    <div className="flex h-screen min-h-screen w-full overflow-hidden bg-background text-foreground antialiased">
+      {/* Persistent rail (desktop) */}
+      <aside className="hidden w-[236px] shrink-0 border-r border-border lg:flex lg:flex-col">
         <DashboardSidebar role={role} />
       </aside>
 
-      {/* Main Content Area with balanced spacing */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      {/* Working area */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <DashboardHeader role={role} />
-        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 bg-background">
-          <div className="w-full space-y-6 sm:space-y-8">{children}</div>
+        <main className="flex-1 overflow-y-auto bg-background">
+          <div className="container-dashboard space-y-4 px-3 py-4 sm:space-y-5 sm:px-4 sm:py-5 lg:px-6">
+            {children}
+          </div>
         </main>
       </div>
     </div>

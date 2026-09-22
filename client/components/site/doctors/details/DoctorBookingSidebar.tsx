@@ -109,15 +109,15 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
   }
 
   return (
-    <div className="p-5 sm:p-6 rounded-3xl bg-card border border-border/80 shadow-lg space-y-5 sticky top-24">
+    <div className="p-5 sm:p-6 rounded-xl bg-card border border-border space-y-5 sticky top-24">
       <div className="flex items-center justify-between pb-3 border-b border-border/80">
         <div>
-          <h3 className="text-base font-bold text-foreground">Schedule Consultation</h3>
+          <h3 className="text-sm font-semibold text-foreground">Schedule consultation</h3>
           <p className="text-xs text-muted-foreground">Select date & time for video call</p>
         </div>
         <div className="text-right">
           <span className="text-xs text-muted-foreground">Consultation Fee</span>
-          <p className="text-lg font-extrabold text-foreground">BDT {doctor.fee}</p>
+          <p className="text-lg font-semibold text-foreground">BDT {doctor.fee}</p>
         </div>
       </div>
 

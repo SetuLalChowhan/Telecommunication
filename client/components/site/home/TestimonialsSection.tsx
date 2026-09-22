@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Image from "next/image";
 
 interface Testimonial {
@@ -15,7 +15,7 @@ const TESTIMONIALS: Testimonial[] = [
   {
     id: "t-1",
     name: "Mohammad Rafiqul Islam",
-    role: "Patient &bull; Mirpur, Dhaka",
+    role: "Patient · Mirpur, Dhaka",
     quote:
       "Consulting Dr. Sarah online saved me hours in Dhaka traffic. The video call was crystal clear, she reviewed my ECG reports instantly, and sent the e-prescription right to my portal.",
     avatar:
@@ -24,7 +24,7 @@ const TESTIMONIALS: Testimonial[] = [
   {
     id: "t-2",
     name: "Nusrat Jahan",
-    role: "Patient &bull; Dhanmondi, Dhaka",
+    role: "Patient · Dhanmondi, Dhaka",
     quote:
       "When my child had a sudden high fever at night, getting an immediate pediatric consultation was a lifesaver. The doctor was patient, caring, and guided us every step of the way.",
     avatar:
@@ -33,7 +33,7 @@ const TESTIMONIALS: Testimonial[] = [
   {
     id: "t-3",
     name: "Tanvir Ahmed",
-    role: "Patient &bull; Chittagong",
+    role: "Patient · Chittagong",
     quote:
       "Living outside Dhaka often makes accessing top specialists difficult. This platform connected me directly with leading physicians from national institutes without any hassle.",
     avatar:
@@ -42,97 +42,43 @@ const TESTIMONIALS: Testimonial[] = [
 ];
 
 export const TestimonialsSection: React.FC = () => {
-  const [activeIndex, setActiveIndex] = useState(0);
-
   return (
-    <section className="w-full bg-background py-14 sm:py-16 lg:py-20 border-b border-border overflow-hidden">
-      <div className="max-w-[1920px] mx-auto section-padding-x">
-        
-        {/* Centered Header */}
-        <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16 space-y-4 sm:space-y-5 flex flex-col items-center">
-          <span className="text-xs font-semibold tracking-wider text-primary uppercase block">
-            Patient Stories
-          </span>
-
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground leading-tight">
-            What Our Patients Say
+    <section className="w-full border-b border-border/60 bg-background py-16 sm:py-20">
+      <div className="container-page">
+        {/* Header */}
+        <div className="max-w-2xl mb-10 sm:mb-12 space-y-4">
+          <span className="eyebrow-text block text-primary">Patient stories</span>
+          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground leading-tight">
+            What our patients say
           </h2>
-
-          <p className="text-sm sm:text-[15px] text-secondary-text max-w-lg mx-auto leading-relaxed">
-            Real feedback from patients who experienced fast, reliable, and compassionate virtual medical care.
+          <p className="text-sm text-secondary-text leading-relaxed">
+            Feedback from patients who experienced fast, reliable, and compassionate virtual care.
           </p>
         </div>
 
-        {/* Minimal Cards Row */}
-        <div className="relative max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((item) => (
-              <div
-                key={item.id}
-                className="group relative flex flex-col items-center text-center rounded-2xl bg-card border border-border p-6 sm:p-7 shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-200"
-              >
-                {/* Circular Avatar */}
-                <div className="relative h-16 w-16 rounded-full overflow-hidden border border-border shadow-xs mb-3.5 group-hover:scale-105 transition-transform duration-200">
-                  <Image
-                    src={item.avatar}
-                    alt={item.name}
-                    fill
-                    sizes="64px"
-                    className="object-cover"
-                  />
+        {/* Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {TESTIMONIALS.map((item) => (
+            <figure
+              key={item.id}
+              className="flex flex-col rounded-xl border border-border bg-card p-6"
+            >
+              <blockquote className="text-sm leading-relaxed text-body">
+                “{item.quote}”
+              </blockquote>
+
+              <figcaption className="mt-5 flex items-center gap-3 border-t border-border/70 pt-4">
+                <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-border">
+                  <Image src={item.avatar} alt={item.name} fill sizes="40px" className="object-cover" />
                 </div>
-
-                {/* Author Name */}
-                <h3 className="text-base font-bold text-foreground">
-                  {item.name}
-                </h3>
-                <span className="text-xs text-secondary-text mb-3">
-                  {item.role}
-                </span>
-
-                {/* Quote Text */}
-                <p className="text-xs sm:text-[13px] leading-relaxed text-secondary-text">
-                  “{item.quote}”
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* Minimal Pagination Dots */}
-          <div className="flex items-center justify-center gap-2 mt-8">
-            <button
-              type="button"
-              onClick={() => setActiveIndex(0)}
-              aria-label="Slide 1"
-              className={`transition-all duration-200 rounded-full cursor-pointer ${
-                activeIndex === 0
-                  ? "h-2.5 w-6 bg-primary"
-                  : "h-2.5 w-2.5 bg-muted-foreground/30 hover:bg-primary/50"
-              }`}
-            />
-            <button
-              type="button"
-              onClick={() => setActiveIndex(1)}
-              aria-label="Slide 2"
-              className={`transition-all duration-200 rounded-full cursor-pointer ${
-                activeIndex === 1
-                  ? "h-2.5 w-6 bg-primary"
-                  : "h-2.5 w-2.5 bg-muted-foreground/30 hover:bg-primary/50"
-              }`}
-            />
-            <button
-              type="button"
-              onClick={() => setActiveIndex(2)}
-              aria-label="Slide 3"
-              className={`transition-all duration-200 rounded-full cursor-pointer ${
-                activeIndex === 2
-                  ? "h-2.5 w-6 bg-primary"
-                  : "h-2.5 w-2.5 bg-muted-foreground/30 hover:bg-primary/50"
-              }`}
-            />
-          </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{item.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{item.role}</p>
+                </div>
+              </figcaption>
+            </figure>
+          ))}
         </div>
-
       </div>
     </section>
   );

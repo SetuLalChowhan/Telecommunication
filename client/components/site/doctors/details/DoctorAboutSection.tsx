@@ -32,8 +32,8 @@ export const DoctorAboutSection: React.FC<DoctorAboutSectionProps> = ({
   return (
     <div className="space-y-6">
       {/* 1. About & Biography Card */}
-      <div className="rounded-2xl border border-border/70 bg-card p-6 sm:p-7 shadow-xs space-y-4">
-        <h2 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
+      <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+        <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
           <Stethoscope className="h-5 w-5 text-primary" />
           <span>Biography</span>
         </h2>
@@ -53,7 +53,7 @@ export const DoctorAboutSection: React.FC<DoctorAboutSectionProps> = ({
               {specialties.map((s) => (
                 <span
                   key={s.specialtyId || s.specialty?.id}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 text-foreground px-3 py-1.5 text-xs font-medium"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-muted text-foreground px-3 py-1.5 text-xs font-medium"
                 >
                   <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
                   <span>{s.specialty?.name}</span>
@@ -65,12 +65,12 @@ export const DoctorAboutSection: React.FC<DoctorAboutSectionProps> = ({
       </div>
 
       {/* 2. Education, Credentials & Hospital Affiliation */}
-      <div className="rounded-2xl border border-border/70 bg-card p-6 sm:p-7 shadow-xs space-y-5">
+      <div className="rounded-xl border border-border bg-card p-6 space-y-5">
         <div className="flex items-center justify-between pb-3 border-b border-border/60">
           <div className="flex items-center gap-2">
             <GraduationCap className="h-5 w-5 text-primary" />
-            <h3 className="text-base sm:text-lg font-bold text-foreground">
-              Education & Qualifications
+            <h3 className="text-base font-semibold text-foreground">
+              Education & qualifications
             </h3>
           </div>
           {doctor.verified && (
@@ -87,7 +87,7 @@ export const DoctorAboutSection: React.FC<DoctorAboutSectionProps> = ({
             {qualifications.map((q, idx) => (
               <div
                 key={q.id || idx}
-                className="p-4 rounded-xl border border-border/70 bg-slate-50/60 dark:bg-slate-900/30 space-y-1.5"
+                className="p-4 rounded-lg border border-border bg-muted/40 space-y-1.5"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">
@@ -119,7 +119,7 @@ export const DoctorAboutSection: React.FC<DoctorAboutSectionProps> = ({
 
         {/* Current Hospital / Workplace */}
         {hasAffiliation && (
-          <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50/70 dark:bg-slate-900/40 border border-border/70">
+          <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/40 border border-border">
             <Building2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
             <div className="space-y-0.5 text-xs">
               <span className="font-bold text-foreground block text-sm">

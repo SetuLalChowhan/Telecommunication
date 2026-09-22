@@ -153,7 +153,7 @@ export function DoctorAppointmentsClient({
   const isBusy = isLoading || isFetching;
 
   return (
-    <div className="w-full space-y-5">
+    <div className="w-full space-y-4 sm:space-y-5">
       <DoctorAppointmentsHeader
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -167,7 +167,7 @@ export function DoctorAppointmentsClient({
       />
 
       {/* Main Clean Minimal Shadcn Table */}
-      <div className="relative rounded-2xl border border-border/70 bg-card overflow-hidden shadow-xs">
+      <div className="relative panel overflow-hidden">
         {isBusy && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/70 backdrop-blur-[1px]">
             <Loader2 className="h-7 w-7 animate-spin text-primary" />
@@ -191,24 +191,24 @@ export function DoctorAppointmentsClient({
             {/* Desktop Table View */}
             <div className="hidden md:block overflow-x-auto">
               <Table>
-                <TableHeader className="bg-slate-50/70 dark:bg-slate-900/40 border-b border-border/60">
+                <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="py-2.5 px-5 font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
+                    <TableHead className="h-9 px-4 text-[10px] tracking-wider">
                       Patient
                     </TableHead>
-                    <TableHead className="py-2.5 px-4 font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
+                    <TableHead className="h-9 px-4 text-[10px] tracking-wider">
                       Age / Gender
                     </TableHead>
-                    <TableHead className="py-2.5 px-4 font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
+                    <TableHead className="h-9 px-4 text-[10px] tracking-wider">
                       Date & Time
                     </TableHead>
-                    <TableHead className="py-2.5 px-4 font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
+                    <TableHead className="h-9 px-4 text-[10px] tracking-wider">
                       Chief Complaint
                     </TableHead>
-                    <TableHead className="py-2.5 px-4 font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
+                    <TableHead className="h-9 px-4 text-[10px] tracking-wider">
                       Status
                     </TableHead>
-                    <TableHead className="py-2.5 px-5 text-right font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
+                    <TableHead className="h-9 px-4 text-right text-[10px] tracking-wider">
                       Actions
                     </TableHead>
                   </TableRow>
@@ -220,7 +220,7 @@ export function DoctorAppointmentsClient({
                       className="hover:bg-muted/40 transition-colors group"
                     >
                       {/* Patient Details */}
-                      <TableCell className="py-3 px-5">
+                      <TableCell className="px-4 py-2.5">
                         <div className="flex items-center gap-3">
                           <Avatar className="h-9 w-9 ring-1 ring-primary/15 shrink-0">
                             <AvatarImage src={item.patientAvatar} alt={item.patientName} />
@@ -245,25 +245,23 @@ export function DoctorAppointmentsClient({
                       </TableCell>
 
                       {/* Date & Time */}
-                      <TableCell className="py-3 px-4 font-medium text-foreground text-xs">
+                      <TableCell className="px-4 py-2.5 text-xs font-medium tabular-nums text-foreground">
                         {item.time}
                       </TableCell>
 
                       {/* Symptoms */}
-                      <TableCell className="py-3 px-4 text-xs text-muted-foreground max-w-[200px] truncate">
+                      <TableCell className="max-w-[200px] truncate px-4 py-2.5 text-xs text-muted-foreground">
                         {item.symptoms || "General Checkup"}
                       </TableCell>
 
                       {/* Status */}
-                      <TableCell className="py-3 px-4">
+                      <TableCell className="px-4 py-2.5">
                         <span
-                          className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full border uppercase ${
+                          className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded border uppercase ${
                             item.status === "CONFIRMED"
-                              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                              ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-400"
                               : item.status === "PENDING"
-                              ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                              : item.status === "COMPLETED"
-                              ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                              ? "bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-400"
                               : "bg-muted text-muted-foreground border-border"
                           }`}
                         >
@@ -272,14 +270,14 @@ export function DoctorAppointmentsClient({
                       </TableCell>
 
                       {/* Action Buttons */}
-                      <TableCell className="py-3 px-5 text-right">
+                      <TableCell className="px-4 py-2.5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           {item.status === "PENDING" && (
                             <Button
                               size="sm"
                               onClick={() => handleConfirm(item.id)}
                               disabled={actionLoadingId === item.id}
-                              className="h-7.5 px-2.5 rounded-lg text-xs font-semibold gap-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer"
+                              className="h-7 rounded-md px-2.5 text-xs font-semibold gap-1"
                             >
                               {actionLoadingId === item.id ? (
                                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -312,7 +310,7 @@ export function DoctorAppointmentsClient({
                               variant="outline"
                               onClick={() => handleComplete(item.id)}
                               disabled={actionLoadingId === item.id}
-                              className="h-7.5 px-2.5 rounded-lg text-xs font-semibold gap-1 border-border hover:border-emerald-500 hover:text-emerald-600 cursor-pointer"
+                              className="h-7 rounded-md px-2.5 text-xs font-semibold gap-1"
                             >
                               {actionLoadingId === item.id ? (
                                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -345,7 +343,7 @@ export function DoctorAppointmentsClient({
                                 meetLink: item.meetLink,
                               })
                             }
-                            className="h-7.5 px-2.5 rounded-lg text-xs font-medium border-border/80 hover:border-primary/50"
+                            className="h-7 rounded-md px-2.5 text-xs font-medium"
                           >
                             Details
                           </Button>
@@ -380,7 +378,7 @@ export function DoctorAppointmentsClient({
                     </div>
 
                     <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border uppercase shrink-0 ${
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded border uppercase shrink-0 ${
                         item.status === "CONFIRMED"
                           ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                           : item.status === "PENDING"
@@ -404,7 +402,7 @@ export function DoctorAppointmentsClient({
                           size="sm"
                           disabled={actionLoadingId === item.id}
                           onClick={() => handleConfirm(item.id)}
-                          className="h-7 px-2.5 rounded-lg text-xs font-semibold gap-1 bg-emerald-600 text-white"
+                          className="h-7 rounded-md px-2.5 text-xs font-semibold gap-1"
                         >
                           {actionLoadingId === item.id && <Loader2 className="h-3 w-3 animate-spin" />}
                           <span>Confirm</span>
@@ -416,7 +414,7 @@ export function DoctorAppointmentsClient({
                           variant="outline"
                           disabled={actionLoadingId === item.id}
                           onClick={() => handleComplete(item.id)}
-                          className="h-7 px-2.5 rounded-lg text-xs font-semibold gap-1"
+                          className="h-7 rounded-md px-2.5 text-xs font-semibold gap-1"
                         >
                           {actionLoadingId === item.id && <Loader2 className="h-3 w-3 animate-spin" />}
                           <span>Done</span>
@@ -430,7 +428,7 @@ export function DoctorAppointmentsClient({
                         >
                           <Button
                             size="sm"
-                            className="h-7 px-2.5 rounded-lg text-xs font-semibold gap-1 bg-emerald-600 text-white"
+                            className="h-7 rounded-md px-2.5 text-xs font-semibold gap-1"
                           >
                             <Video className="h-3 w-3" />
                             <span>Join</span>

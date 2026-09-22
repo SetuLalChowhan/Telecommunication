@@ -27,14 +27,14 @@ export const DoctorDetailsContent: React.FC<DoctorDetailsContentProps> = ({
   if (isLoading) {
     return (
       <div className="w-full bg-background min-h-screen">
-        <div className="max-w-[1920px] mx-auto section-padding-x py-12">
+        <div className="container-page py-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
             <div className="lg:col-span-8 space-y-8">
-              <div className="h-64 rounded-2xl border border-border bg-card p-6 animate-pulse" />
-              <div className="h-96 rounded-2xl border border-border bg-card p-6 animate-pulse" />
+              <div className="h-64 rounded-xl border border-border bg-muted/50 animate-pulse" />
+              <div className="h-96 rounded-xl border border-border bg-muted/50 animate-pulse" />
             </div>
             <div className="lg:col-span-4">
-              <div className="h-[500px] rounded-2xl border border-border bg-card p-6 animate-pulse" />
+              <div className="h-[500px] rounded-xl border border-border bg-muted/50 animate-pulse" />
             </div>
           </div>
         </div>
@@ -45,20 +45,20 @@ export const DoctorDetailsContent: React.FC<DoctorDetailsContentProps> = ({
   if (!doctor) {
     return (
       <div className="w-full bg-background min-h-[70vh] flex items-center justify-center p-6">
-        <div className="max-w-md w-full text-center space-y-4 rounded-2xl border border-border bg-card p-8 shadow-xs">
-          <div className="h-14 w-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
+        <div className="max-w-md w-full text-center space-y-4 rounded-xl border border-border bg-card p-8">
+          <div className="h-14 w-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
             <Stethoscope className="h-7 w-7" />
           </div>
-          <h2 className="text-xl font-bold text-foreground">Doctor Not Found</h2>
+          <h2 className="text-lg font-semibold text-foreground">Doctor not found</h2>
           <p className="text-sm text-secondary-text">
             The requested doctor profile could not be found or may no longer be active.
           </p>
           <Link
             href="/doctors"
-            className="inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary-dark text-white px-5 py-2.5 text-sm font-semibold transition-all shadow-xs"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary hover:bg-primary-dark text-primary-foreground px-5 py-2.5 text-sm font-semibold transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to Doctors Directory</span>
+            <span>Back to doctors directory</span>
           </Link>
         </div>
       </div>
@@ -73,8 +73,8 @@ export const DoctorDetailsContent: React.FC<DoctorDetailsContentProps> = ({
   return (
     <div className="w-full bg-background min-h-screen">
       {/* Top Breadcrumb Bar */}
-      <div className="w-full border-b border-border/70 bg-slate-50/70 dark:bg-slate-900/30 py-4">
-        <div className="max-w-[1920px] mx-auto section-padding-x flex items-center justify-between">
+      <div className="w-full border-b border-border/60 bg-muted/30 py-4">
+        <div className="container-page flex items-center justify-between">
           <nav className="flex items-center gap-2 text-xs font-medium text-secondary-text">
             <Link href="/" className="hover:text-primary transition-colors">
               Home
@@ -100,7 +100,7 @@ export const DoctorDetailsContent: React.FC<DoctorDetailsContentProps> = ({
       </div>
 
       {/* Main Doctor Profile & Booking Grid */}
-      <div className="max-w-[1920px] mx-auto section-padding-x py-8 sm:py-12">
+      <div className="container-page py-8 sm:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
           {/* Left Column: Hero Card, About & Reviews */}
           <div className="lg:col-span-8 space-y-8">

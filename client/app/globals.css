@@ -303,14 +303,17 @@
   background-color: rgba(19, 30, 48, 0.85);
 }
 
-/* Trustworthy interactive card transitions */
+/*
+ * Interactive surface: restrained feedback via border + shadow.
+ * Intentionally no vertical lift — it reads as a demo flourish, not a product.
+ */
 .card-hover {
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .card-hover:hover {
-  transform: translateY(-2px);
   box-shadow: var(--shadow-card-hover);
+  border-color: color-mix(in srgb, var(--primary) 32%, var(--border));
 }
 
 /* Clean minimal scrollbars */
@@ -342,6 +345,112 @@
 
 
 
+/*
+ * Legacy full-width horizontal padding. Prefer `.container-page` for new work:
+ * it caps content width so line-length stays readable on large screens.
+ */
 .section-padding-x {
   @apply px-4 sm:px-6 md:px-10 lg:px-16 2xl:px-24 w-full;
+}
+
+/* Consistent page container: professional content width, never full-bleed. */
+.container-page {
+  @apply mx-auto w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-10;
+}
+
+/* Wider container for the dashboard shell (data-dense, but still bounded). */
+.container-dashboard {
+  @apply mx-auto w-full max-w-[1600px];
+}
+
+/*
+ * Typographic scale.
+ * Use these semantic classes for headers so hierarchy stays consistent across
+ * the 30+ pages instead of ad-hoc text-size combinations.
+ */
+.page-title {
+  @apply text-lg sm:text-xl font-semibold tracking-tight text-foreground;
+}
+
+.page-subtitle {
+  @apply text-xs sm:text-sm text-secondary-text leading-snug;
+}
+
+.section-title {
+  @apply text-base sm:text-lg font-semibold tracking-tight text-foreground;
+}
+
+.card-title {
+  @apply text-sm font-semibold tracking-tight text-foreground;
+}
+
+.meta-text {
+  @apply text-xs text-muted-foreground;
+}
+
+.eyebrow-text {
+  @apply text-[11px] font-semibold uppercase tracking-wider text-muted-foreground;
+}
+
+/*
+ * Dense clinical workspace primitives.
+ * The dashboard is a working surface, not a marketing page: flat panels, tight
+ * rhythm, one accent colour, and typographic hierarchy instead of decoration.
+ */
+/* Flat bordered surface used for every dashboard block. */
+.panel {
+  @apply rounded-lg border border-border bg-card;
+}
+
+/* Compact header row that sits inside a `.panel`. */
+.panel-header {
+  @apply flex items-center justify-between gap-3 border-b border-border px-4 py-3;
+}
+
+.panel-title {
+  @apply text-sm font-semibold tracking-tight text-foreground;
+}
+
+/* Uppercase micro-label for table heads and metric captions. */
+.data-label {
+  @apply text-[10px] font-semibold uppercase tracking-wider text-muted-foreground;
+}
+
+/* Large numeric readout in metric tiles. */
+.data-value {
+  @apply text-xl sm:text-2xl font-semibold tabular-nums tracking-tight text-foreground;
+}
+
+/* Single-row KPI strip: one panel, divided columns, no floating cards. */
+.kpi-strip {
+  @apply grid grid-cols-2 lg:grid-cols-4;
+}
+
+.kpi-cell {
+  @apply flex flex-col gap-1 px-4 py-3.5;
+}
+
+/* Neutral status pill. Colour is opt-in per state. */
+.status-chip {
+  @apply inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide;
+}
+
+/* Sidebar navigation item. */
+.nav-item {
+  @apply relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium text-secondary-text transition-colors hover:bg-muted hover:text-foreground;
+}
+
+.nav-item-active {
+  @apply bg-accent font-semibold text-accent-foreground hover:bg-accent hover:text-accent-foreground;
+}
+
+/* Left accent rail that marks the active nav item. */
+.nav-item-active::before {
+  content: "";
+  @apply absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-primary;
+}
+
+/* Horizontal toolbar row used above tables and lists. */
+.toolbar {
+  @apply flex flex-col gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between;
 }

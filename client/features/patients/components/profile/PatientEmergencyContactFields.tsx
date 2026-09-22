@@ -19,11 +19,13 @@ export const PatientEmergencyContactFields: React.FC<PatientEmergencyContactFiel
   disabled = false,
 }) => {
   return (
-    <div className="p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-4">
+    <div className="panel space-y-4 p-4">
       <div className="flex items-center gap-2">
-        <ShieldAlert className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-amber-500/10">
+          <ShieldAlert className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+        </div>
         <div>
-          <h4 className="text-sm font-semibold text-foreground">Emergency Contact Details</h4>
+          <h4 className="text-sm font-semibold text-foreground">Emergency contact</h4>
           <p className="text-xs text-muted-foreground">
             Contact person in case of urgent medical scenarios.
           </p>

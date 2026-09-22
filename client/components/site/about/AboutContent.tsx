@@ -78,13 +78,13 @@ export function AboutContent() {
   return (
     <div className="min-h-screen bg-background">
       {/* 1. Hero Section */}
-      <section className="relative overflow-hidden bg-slate-50/60 dark:bg-slate-900/20 border-b border-border py-16 sm:py-20 lg:py-24">
-        <div className="max-w-[1920px] mx-auto section-padding-x">
+      <section className="border-b border-border/60 bg-muted/30 py-16 sm:py-20">
+        <div className="container-page">
           <div className="max-w-3xl mx-auto text-center space-y-4 sm:space-y-6">
-            <span className="text-xs font-semibold tracking-wider text-primary uppercase block">
+            <span className="eyebrow-text block text-primary">
               About DocConnect
             </span>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-[1.15] tracking-tight text-foreground">
+            <h1 className="text-3xl sm:text-4xl font-semibold leading-tight tracking-tight text-foreground">
               Bridging the gap between compassionate care &amp; modern medicine.
             </h1>
             <p className="text-base sm:text-lg text-secondary-text leading-relaxed">
@@ -96,11 +96,11 @@ export function AboutContent() {
 
       {/* 2. Key Impact Metrics */}
       <section className="py-12 sm:py-16 border-b border-border bg-card">
-        <div className="max-w-[1920px] mx-auto section-padding-x">
+        <div className="container-page">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8">
             {STATS.map((stat, idx) => (
               <div key={idx} className="text-center space-y-1.5 p-4">
-                <p className="text-3xl sm:text-4xl font-extrabold text-primary tracking-tight">
+                <p className="text-3xl font-semibold text-primary tracking-tight">
                   {stat.value}
                 </p>
                 <p className="text-sm sm:text-base font-semibold text-foreground">
@@ -119,7 +119,7 @@ export function AboutContent() {
       <section className="py-16 sm:py-20 border-b border-border">
         <div className="max-w-[1920px] mx-auto section-padding-x space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-3">
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-semibold text-foreground tracking-tight">
               Our Core Clinical Principles
             </h2>
             <p className="text-sm sm:text-base text-secondary-text">
@@ -133,12 +133,12 @@ export function AboutContent() {
               return (
                 <div
                   key={idx}
-                  className="rounded-2xl border border-border bg-card p-6 sm:p-7 space-y-3 transition-all hover:border-primary/40 shadow-xs"
+                  className="rounded-xl border border-border bg-card p-6 space-y-3 transition-colors hover:border-primary/40"
                 >
                   <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                     <Icon className="h-5 w-5 stroke-[2.2]" />
                   </div>
-                  <h3 className="text-lg font-bold text-foreground">
+                  <h3 className="text-base font-semibold text-foreground">
                     {item.title}
                   </h3>
                   <p className="text-xs sm:text-sm text-secondary-text leading-relaxed">
@@ -152,10 +152,10 @@ export function AboutContent() {
       </section>
 
       {/* 4. Medical Leadership */}
-      <section className="py-16 sm:py-20 border-b border-border bg-slate-50/40 dark:bg-slate-900/10">
+      <section className="py-16 sm:py-20 border-b border-border/60 bg-muted/30">
         <div className="max-w-[1920px] mx-auto section-padding-x space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-3">
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-semibold text-foreground tracking-tight">
               Clinical Leadership &amp; Governance
             </h2>
             <p className="text-sm sm:text-base text-secondary-text">
@@ -167,9 +167,9 @@ export function AboutContent() {
             {LEADERSHIP.map((leader, idx) => (
               <div
                 key={idx}
-                className="rounded-2xl border border-border bg-card p-6 flex flex-col items-center text-center space-y-4 shadow-xs"
+                className="rounded-xl border border-border bg-card p-6 flex flex-col items-center text-center space-y-4"
               >
-                <Avatar className="h-24 w-24 rounded-2xl border-2 border-primary/20">
+                <Avatar className="h-24 w-24 rounded-xl border border-border">
                   <AvatarImage src={leader.avatar} alt={leader.name} />
                   <AvatarFallback>{leader.name.charAt(0)}</AvatarFallback>
                 </Avatar>
@@ -200,30 +200,30 @@ export function AboutContent() {
 
       {/* 5. Call to Action Banner */}
       <section className="py-16 sm:py-20">
-        <div className="max-w-[1920px] mx-auto section-padding-x">
-          <div className="rounded-3xl bg-primary text-white p-8 sm:p-12 lg:p-16 max-w-5xl mx-auto text-center space-y-6 shadow-xl relative overflow-hidden">
-            <div className="max-w-2xl mx-auto space-y-3 relative z-10">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
+        <div className="container-page">
+          <div className="rounded-xl bg-primary text-primary-foreground p-8 sm:p-12 max-w-5xl mx-auto text-center space-y-6">
+            <div className="max-w-2xl mx-auto space-y-3">
+              <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">
                 Ready to experience accessible, verified healthcare?
               </h2>
-              <p className="text-sm sm:text-base text-white/85 leading-relaxed">
+              <p className="text-sm text-primary-foreground/85 leading-relaxed">
                 Connect with a licensed specialist in under 10 minutes or book a scheduled consultation at your convenience.
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 relative z-10">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <Link href="/doctors">
-                <Button className="w-full sm:w-auto h-12 px-6 rounded-xl bg-white text-primary hover:bg-white/90 font-bold text-sm shadow-md gap-2">
-                  <span>Find a Doctor</span>
+                <Button className="w-full sm:w-auto h-11 px-6 rounded-lg bg-white text-primary hover:bg-white/90 font-semibold text-sm gap-2">
+                  <span>Find a doctor</span>
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/register">
                 <Button
                   variant="outline"
-                  className="w-full sm:w-auto h-12 px-6 rounded-xl border-white/40 text-white bg-white/10 hover:bg-white/20 font-semibold text-sm"
+                  className="w-full sm:w-auto h-11 px-6 rounded-lg border-white/40 text-white bg-white/10 hover:bg-white/20 font-semibold text-sm"
                 >
-                  Create Patient Account
+                  Create patient account
                 </Button>
               </Link>
             </div>

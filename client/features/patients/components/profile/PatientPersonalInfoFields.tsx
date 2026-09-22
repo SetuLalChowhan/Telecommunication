@@ -63,7 +63,7 @@ export const PatientPersonalInfoFields: React.FC<PatientPersonalInfoFieldsProps>
   disabled = false,
 }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 rounded-2xl bg-card border border-border/80 shadow-xs">
+    <div className="panel grid grid-cols-1 gap-4 p-4 md:grid-cols-2">
       <div className="space-y-2">
         <Label className="text-xs font-semibold text-foreground">Full Name</Label>
         <div className="relative">

@@ -242,11 +242,26 @@ export const doctorKeys = {
   all: ["doctors"] as const,
   lists: () => [...doctorKeys.all, "list"] as const,
   list: (params?: DoctorQueryParams) => {
-    const normalized: DoctorQueryParams = {
+    // Every filter that affects the request MUST be part of the key, otherwise
+    // React Query cannot tell requests apart (and hydration keys drift from the
+    // server prefetch).
+    const normalized = {
       search: params?.search ? params.search.trim() : undefined,
       specialtySlug: params?.specialtySlug || undefined,
-      minFee: params?.minFee !== undefined && !isNaN(Number(params.minFee)) ? Number(params.minFee) : undefined,
-      maxFee: params?.maxFee !== undefined && !isNaN(Number(params.maxFee)) ? Number(params.maxFee) : undefined,
+      minFee:
+        params?.minFee !== undefined && !isNaN(Number(params.minFee))
+          ? Number(params.minFee)
+          : undefined,
+      maxFee:
+        params?.maxFee !== undefined && !isNaN(Number(params.maxFee))
+          ? Number(params.maxFee)
+          : undefined,
+      minExperience:
+        params?.minExperience !== undefined && !isNaN(Number(params.minExperience))
+          ? Number(params.minExperience)
+          : params?.experience !== undefined && params.experience !== ""
+            ? Number(params.experience)
+            : undefined,
       sortBy: params?.sortBy || "rating",
       page: params?.page ? Number(params.page) : 1,
       limit: params?.limit ? Number(params.limit) : 6,

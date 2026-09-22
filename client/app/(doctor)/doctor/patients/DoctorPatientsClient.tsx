@@ -51,7 +51,7 @@ export function DoctorPatientsClient() {
   const totalReports = patients.reduce((acc, p) => acc + (p.reportsCount || 0), 0);
 
   return (
-    <div className="w-full space-y-5">
+    <div className="w-full space-y-4 sm:space-y-5">
       <DoctorPatientsHeader
         searchInput={searchInput}
         onSearchChange={setSearchInput}
@@ -62,15 +62,15 @@ export function DoctorPatientsClient() {
       />
 
       {/* Main Clean Minimal Shadcn Table */}
-      <div className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-xs">
+      <div className="panel overflow-hidden">
         {isLoading && patients.length === 0 ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-7 w-7 animate-spin text-primary" />
           </div>
         ) : patients.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-            <div className="h-11 w-11 rounded-2xl bg-muted/80 flex items-center justify-center text-muted-foreground mb-3">
-              <Users className="h-5 w-5" />
+            <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-md bg-muted text-muted-foreground">
+              <Users className="h-4 w-4" />
             </div>
             <h3 className="text-sm font-semibold text-foreground">No patients found</h3>
             <p className="text-xs text-muted-foreground max-w-sm mt-1">
@@ -84,29 +84,29 @@ export function DoctorPatientsClient() {
             {/* Desktop Table */}
             <div className="hidden md:block overflow-x-auto">
               <Table>
-                <TableHeader className="bg-slate-50/70 dark:bg-slate-900/40 border-b border-border/60">
+                <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="py-2.5 px-5 font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
+                    <TableHead className="h-9 px-4 text-[10px] tracking-wider">
                       Patient
                     </TableHead>
-                    <TableHead className="py-2.5 px-4 font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
+                    <TableHead className="h-9 px-4 text-[10px] tracking-wider">
                       Age / Gender
                     </TableHead>
-                    <TableHead className="py-2.5 px-4 font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
+                    <TableHead className="h-9 px-4 text-[10px] tracking-wider">
                       Blood Group
                     </TableHead>
-                    <TableHead className="py-2.5 px-4 font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
+                    <TableHead className="h-9 px-4 text-[10px] tracking-wider">
                       Last Consultation
                     </TableHead>
-                    <TableHead className="py-2.5 px-4 font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
+                    <TableHead className="h-9 px-4 text-[10px] tracking-wider">
                       Visits & Reports
                     </TableHead>
-                    <TableHead className="py-2.5 px-5 text-right font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
+                    <TableHead className="h-9 px-4 text-right text-[10px] tracking-wider">
                       Actions
                     </TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody className="divide-y divide-border/40">
+                <TableBody className="divide-y divide-border">
                   {patients.map((patient) => {
                     const patientName = patient.name || "Patient";
                     const lastVisitFormatted = patient.lastConsultation
@@ -120,10 +120,10 @@ export function DoctorPatientsClient() {
                     return (
                       <TableRow
                         key={patient.patientId}
-                        className="hover:bg-muted/40 transition-colors group"
+                        className="border-0 transition-colors hover:bg-muted/50"
                       >
                         {/* Patient info */}
-                        <TableCell className="py-3 px-5">
+                        <TableCell className="px-4 py-2.5">
                           <div className="flex items-center gap-3">
                             <Avatar className="h-9 w-9 ring-1 ring-primary/15 shrink-0">
                               <AvatarImage src={patient.image || ""} alt={patientName} />
@@ -143,24 +143,24 @@ export function DoctorPatientsClient() {
                         </TableCell>
 
                         {/* Gender */}
-                        <TableCell className="py-3 px-4 text-xs text-secondary-text">
+                        <TableCell className="px-4 py-2.5 text-xs text-secondary-text">
                           <span>{patient.gender || "Patient"}</span>
                         </TableCell>
 
                         {/* Blood Group */}
-                        <TableCell className="py-3 px-4">
-                          <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 border border-rose-500/20">
+                        <TableCell className="px-4 py-2.5">
+                          <span className="inline-block rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-foreground">
                             {formatBloodGroup(patient.bloodGroup)}
                           </span>
                         </TableCell>
 
                         {/* Last Consultation */}
-                        <TableCell className="py-3 px-4 text-xs font-medium text-foreground">
+                        <TableCell className="px-4 py-2.5 text-xs font-medium tabular-nums text-foreground">
                           {lastVisitFormatted}
                         </TableCell>
 
                         {/* Stats */}
-                        <TableCell className="py-3 px-4 text-xs text-muted-foreground">
+                        <TableCell className="px-4 py-2.5 text-xs text-muted-foreground">
                           <span className="font-semibold text-foreground">
                             {patient.consultationCount || 0}
                           </span>{" "}
@@ -172,12 +172,12 @@ export function DoctorPatientsClient() {
                         </TableCell>
 
                         {/* Actions */}
-                        <TableCell className="py-3 px-5 text-right">
+                        <TableCell className="px-4 py-2.5 text-right">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => setSelectedPatient(patient)}
-                            className="h-7.5 px-2.5 rounded-lg text-xs font-medium border-border/80 hover:border-primary/50"
+                            className="h-7 rounded-md px-2.5 text-xs font-medium"
                           >
                             View Medical File
                           </Button>
@@ -190,7 +190,7 @@ export function DoctorPatientsClient() {
             </div>
 
             {/* Mobile View */}
-            <div className="md:hidden divide-y divide-border/60">
+            <div className="divide-y divide-border md:hidden">
               {patients.map((patient) => {
                 const patientName = patient.name || "Patient";
                 return (
@@ -217,7 +217,7 @@ export function DoctorPatientsClient() {
                         variant="outline"
                         size="sm"
                         onClick={() => setSelectedPatient(patient)}
-                        className="h-7 px-2.5 rounded-lg text-xs font-medium border-border"
+                        className="h-7 rounded-md px-2.5 text-xs font-medium"
                       >
                         File
                       </Button>

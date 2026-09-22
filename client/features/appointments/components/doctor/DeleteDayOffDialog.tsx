@@ -27,24 +27,18 @@ export const DeleteDayOffDialog: React.FC<DeleteDayOffDialogProps> = ({
 }) => {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="rounded-2xl p-6">
+      <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-base font-bold text-foreground">
-            Remove this day off?
-          </AlertDialogTitle>
-          <AlertDialogDescription className="text-xs text-secondary-text leading-relaxed">
-            Removing {dayOffDate} will make this date available for patient appointment bookings again.
+          <AlertDialogTitle>Remove this day off?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Removing {dayOffDate} will make this date available for patient
+            appointment bookings again.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="pt-3 gap-2">
-          <AlertDialogCancel className="h-9.5 px-4 rounded-xl text-xs">
-            Cancel
-          </AlertDialogCancel>
-          <AlertDialogAction
-            onClick={onConfirm}
-            className="h-9.5 px-4 rounded-xl text-xs font-semibold bg-destructive hover:bg-destructive/90"
-          >
-            Remove Day Off
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>
+            Remove day off
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

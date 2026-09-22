@@ -61,12 +61,12 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-4">
+    <div className="space-y-4">
+      <div className="panel space-y-4 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-              <ShieldCheck className="h-5 w-5" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+              <ShieldCheck className="h-4 w-4" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-foreground">Practicing License & Verification</h3>
@@ -138,7 +138,7 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
       </div>
 
       {documents.length > 0 && (
-        <div className="p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-3">
+        <div className="panel space-y-3 p-4">
           <h4 className="text-sm font-semibold text-foreground">Uploaded Documents</h4>
           <div className="space-y-2">
             {documents.map((doc) => (

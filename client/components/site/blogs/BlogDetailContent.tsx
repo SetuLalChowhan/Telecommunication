@@ -15,15 +15,15 @@ export function BlogDetailContent({ post }: BlogDetailContentProps) {
   if (!post) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 py-20 text-center">
-        <div className="rounded-2xl border border-border bg-card p-10 max-w-md mx-auto space-y-4 shadow-xs">
+        <div className="rounded-xl border border-border bg-card p-10 max-w-md mx-auto space-y-4">
           <BookOpen className="h-12 w-12 text-muted-foreground mx-auto" />
-          <h1 className="text-2xl font-bold text-foreground">Blog Not Found</h1>
+          <h1 className="text-lg font-semibold text-foreground">Article not found</h1>
           <p className="text-sm text-secondary-text">
             The blog article you are looking for does not exist or has been removed.
           </p>
           <Link href="/blogs">
-            <Button className="rounded-xl bg-primary text-white hover:bg-primary-dark">
-              Back to Blogs
+            <Button className="rounded-lg bg-primary text-primary-foreground hover:bg-primary-dark">
+              Back to blogs
             </Button>
           </Link>
         </div>
@@ -33,7 +33,7 @@ export function BlogDetailContent({ post }: BlogDetailContentProps) {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <div className="max-w-[1920px] mx-auto section-padding-x pt-8 sm:pt-12">
+      <div className="container-page pt-8 sm:pt-12">
         <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
           <Link
             href="/blogs"
@@ -43,7 +43,7 @@ export function BlogDetailContent({ post }: BlogDetailContentProps) {
             <span>Back to all blogs</span>
           </Link>
 
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-foreground leading-[1.2] tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-foreground leading-tight tracking-tight">
             {post.title}
           </h1>
 
@@ -63,7 +63,7 @@ export function BlogDetailContent({ post }: BlogDetailContentProps) {
             </div>
           </div>
 
-          <div className="relative aspect-[16/10] sm:aspect-[16/9] w-full rounded-2xl overflow-hidden border border-border bg-muted/40 shadow-xs">
+          <div className="relative aspect-[16/10] sm:aspect-[16/9] w-full rounded-xl overflow-hidden border border-border bg-muted/40">
             <Image
               src={post.featuredImage}
               alt={post.title}
@@ -75,7 +75,7 @@ export function BlogDetailContent({ post }: BlogDetailContentProps) {
           </div>
 
           {post.excerpt && (
-            <p className="text-base sm:text-lg font-medium text-foreground leading-relaxed bg-slate-50/60 dark:bg-slate-900/30 p-5 rounded-2xl border border-border">
+            <p className="text-base font-medium text-foreground leading-relaxed bg-muted/40 p-5 rounded-xl border border-border">
               {post.excerpt}
             </p>
           )}
@@ -86,7 +86,7 @@ export function BlogDetailContent({ post }: BlogDetailContentProps) {
                 return (
                   <h2
                     key={idx}
-                    className="text-xl sm:text-2xl font-bold text-foreground pt-4 pb-1"
+                    className="text-xl font-semibold text-foreground pt-4 pb-1"
                   >
                     {block.text}
                   </h2>
@@ -95,7 +95,7 @@ export function BlogDetailContent({ post }: BlogDetailContentProps) {
 
               if (block.type === "subheading") {
                 return (
-                  <h3 key={idx} className="text-lg font-bold text-foreground pt-2">
+                  <h3 key={idx} className="text-lg font-semibold text-foreground pt-2">
                     {block.text}
                   </h3>
                 );
@@ -117,7 +117,7 @@ export function BlogDetailContent({ post }: BlogDetailContentProps) {
                 return (
                   <blockquote
                     key={idx}
-                    className="my-5 border-l-4 border-primary pl-4 py-2 italic text-foreground bg-slate-50/60 dark:bg-slate-900/40 rounded-r-xl"
+                    className="my-5 border-l-4 border-primary pl-4 py-2 italic text-foreground bg-muted/40 rounded-r-lg"
                   >
                     <p>&ldquo;{block.text}&rdquo;</p>
                   </blockquote>
@@ -145,7 +145,7 @@ export function BlogDetailContent({ post }: BlogDetailContentProps) {
 
           <div className="pt-8 border-t border-border flex items-center justify-between">
             <Link href="/blogs">
-              <Button variant="outline" className="rounded-xl text-xs sm:text-sm h-10 px-4 gap-2">
+              <Button variant="outline" className="rounded-lg text-xs sm:text-sm h-10 px-4 gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 <span>Back to all blogs</span>
               </Button>

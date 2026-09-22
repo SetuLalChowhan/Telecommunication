@@ -44,7 +44,7 @@ export const BlogSearchFilters: React.FC<BlogSearchFiltersProps> = ({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search articles by title, topic, condition, or author..."
-            className="pl-10 pr-9 h-11 rounded-xl bg-card border-border shadow-xs text-sm placeholder:text-muted-foreground focus-visible:ring-primary/20"
+            className="pl-10 pr-9 h-11 rounded-lg bg-card border-border text-sm placeholder:text-muted-foreground focus-visible:ring-primary/20"
           />
           {searchQuery && (
             <button
@@ -67,7 +67,7 @@ export const BlogSearchFilters: React.FC<BlogSearchFiltersProps> = ({
           <select
             value={sortBy}
             onChange={(e) => onSortChange(e.target.value as "latest" | "readTime" | "title")}
-            className="h-10 px-3 py-1 text-xs sm:text-sm font-medium rounded-xl border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer shadow-xs"
+            className="h-10 px-3 py-1 text-xs sm:text-sm font-medium rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
           >
             <option value="latest">Latest Published</option>
             <option value="readTime">Shortest Read Time</option>
@@ -86,9 +86,9 @@ export const BlogSearchFilters: React.FC<BlogSearchFiltersProps> = ({
               type="button"
               onClick={() => onSelectCategory(category)}
               className={cn(
-                "px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-150 border cursor-pointer",
+                "px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors border cursor-pointer",
                 isSelected
-                  ? "bg-primary text-white border-primary shadow-xs"
+                  ? "bg-primary text-primary-foreground border-primary"
                   : "bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-foreground"
               )}
             >
@@ -100,7 +100,7 @@ export const BlogSearchFilters: React.FC<BlogSearchFiltersProps> = ({
 
       {/* Results status and clear button */}
       {isFiltered && (
-        <div className="flex items-center justify-between bg-primary/5 border border-primary/15 rounded-xl px-4 py-2.5 text-xs">
+        <div className="flex items-center justify-between bg-primary/5 border border-primary/15 rounded-lg px-4 py-2.5 text-xs">
           <span className="text-secondary-text">
             Showing <strong className="text-foreground">{filteredCount}</strong> of{" "}
             {totalCount} articles

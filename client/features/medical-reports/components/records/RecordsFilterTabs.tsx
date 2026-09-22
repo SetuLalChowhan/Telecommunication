@@ -1,14 +1,23 @@
 "use client";
 
 import React from "react";
-import { FileCheck2, FileText } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export type RecordsCategoryFilter = "diagnostic" | "prescription" | "all";
 
 interface RecordsFilterTabsProps {
-  activeTab: "diagnostic" | "prescription" | "all";
-  onTabChange: (tab: "diagnostic" | "prescription" | "all") => void;
+  activeTab: RecordsCategoryFilter;
+  onTabChange: (tab: RecordsCategoryFilter) => void;
   diagnosticCount: number;
   prescriptionCount: number;
   totalCount: number;
+}
+
+interface TabDef {
+  value: RecordsCategoryFilter;
+  label: string;
+  shortLabel: string;
+  count: number;
 }
 
 export const RecordsFilterTabs: React.FC<RecordsFilterTabsProps> = ({
@@ -18,54 +27,66 @@ export const RecordsFilterTabs: React.FC<RecordsFilterTabsProps> = ({
   prescriptionCount,
   totalCount,
 }) => {
+  const tabs: TabDef[] = [
+    {
+      value: "diagnostic",
+      label: "Diagnostic reports",
+      shortLabel: "Reports",
+      count: diagnosticCount,
+    },
+    {
+      value: "prescription",
+      label: "Prescriptions",
+      shortLabel: "Rx",
+      count: prescriptionCount,
+    },
+    {
+      value: "all",
+      label: "All documents",
+      shortLabel: "All",
+      count: totalCount,
+    },
+  ];
+
   return (
-    <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-muted/60 border border-border w-fit">
-      <button
-        type="button"
-        onClick={() => onTabChange("diagnostic")}
-        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
-          activeTab === "diagnostic"
-            ? "bg-card text-foreground shadow-xs"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
-      >
-        <FileCheck2 className="h-4 w-4" />
-        <span>Diagnostic Reports</span>
-        <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
-          {diagnosticCount}
-        </span>
-      </button>
-
-      <button
-        type="button"
-        onClick={() => onTabChange("prescription")}
-        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
-          activeTab === "prescription"
-            ? "bg-card text-foreground shadow-xs"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
-      >
-        <FileText className="h-4 w-4" />
-        <span>Prescriptions</span>
-        <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
-          {prescriptionCount}
-        </span>
-      </button>
-
-      <button
-        type="button"
-        onClick={() => onTabChange("all")}
-        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
-          activeTab === "all"
-            ? "bg-card text-foreground shadow-xs"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
-      >
-        <span>All Documents</span>
-        <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-bold">
-          {totalCount}
-        </span>
-      </button>
+    <div
+      role="tablist"
+      aria-label="Filter documents by type"
+      className="flex w-full items-center gap-0.5 overflow-x-auto border-b border-border"
+    >
+      {tabs.map((tab) => {
+        const isActive = activeTab === tab.value;
+        return (
+          <button
+            key={tab.value}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            onClick={() => onTabChange(tab.value)}
+            className={cn(
+              "-mb-px flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2 text-xs font-semibold transition-colors",
+              isActive
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <span className="hidden sm:inline">{tab.label}</span>
+            <span className="sm:hidden">{tab.shortLabel}</span>
+            <span
+              className={cn(
+                "rounded px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+                isActive
+                  ? "bg-accent text-accent-foreground"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {tab.count}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 };
+
+export default RecordsFilterTabs;

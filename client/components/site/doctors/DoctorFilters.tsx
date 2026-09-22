@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Specialty } from "@/types/doctor";
-import { Filter, RotateCcw, ShieldCheck, Stethoscope } from "lucide-react";
+import { Filter, RotateCcw, ShieldCheck, Stethoscope, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -29,6 +29,13 @@ interface DoctorFiltersProps {
   onMobileClose?: () => void;
 }
 
+const EXPERIENCE_OPTIONS = [
+  { label: "Any", val: "" },
+  { label: "5+ years", val: "5" },
+  { label: "10+ years", val: "10" },
+  { label: "15+ years", val: "15" },
+];
+
 export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
   specialties,
   selectedSpecialty,
@@ -47,13 +54,16 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
 }) => {
   const hasActiveFilters = Boolean(selectedSpecialty || minFee || maxFee || experience);
 
+  const feeInputClass =
+    "w-full h-10 px-3 rounded-lg border border-border bg-card text-sm text-foreground placeholder:text-muted-foreground transition-colors hover:border-primary/40 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+
   const filterContent = (
     <div className="space-y-6">
-      {/* Header & Reset */}
+      {/* Header & reset */}
       <div className="flex items-center justify-between pb-4 border-b border-border">
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-primary" />
-          <h3 className="text-base font-semibold text-foreground">Filters</h3>
+          <h3 className="text-sm font-semibold text-foreground">Filters</h3>
         </div>
 
         {hasActiveFilters && (
@@ -68,35 +78,25 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
         )}
       </div>
 
-      {/* 1. Specialty Dropdown */}
+      {/* Specialty */}
       <div className="space-y-2">
-        <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+        <label className="flex items-center gap-1.5 text-xs font-medium text-foreground">
           <Stethoscope className="h-3.5 w-3.5 text-primary" />
-          <span>Medical Specialty</span>
+          <span>Medical specialty</span>
         </label>
         <Select
           value={selectedSpecialty || "all"}
           onValueChange={(val) => onSpecialtyChange(val === "all" ? "" : val)}
         >
-          <SelectTrigger
-            className={`h-11 rounded-xl text-sm font-medium transition-all ${
-              selectedSpecialty
-                ? "border-2 border-primary bg-primary/5 text-primary font-semibold ring-2 ring-primary/20 shadow-xs"
-                : "border border-border bg-card text-foreground hover:border-primary/40 focus:ring-primary/20"
-            }`}
-          >
-            <SelectValue placeholder="All Specialties" />
+          <SelectTrigger className="h-10 rounded-lg border border-border bg-card text-sm font-medium">
+            <SelectValue placeholder="All specialties" />
           </SelectTrigger>
-          <SelectContent className="rounded-xl border-border bg-card shadow-xl max-h-64">
+          <SelectContent className="rounded-xl border-border bg-card shadow-lg max-h-64">
             <SelectItem value="all" className="text-sm font-medium">
-              All Specialties
+              All specialties
             </SelectItem>
             {specialties.map((spec) => (
-              <SelectItem
-                key={spec.id}
-                value={spec.slug}
-                className="text-sm font-medium flex items-center justify-between"
-              >
+              <SelectItem key={spec.id} value={spec.slug} className="text-sm font-medium">
                 <span>{spec.name}</span>
               </SelectItem>
             ))}
@@ -104,14 +104,12 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
         </Select>
       </div>
 
-      {/* 2. Fee Range */}
-      <div className="space-y-2 pt-3 border-t border-border/70">
-        <label className="text-xs font-semibold text-foreground block">
-          Consultation Fee (BDT)
-        </label>
+      {/* Fee range */}
+      <div className="space-y-2 pt-4 border-t border-border/70">
+        <label className="block text-xs font-medium text-foreground">Consultation fee (BDT)</label>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <span className="text-[11px] text-muted-foreground mb-1 block font-medium">Min (৳)</span>
+            <span className="mb-1 block text-[11px] font-medium text-muted-foreground">Min (৳)</span>
             <input
               type="number"
               placeholder="0"
@@ -120,15 +118,11 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
               onKeyDown={(e) => {
                 if (e.key === "Enter") onApplyFilters();
               }}
-              className={`w-full h-10 px-3.5 rounded-xl text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none transition-all ${
-                minFee
-                  ? "border-2 border-primary bg-primary/5 font-semibold ring-1 ring-primary/20"
-                  : "border border-border/80 bg-card hover:border-primary/40 focus:border-primary"
-              }`}
+              className={feeInputClass}
             />
           </div>
           <div>
-            <span className="text-[11px] text-muted-foreground mb-1 block font-medium">Max (৳)</span>
+            <span className="mb-1 block text-[11px] font-medium text-muted-foreground">Max (৳)</span>
             <input
               type="number"
               placeholder="2000"
@@ -137,38 +131,27 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
               onKeyDown={(e) => {
                 if (e.key === "Enter") onApplyFilters();
               }}
-              className={`w-full h-10 px-3.5 rounded-xl text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none transition-all ${
-                maxFee
-                  ? "border-2 border-primary bg-primary/5 font-semibold ring-1 ring-primary/20"
-                  : "border border-border/80 bg-card hover:border-primary/40 focus:border-primary"
-              }`}
+              className={feeInputClass}
             />
           </div>
         </div>
       </div>
 
-      {/* 3. Experience Level */}
-      <div className="space-y-2 pt-3 border-t border-border/70">
-        <label className="text-xs font-semibold text-foreground block">
-          Experience Level
-        </label>
-        <div className="grid grid-cols-2 gap-2.5">
-          {[
-            { label: "Any Experience", val: "" },
-            { label: "5+ Years", val: "5" },
-            { label: "10+ Years", val: "10" },
-            { label: "15+ Years", val: "15" },
-          ].map((item) => {
+      {/* Experience */}
+      <div className="space-y-2 pt-4 border-t border-border/70">
+        <label className="block text-xs font-medium text-foreground">Experience level</label>
+        <div className="grid grid-cols-2 gap-2">
+          {EXPERIENCE_OPTIONS.map((item) => {
             const isSelected = experience === item.val;
             return (
               <button
                 key={item.val}
                 type="button"
                 onClick={() => onExperienceChange(item.val)}
-                className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer text-center ${
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors text-center cursor-pointer border ${
                   isSelected
-                    ? "border-2 border-primary bg-primary text-white shadow-xs font-bold ring-2 ring-primary/20"
-                    : "bg-slate-50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground border border-border/80 hover:border-primary/40"
+                    ? "border-primary bg-primary/10 text-primary font-semibold"
+                    : "border-border bg-card text-foreground hover:border-primary/40"
                 }`}
               >
                 {item.label}
@@ -178,28 +161,28 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
         </div>
       </div>
 
-      {/* Apply Filters Action Button */}
-      <div className="pt-3 border-t border-border/70 space-y-2">
+      {/* Apply */}
+      <div className="pt-4 border-t border-border/70">
         <Button
           type="button"
           disabled={isApplying}
           onClick={onApplyFilters}
-          className="w-full h-10.5 rounded-xl font-semibold text-xs sm:text-sm shadow-xs flex items-center justify-center gap-2"
+          className="w-full h-10 rounded-lg font-semibold text-sm"
         >
           {isApplying ? (
-            <>
-              <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+            <span className="flex items-center justify-center gap-2">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
               <span>Applying...</span>
-            </>
+            </span>
           ) : (
-            <span>Apply Filters</span>
+            <span>Apply filters</span>
           )}
         </Button>
       </div>
 
-      {/* Verification Notice */}
-      <div className="rounded-xl bg-slate-50/80 dark:bg-slate-900/40 border border-border/70 p-3.5 flex items-start gap-2.5 text-xs text-secondary-text">
-        <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+      {/* Notice */}
+      <div className="flex items-start gap-2.5 rounded-lg border border-border/70 bg-muted/40 p-3.5 text-xs text-secondary-text">
+        <ShieldCheck className="h-4 w-4 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
         <p className="leading-relaxed">
           All registered doctors are BMDC-certified and verified for online practice.
         </p>
@@ -209,39 +192,39 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
 
   return (
     <>
-      {/* Desktop Sidebar */}
+      {/* Desktop sidebar */}
       <aside className="hidden lg:block w-80 xl:w-[340px] shrink-0">
-        <div className="sticky top-24 rounded-2xl border border-border/70 bg-card p-6 sm:p-7 shadow-xs">
+        <div className="sticky top-24 rounded-xl border border-border bg-card p-6">
           {filterContent}
         </div>
       </aside>
 
-      {/* Mobile Drawer Modal */}
+      {/* Mobile drawer */}
       {isMobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
-          {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-black/50 transition-opacity"
             onClick={onMobileClose}
+            aria-hidden="true"
           />
 
-          {/* Drawer Content */}
-          <div className="relative ml-auto w-full max-w-xs h-full bg-card p-6 overflow-y-auto shadow-2xl z-10 flex flex-col justify-between">
+          <div className="relative ml-auto z-10 flex h-full w-full max-w-xs flex-col justify-between overflow-y-auto bg-card p-6 shadow-xl">
             <div>
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-border">
-                <h3 className="text-base font-semibold text-foreground">Filters</h3>
+              <div className="mb-4 flex items-center justify-between border-b border-border pb-4">
+                <h3 className="text-sm font-semibold text-foreground">Filters</h3>
                 <button
                   type="button"
                   onClick={onMobileClose}
+                  aria-label="Close filters"
                   className="rounded-lg p-1 text-secondary-text hover:bg-muted cursor-pointer"
                 >
-                  <RotateCcw className="h-5 w-5" />
+                  <X className="h-5 w-5" />
                 </button>
               </div>
               {filterContent}
             </div>
 
-            <div className="pt-6 border-t border-border mt-6">
+            <div className="mt-6 border-t border-border pt-6">
               <Button
                 type="button"
                 disabled={isApplying}
@@ -249,15 +232,15 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
                   onApplyFilters();
                   onMobileClose?.();
                 }}
-                className="w-full h-11 rounded-xl font-semibold text-sm shadow-xs flex items-center justify-center gap-2"
+                className="w-full h-11 rounded-lg font-semibold text-sm"
               >
                 {isApplying ? (
-                  <>
-                    <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
                     <span>Applying...</span>
-                  </>
+                  </span>
                 ) : (
-                  <span>Apply Filters</span>
+                  <span>Apply filters</span>
                 )}
               </Button>
             </div>

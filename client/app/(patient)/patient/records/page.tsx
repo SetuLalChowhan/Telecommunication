@@ -16,13 +16,19 @@ export const metadata: Metadata = {
   description: "Securely view, upload, and organize your diagnostic reports and clinical documents.",
 };
 
+/**
+ * Kept in sync with the client hook: type and search are filtered on the client,
+ * so one wide page is prefetched instead of the API default of 10.
+ */
+const REPORTS_LIMIT = 100;
+
 export default async function PatientRecordsPage() {
   const queryClient = new QueryClient();
 
   await Promise.all([
     queryClient.prefetchQuery({
-      queryKey: medicalReportKeys.myReports(),
-      queryFn: () => getMyMedicalReportsServer(),
+      queryKey: medicalReportKeys.myReports({ limit: REPORTS_LIMIT }),
+      queryFn: () => getMyMedicalReportsServer({ limit: REPORTS_LIMIT }),
     }),
     queryClient.prefetchQuery({
       queryKey: patientKeys.bookings({ limit: 50 }),

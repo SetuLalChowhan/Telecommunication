@@ -1,6 +1,7 @@
 export * from "./DoctorStatsCards";
 export * from "./DoctorNextConsultation";
 export * from "./DoctorTodayScheduleTable";
+export * from "./DoctorQuickActions";
 export * from "./DoctorAvailabilityTable";
 export * from "./DoctorDaysOffCalendar";
 export * from "./DoctorDashboardView";

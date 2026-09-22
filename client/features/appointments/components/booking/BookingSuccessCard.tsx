@@ -28,19 +28,19 @@ export const BookingSuccessCard: React.FC<BookingSuccessCardProps> = ({
   });
 
   return (
-    <div className="p-6 rounded-3xl bg-card border border-border/80 shadow-lg text-center space-y-5 animate-in zoom-in-95 duration-200">
-      <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto shadow-xs">
+    <div className="p-6 rounded-xl bg-card border border-border text-center space-y-5 animate-in fade-in duration-200">
+      <div className="h-14 w-14 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto">
         <CheckCircle2 className="h-8 w-8" />
       </div>
 
       <div className="space-y-1">
-        <h3 className="text-lg font-bold text-foreground">Appointment Booked!</h3>
+        <h3 className="text-base font-semibold text-foreground">Appointment booked</h3>
         <p className="text-xs text-muted-foreground">
           Your video consultation request has been submitted and confirmed.
         </p>
       </div>
 
-      <div className="p-4 rounded-2xl bg-muted/40 border border-border/60 text-xs text-left space-y-2">
+      <div className="p-4 rounded-lg bg-muted/40 border border-border text-xs text-left space-y-2">
         <div className="flex items-center justify-between text-muted-foreground">
           <span>Date</span>
           <span className="font-semibold text-foreground flex items-center gap-1">
@@ -66,8 +66,8 @@ export const BookingSuccessCard: React.FC<BookingSuccessCardProps> = ({
 
       <div className="space-y-2 pt-2">
         <Link href="/patient/appointments">
-          <Button className="w-full h-11 rounded-xl bg-primary hover:bg-primary-dark text-white font-semibold gap-2 shadow-sm shadow-primary/20">
-            <span>View in Appointments</span>
+          <Button className="w-full h-11 rounded-lg font-semibold gap-2">
+            <span>View in appointments</span>
             <ArrowRight className="h-4 w-4" />
           </Button>
         </Link>
@@ -75,7 +75,7 @@ export const BookingSuccessCard: React.FC<BookingSuccessCardProps> = ({
         <Button
           variant="ghost"
           onClick={onBookAnother}
-          className="w-full h-9 rounded-xl text-xs text-muted-foreground hover:text-foreground"
+          className="w-full h-9 rounded-lg text-xs text-muted-foreground hover:text-foreground"
         >
           Book another slot
         </Button>

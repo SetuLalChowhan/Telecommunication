@@ -1,9 +1,24 @@
 "use client";
 
 import React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogBody,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Phone, Mail, MapPin, Droplet, ShieldAlert, Calendar, FileText } from "lucide-react";
+import {
+  Phone,
+  Mail,
+  MapPin,
+  Droplet,
+  ShieldAlert,
+  Calendar,
+  FileText,
+} from "lucide-react";
 import { DoctorPatientRegistryItem } from "@/features/doctors/types";
 
 interface DoctorPatientDetailDialogProps {
@@ -11,6 +26,12 @@ interface DoctorPatientDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+const formatBloodGroup = (value: string) =>
+  value
+    .replace("_POSITIVE", "+")
+    .replace("_NEGATIVE", "-")
+    .replace("_", " ");
 
 export const DoctorPatientDetailDialog: React.FC<DoctorPatientDetailDialogProps> = ({
   patient,
@@ -27,79 +48,135 @@ export const DoctorPatientDetailDialog: React.FC<DoctorPatientDetailDialogProps>
       .join("")
       .toUpperCase();
 
+  const stats = [
+    {
+      label: "Consultations",
+      value: patient.consultationCount ?? 0,
+      icon: Calendar,
+    },
+    {
+      label: "Medical records",
+      value: patient.reportsCount ?? 0,
+      icon: FileText,
+    },
+  ];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="rounded-3xl max-w-lg p-6">
-        <DialogHeader className="text-left space-y-2">
-          <div className="flex items-center gap-3.5">
-            <Avatar className="h-14 w-14 rounded-2xl border border-primary/20">
+      <DialogContent className="max-w-[520px]">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <Avatar className="h-12 w-12 shrink-0 rounded-lg">
               <AvatarImage src={patient.image || undefined} alt={patient.name} />
-              <AvatarFallback className="bg-primary/10 text-primary font-bold text-base rounded-2xl">
+              <AvatarFallback className="rounded-lg bg-muted text-sm font-semibold text-foreground">
                 {getInitials(patient.name || "P")}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <DialogTitle className="text-lg font-bold text-foreground">
-                {patient.name}
-              </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
-                <span>Patient ID: {patient.patientId.slice(-8)}</span>
-                {patient.gender && <span>• {patient.gender}</span>}
+            <div className="min-w-0">
+              <DialogTitle className="truncate">{patient.name}</DialogTitle>
+              <DialogDescription className="flex flex-wrap items-center gap-x-1.5">
+                <span className="font-mono">
+                  ID {patient.patientId.slice(-8)}
+                </span>
+                {patient.gender && (
+                  <>
+                    <span aria-hidden>·</span>
+                    <span>{patient.gender}</span>
+                  </>
+                )}
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="space-y-4 py-2 text-xs">
-          <div className="grid grid-cols-2 gap-2.5 p-3.5 rounded-2xl bg-muted/40 border border-border/60">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Phone className="h-3.5 w-3.5 text-primary" />
-              <span className="font-medium text-foreground">{patient.phone || "No phone"}</span>
+        <DialogBody>
+          {/* Contact block */}
+          <dl className="grid grid-cols-1 gap-x-4 gap-y-2.5 rounded-md border border-border bg-muted/40 p-3 sm:grid-cols-2">
+            <div className="flex items-center gap-2">
+              <dt className="shrink-0 text-muted-foreground">
+                <Phone className="h-3.5 w-3.5" />
+                <span className="sr-only">Phone</span>
+              </dt>
+              <dd className="truncate text-xs font-medium text-foreground">
+                {patient.phone || "No phone"}
+              </dd>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Mail className="h-3.5 w-3.5 text-primary" />
-              <span className="font-medium text-foreground truncate">{patient.email}</span>
+
+            <div className="flex items-center gap-2">
+              <dt className="shrink-0 text-muted-foreground">
+                <Mail className="h-3.5 w-3.5" />
+                <span className="sr-only">Email</span>
+              </dt>
+              <dd className="truncate text-xs font-medium text-foreground">
+                {patient.email || "No email"}
+              </dd>
             </div>
+
             {patient.bloodGroup && (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Droplet className="h-3.5 w-3.5 text-red-600" />
-                <span className="font-medium text-foreground">
-                  Blood: {patient.bloodGroup.replace("_POSITIVE", "+").replace("_NEGATIVE", "-").replace("_", " ")}
-                </span>
+              <div className="flex items-center gap-2">
+                <dt className="shrink-0 text-muted-foreground">
+                  <Droplet className="h-3.5 w-3.5" />
+                  <span className="sr-only">Blood group</span>
+                </dt>
+                <dd className="text-xs font-medium text-foreground">
+                  {formatBloodGroup(patient.bloodGroup)}
+                </dd>
               </div>
             )}
+
             {patient.address && (
-              <div className="flex items-center gap-2 text-muted-foreground col-span-2">
-                <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
-                <span className="font-medium text-foreground truncate">{patient.address}</span>
+              <div className="flex items-center gap-2 sm:col-span-2">
+                <dt className="shrink-0 text-muted-foreground">
+                  <MapPin className="h-3.5 w-3.5" />
+                  <span className="sr-only">Address</span>
+                </dt>
+                <dd className="truncate text-xs font-medium text-foreground">
+                  {patient.address}
+                </dd>
               </div>
             )}
-          </div>
+          </dl>
 
           {patient.emergencyContactName && (
-            <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-200 space-y-1">
-              <div className="flex items-center gap-1.5 font-semibold">
+            <div className="space-y-1 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-amber-800 dark:text-amber-200">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider">
                 <ShieldAlert className="h-3.5 w-3.5" />
-                <span>Emergency Contact</span>
+                <span>Emergency contact</span>
               </div>
-              <p>{patient.emergencyContactName}</p>
+              <p className="text-xs font-medium">
+                {patient.emergencyContactName}
+              </p>
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3 pt-2">
-            <div className="p-3.5 rounded-2xl bg-card border border-border/80 text-center">
-              <Calendar className="h-4 w-4 text-primary mx-auto mb-1" />
-              <span className="text-[11px] text-muted-foreground">Consultations</span>
-              <p className="text-base font-bold text-foreground mt-0.5">{patient.consultationCount}</p>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-card border border-border/80 text-center">
-              <FileText className="h-4 w-4 text-primary mx-auto mb-1" />
-              <span className="text-[11px] text-muted-foreground">Medical Records</span>
-              <p className="text-base font-bold text-foreground mt-0.5">{patient.reportsCount}</p>
-            </div>
+          {/* Activity */}
+          <div className="grid grid-cols-2 gap-2">
+            {stats.map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={stat.label}
+                  className="flex items-center gap-3 rounded-md border border-border p-3"
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      {stat.label}
+                    </p>
+                    <p className="text-sm font-semibold tabular-nums text-foreground">
+                      {stat.value}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        </div>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );
 };
+
+export default DoctorPatientDetailDialog;

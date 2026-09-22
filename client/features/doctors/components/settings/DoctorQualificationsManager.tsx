@@ -39,10 +39,12 @@ export const DoctorQualificationsManager: React.FC<DoctorQualificationsManagerPr
   };
 
   return (
-    <div className="space-y-4 p-5 rounded-2xl bg-card border border-border/80 shadow-xs">
+    <div className="panel space-y-4 p-4">
       <div className="flex items-center gap-2">
-        <GraduationCap className="h-5 w-5 text-primary" />
-        <h4 className="text-sm font-semibold text-foreground">Degrees & Medical Qualifications</h4>
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+          <GraduationCap className="h-4 w-4" />
+        </div>
+        <h4 className="text-sm font-semibold text-foreground">Degrees &amp; qualifications</h4>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

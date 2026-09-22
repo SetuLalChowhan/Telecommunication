@@ -48,14 +48,14 @@ export const DoctorDaysOffCalendar: React.FC<DoctorDaysOffCalendarProps> = ({
   return (
     <section className="space-y-3.5 pt-2">
       <div>
-        <h2 className="text-base sm:text-lg font-bold text-foreground">
-          Planned Days Off & Vacation
+        <h2 className="text-base font-semibold text-foreground">
+          Planned days off & vacation
         </h2>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Calendar Picker Panel */}
-        <div className="lg:col-span-6 rounded-2xl border border-border/80 bg-card p-5 shadow-xs flex flex-col items-center justify-center">
+        <div className="lg:col-span-6 rounded-xl border border-border bg-card p-5 flex flex-col items-center justify-center">
           <Calendar
             selected={selectedDate}
             onSelect={(date) => setSelectedDate(date)}
@@ -73,21 +73,21 @@ export const DoctorDaysOffCalendar: React.FC<DoctorDaysOffCalendarProps> = ({
             <Button
               size="sm"
               onClick={() => setAddDialogOpen(true)}
-              className="h-8.5 px-3 rounded-lg text-xs font-semibold gap-1.5"
+              className="h-9 px-3.5 rounded-lg text-xs font-semibold gap-1.5"
             >
               <Plus className="h-3.5 w-3.5" />
-              <span>Mark Date as Day Off</span>
+              <span>Mark date as day off</span>
             </Button>
           </div>
         </div>
 
         {/* Existing Days Off List */}
-        <div className="lg:col-span-6 rounded-2xl border border-border/80 bg-card p-5 space-y-4 shadow-xs">
+        <div className="lg:col-span-6 rounded-xl border border-border bg-card p-5 space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-border/60">
             <div className="flex items-center gap-2">
               <CalendarOff className="h-4 w-4 text-amber-600" />
-              <h3 className="text-sm font-bold text-foreground">
-                Scheduled Days Off
+              <h3 className="text-sm font-semibold text-foreground">
+                Scheduled days off
               </h3>
             </div>
             <span className="text-xs text-muted-foreground">
@@ -103,10 +103,10 @@ export const DoctorDaysOffCalendar: React.FC<DoctorDaysOffCalendarProps> = ({
                 return (
                   <div
                     key={day.id}
-                    className="p-3.5 rounded-xl border border-border/60 bg-slate-50/50 dark:bg-slate-900/30 flex items-center justify-between gap-3"
+                    className="p-3.5 rounded-lg border border-border bg-muted/40 flex items-center justify-between gap-3"
                   >
                     <div className="space-y-0.5">
-                      <p className="text-sm font-bold text-foreground">
+                      <p className="text-sm font-semibold text-foreground">
                         {day.formatted}
                       </p>
                       <p className="text-xs text-muted-foreground">{day.reason}</p>

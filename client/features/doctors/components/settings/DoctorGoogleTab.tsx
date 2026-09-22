@@ -51,12 +51,12 @@ export const DoctorGoogleTab: React.FC<DoctorGoogleTabProps> = ({
   });
 
   return (
-    <div className="space-y-6">
-      <div className="p-6 rounded-2xl bg-card border border-border/80 shadow-xs space-y-6">
+    <div className="space-y-4">
+      <div className="panel space-y-5 p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
-              <div className="h-10 w-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-600">
+              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-muted text-muted-foreground">
                 <Calendar className="h-5 w-5" />
               </div>
               <div>

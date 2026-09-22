@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/features/auth/api/client";
+import { PageHeader } from "@/components/layout";
 
 const changePasswordSchema = z
   .object({
@@ -87,25 +88,20 @@ export default function PatientSettingsPage() {
   };
 
   return (
-    <div className="w-full space-y-6 sm:space-y-7">
-      <div className="pb-5 border-b border-border/70 space-y-1">
-        <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
-          Account Settings
-        </h1>
-        <p className="text-xs sm:text-sm text-secondary-text">
-          Manage your account security and update your password.
-        </p>
-      </div>
+    <div className="w-full space-y-4 sm:space-y-5">
+      <PageHeader
+        eyebrow="Account"
+        title="Settings"
+        description="Manage account security and password."
+      />
 
-      <div className="rounded-2xl border border-border/70 bg-card p-5 sm:p-7 shadow-xs space-y-4">
-        <div className="flex items-center gap-2 pb-2.5 border-b border-border/70">
-          <KeyRound className="h-4 w-4 text-primary" />
-          <h2 className="text-sm sm:text-base font-semibold text-foreground">
-            Security & Password
-          </h2>
+      <section className="panel max-w-xl overflow-hidden">
+        <div className="panel-header">
+          <h2 className="panel-title">Security &amp; password</h2>
+          <KeyRound className="h-4 w-4 text-muted-foreground" />
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-md" noValidate>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4" noValidate>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="currentPassword">Current Password</Label>
             <Input
@@ -113,7 +109,7 @@ export default function PatientSettingsPage() {
               type="password"
               disabled={isChangingPassword}
               placeholder="••••••••••••"
-              className={`h-10 text-xs sm:text-sm rounded-xl ${
+              className={`h-9 rounded-md text-sm ${
                 errors.currentPassword ? "border-error focus-visible:ring-error" : ""
               }`}
               {...register("currentPassword")}
@@ -130,7 +126,7 @@ export default function PatientSettingsPage() {
               type="password"
               disabled={isChangingPassword}
               placeholder="••••••••••••"
-              className={`h-10 text-xs sm:text-sm rounded-xl ${
+              className={`h-9 rounded-md text-sm ${
                 errors.newPassword ? "border-error focus-visible:ring-error" : ""
               }`}
               {...register("newPassword")}
@@ -151,7 +147,7 @@ export default function PatientSettingsPage() {
               type="password"
               disabled={isChangingPassword}
               placeholder="••••••••••••"
-              className={`h-10 text-xs sm:text-sm rounded-xl ${
+              className={`h-9 rounded-md text-sm ${
                 errors.confirmPassword ? "border-error focus-visible:ring-error" : ""
               }`}
               {...register("confirmPassword")}
@@ -161,11 +157,11 @@ export default function PatientSettingsPage() {
             )}
           </div>
 
-          <div className="pt-2 flex items-center gap-3">
+          <div className="flex items-center gap-3 pt-1">
             <Button
               type="submit"
               disabled={isChangingPassword}
-              className="h-9.5 px-4 rounded-xl text-xs sm:text-sm font-semibold gap-2 shadow-xs"
+              className="h-8 rounded-md px-3 text-xs font-semibold gap-2"
             >
               {isChangingPassword ? (
                 <>
@@ -175,7 +171,7 @@ export default function PatientSettingsPage() {
               ) : (
                 <>
                   <Save className="h-4 w-4" />
-                  <span>Update Password</span>
+                  <span>Update password</span>
                 </>
               )}
             </Button>
@@ -188,7 +184,7 @@ export default function PatientSettingsPage() {
             )}
           </div>
         </form>
-      </div>
+      </section>
     </div>
   );
 }

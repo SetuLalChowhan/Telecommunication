@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/layout";
 
 interface PatientAppointmentsHeaderProps {
   searchQuery: string;
@@ -18,33 +19,33 @@ export const PatientAppointmentsHeader: React.FC<PatientAppointmentsHeaderProps>
   totalCount,
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">My Consultations</h1>
-        <p className="text-sm text-muted-foreground">
-          View your upcoming video appointments and consultation history. ({totalCount} total)
-        </p>
-      </div>
+    <PageHeader
+      eyebrow="Care"
+      title="Appointments"
+      meta={`${totalCount} total`}
+      description="Upcoming video visits and past consultations."
+      actions={
+        <>
+          <div className="relative w-full sm:w-56">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              aria-label="Search appointments"
+              placeholder="Search doctor or specialty"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="h-8 rounded-md pl-8 text-xs"
+            />
+          </div>
 
-      <div className="flex items-center gap-3">
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search doctor or specialty..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9 h-10 rounded-xl text-sm"
-          />
-        </div>
-
-        <Link href="/doctors" className="shrink-0">
-          <Button className="h-10 px-4 rounded-xl bg-primary hover:bg-primary-dark text-white font-semibold gap-1.5 shadow-sm">
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Book Appointment</span>
-            <span className="sm:hidden">Book</span>
-          </Button>
-        </Link>
-      </div>
-    </div>
+          <Link href="/doctors" className="shrink-0">
+            <Button size="sm" className="h-8 rounded-md px-3 text-xs font-semibold">
+              <Plus className="h-3.5 w-3.5" />
+              <span>Book appointment</span>
+            </Button>
+          </Link>
+        </>
+      }
+    />
   );
 };

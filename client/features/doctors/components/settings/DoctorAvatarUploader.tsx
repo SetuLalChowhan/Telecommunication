@@ -35,9 +35,9 @@ export const DoctorAvatarUploader: React.FC<DoctorAvatarUploaderProps> = ({
   const displayImage = previewUrl || currentImageUrl;
 
   return (
-    <div className="flex flex-col sm:flex-row items-center gap-5 p-5 rounded-2xl bg-card border border-border/80 shadow-xs">
-      <div className="relative group">
-        <div className="relative h-24 w-24 rounded-2xl overflow-hidden border-2 border-primary/20 bg-muted flex items-center justify-center shadow-md">
+    <div className="panel flex flex-col items-center gap-4 p-4 sm:flex-row">
+      <div className="group relative">
+        <div className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
           {displayImage ? (
             <Image
               src={displayImage}

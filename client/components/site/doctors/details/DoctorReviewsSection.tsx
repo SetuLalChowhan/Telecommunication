@@ -19,12 +19,12 @@ export const DoctorReviewsSection: React.FC<DoctorReviewsSectionProps> = ({
   const totalReviews = doctor.totalReviews ?? reviews.length;
 
   return (
-    <div className="rounded-2xl border border-border/70 bg-card p-6 sm:p-7 shadow-xs space-y-6">
+    <div className="rounded-xl border border-border bg-card p-6 space-y-6">
       <div className="flex items-center justify-between pb-3 border-b border-border/60">
         <div className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5 text-primary" />
-          <h2 className="text-base sm:text-lg font-bold text-foreground">
-            Patient Feedback & Ratings ({totalReviews})
+          <h2 className="text-base font-semibold text-foreground">
+            Patient feedback & ratings ({totalReviews})
           </h2>
         </div>
 
@@ -39,8 +39,8 @@ export const DoctorReviewsSection: React.FC<DoctorReviewsSectionProps> = ({
       {totalReviews > 0 ? (
         <div className="space-y-6">
           {/* Rating Summary Bar */}
-          <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50/70 dark:bg-slate-900/30 border border-border/70">
-            <div className="text-2xl sm:text-3xl font-bold text-foreground">
+          <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/40 border border-border">
+            <div className="text-2xl font-semibold text-foreground">
               {ratingValue}
             </div>
             <div className="space-y-0.5">
@@ -51,7 +51,7 @@ export const DoctorReviewsSection: React.FC<DoctorReviewsSectionProps> = ({
                     className={`h-4 w-4 ${
                       i < Math.round(Number(ratingValue))
                         ? "fill-amber-400 text-amber-400"
-                        : "text-slate-300 dark:text-slate-700"
+                        : "text-muted-foreground/40"
                     }`}
                   />
                 ))}
@@ -72,7 +72,7 @@ export const DoctorReviewsSection: React.FC<DoctorReviewsSectionProps> = ({
                 <div key={rev.id || idx} className="pt-4 first:pt-0 space-y-2.5">
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary font-bold text-xs flex items-center justify-center border border-primary/20 shrink-0">
+                      <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary font-semibold text-xs flex items-center justify-center border border-primary/20 shrink-0">
                         {initial}
                       </div>
                       <div>
@@ -114,9 +114,9 @@ export const DoctorReviewsSection: React.FC<DoctorReviewsSectionProps> = ({
           </div>
         </div>
       ) : (
-        <div className="p-8 text-center rounded-xl bg-slate-50/50 dark:bg-slate-900/20 border border-dashed border-border/80 text-xs text-muted-foreground space-y-1">
-          <Star className="h-6 w-6 text-slate-300 dark:text-slate-700 mx-auto mb-2" />
-          <p className="font-semibold text-foreground text-sm">No Patient Reviews Yet</p>
+        <div className="p-8 text-center rounded-lg bg-muted/40 border border-dashed border-border text-xs text-muted-foreground space-y-1">
+          <Star className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" />
+          <p className="font-semibold text-foreground text-sm">No patient reviews yet</p>
           <p className="text-secondary-text max-w-sm mx-auto">
             Reviews and feedback will appear here once verified patients complete telemedicine sessions.
           </p>

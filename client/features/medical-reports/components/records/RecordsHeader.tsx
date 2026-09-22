@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
-import { Search, Plus } from "lucide-react";
+import { Search, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/layout";
 
 interface RecordsHeaderProps {
   searchQuery: string;
@@ -17,34 +18,36 @@ export const RecordsHeader: React.FC<RecordsHeaderProps> = ({
   onUploadClick,
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Medical Records & Prescriptions</h1>
-        <p className="text-sm text-muted-foreground">
-          Access diagnostic reports, digital prescriptions, and clinical history.
-        </p>
-      </div>
+    <PageHeader
+      eyebrow="Care"
+      title="Medical records"
+      description="Diagnostic reports, prescriptions and clinical documents."
+      actions={
+        <>
+          <div className="relative w-full sm:w-56">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              aria-label="Search medical documents"
+              placeholder="Search documents"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="h-8 rounded-md pl-8 text-xs"
+            />
+          </div>
 
-      <div className="flex items-center gap-3">
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search documents..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9 h-10 rounded-xl text-sm"
-          />
-        </div>
-
-        <Button
-          onClick={onUploadClick}
-          className="h-10 px-4 rounded-xl bg-primary hover:bg-primary-dark text-white font-semibold gap-1.5 shadow-sm shrink-0"
-        >
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Upload Document</span>
-          <span className="sm:hidden">Upload</span>
-        </Button>
-      </div>
-    </div>
+          <Button
+            onClick={onUploadClick}
+            size="sm"
+            className="h-8 shrink-0 gap-1.5 rounded-md px-3 text-xs font-semibold"
+          >
+            <Upload className="h-3.5 w-3.5" />
+            <span>Upload document</span>
+          </Button>
+        </>
+      }
+    />
   );
 };
+
+export default RecordsHeader;

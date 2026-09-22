@@ -1,15 +1,32 @@
 "use client";
 
-import React, { useState } from "react";
-import { Loader2, FileText, Download, Trash2, ExternalLink, Plus } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { FileText, ImageIcon, Plus, SearchX } from "lucide-react";
 import {
   useMyMedicalReports,
   useDeleteMedicalReport,
 } from "@/features/medical-reports/api/queries";
+import { MedicalReport } from "@/features/medical-reports/types";
+import {
+  formatRecordDate,
+  getConsultationSummary,
+  getFileKind,
+  getRecordCategory,
+  getRecordCategoryLabel,
+} from "@/features/medical-reports/utils/record-meta";
 import { RecordsHeader } from "@/features/medical-reports/components/records/RecordsHeader";
-import { RecordsFilterTabs } from "@/features/medical-reports/components/records/RecordsFilterTabs";
+import {
+  RecordsFilterTabs,
+  RecordsCategoryFilter,
+} from "@/features/medical-reports/components/records/RecordsFilterTabs";
+import { RecordItemCard } from "@/features/medical-reports/components/records/RecordItemCard";
+import { RecordActions } from "@/features/medical-reports/components/records/RecordActions";
+import { RecordDetailsDialog } from "@/features/medical-reports/components/records/RecordDetailsDialog";
 import { RecordDeleteConfirmDialog } from "@/features/medical-reports/components/records/RecordDeleteConfirmDialog";
-import { UploadReportModal } from "./UploadReportModal";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -18,47 +35,206 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
+import { UploadReportModal } from "./UploadReportModal";
+
+/**
+ * Type and search are applied on the client, so a single wide page is fetched
+ * instead of the API default of 10 (which silently hid older documents).
+ */
+const REPORTS_LIMIT = 100;
+
+function CategoryBadge({ report }: { report: MedicalReport }) {
+  const category = getRecordCategory(report);
+  return (
+    <Badge
+      variant="outline"
+      className={`rounded-md font-medium ${
+        category === "prescription"
+          ? "border-secondary/20 bg-secondary/10 text-secondary"
+          : "border-primary/20 bg-primary/10 text-primary"
+      }`}
+    >
+      {category === "prescription" ? "Prescription" : "Diagnostic"}
+    </Badge>
+  );
+}
+
+function DocumentIcon({ report }: { report: MedicalReport }) {
+  const category = getRecordCategory(report);
+  const kind = getFileKind(report.fileName);
+
+  return (
+    <span
+      className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${
+        category === "prescription"
+          ? "bg-secondary/10 text-secondary"
+          : "bg-primary/10 text-primary"
+      }`}
+    >
+      {kind.isImage ? (
+        <ImageIcon className="h-4 w-4" />
+      ) : (
+        <FileText className="h-4 w-4" />
+      )}
+    </span>
+  );
+}
+
+interface EmptyStateProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+}
+
+function EmptyState({ icon, title, description, action }: EmptyStateProps) {
+  return (
+    <div className="flex flex-col items-center justify-center text-center px-6 py-16">
+      <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-md bg-muted text-muted-foreground">
+        {icon}
+      </div>
+      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+      <p className="mt-1 max-w-sm text-xs leading-relaxed text-secondary-text">
+        {description}
+      </p>
+      {action && <div className="mt-4">{action}</div>}
+    </div>
+  );
+}
+
+function ListSkeleton() {
+  return (
+    <>
+      {/* Desktop */}
+      <div className="hidden md:block">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead>Document</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Uploaded</TableHead>
+              <TableHead>Consultation</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <TableRow key={i} className="hover:bg-transparent">
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-9 w-9 rounded-lg" />
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-3.5 w-40" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-5 w-24 rounded-md" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-3.5 w-24" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-3.5 w-36" />
+                </TableCell>
+                <TableCell>
+                  <div className="flex justify-end gap-1.5">
+                    <Skeleton className="h-8 w-8 rounded-lg" />
+                    <Skeleton className="h-8 w-8 rounded-lg" />
+                    <Skeleton className="h-8 w-8 rounded-lg" />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Mobile */}
+      <div className="divide-y divide-border md:hidden">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="p-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <Skeleton className="h-9 w-9 rounded-lg" />
+              <div className="space-y-1.5 flex-1">
+                <Skeleton className="h-3.5 w-40" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+            <Skeleton className="h-3 w-52" />
+            <div className="flex gap-1.5">
+              <Skeleton className="h-8 w-20 rounded-lg" />
+              <Skeleton className="h-8 w-24 rounded-lg" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
 
 export function PatientRecordsClient() {
-  const [activeTab, setActiveTab] = useState<"diagnostic" | "prescription" | "all">("diagnostic");
+  const [activeTab, setActiveTab] = useState<RecordsCategoryFilter>("diagnostic");
   const [searchQuery, setSearchQuery] = useState("");
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [detailsReport, setDetailsReport] = useState<MedicalReport | null>(null);
 
-  const { data: reportsData, isLoading } = useMyMedicalReports();
+  const { data: reportsData, isLoading } = useMyMedicalReports({
+    limit: REPORTS_LIMIT,
+  });
   const deleteMutation = useDeleteMedicalReport();
 
   const reports = reportsData?.data || [];
 
-  const filteredReports = reports.filter((r) => {
-    const isPrescription = r.fileName.toLowerCase().includes("prescription");
-    if (activeTab === "diagnostic" && isPrescription) return false;
-    if (activeTab === "prescription" && !isPrescription) return false;
+  const { diagnosticCount, prescriptionCount } = useMemo(() => {
+    const prescriptions = reports.filter(
+      (r) => getRecordCategory(r) === "prescription"
+    ).length;
+    return {
+      diagnosticCount: reports.length - prescriptions,
+      prescriptionCount: prescriptions,
+    };
+  }, [reports]);
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      const matchName = r.fileName.toLowerCase().includes(q);
-      const matchDoctor = r.booking?.doctor?.user?.name?.toLowerCase().includes(q);
-      return matchName || matchDoctor;
-    }
+  const filteredReports = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
 
-    return true;
-  });
+    return reports.filter((report) => {
+      const category = getRecordCategory(report);
+      if (activeTab === "diagnostic" && category !== "diagnostic") return false;
+      if (activeTab === "prescription" && category !== "prescription") return false;
+      if (!query) return true;
 
-  const diagnosticCount = reports.filter((r) => !r.fileName.toLowerCase().includes("prescription")).length;
-  const prescriptionCount = reports.filter((r) => r.fileName.toLowerCase().includes("prescription")).length;
+      return (
+        report.fileName.toLowerCase().includes(query) ||
+        getConsultationSummary(report).toLowerCase().includes(query) ||
+        getRecordCategoryLabel(report).toLowerCase().includes(query)
+      );
+    });
+  }, [reports, activeTab, searchQuery]);
+
+  const deleteTarget = reports.find((r) => r.id === deleteTargetId) || null;
+  const hasAnyDocuments = reports.length > 0;
+  const isFiltered = searchQuery.trim().length > 0 || activeTab !== "all";
 
   const handleDeleteConfirm = () => {
-    if (deleteTargetId) {
-      deleteMutation.mutate(deleteTargetId, {
-        onSettled: () => setDeleteTargetId(null),
-      });
-    }
+    if (!deleteTargetId) return;
+    deleteMutation.mutate(deleteTargetId, {
+      onSettled: () => setDeleteTargetId(null),
+    });
   };
 
+  const clearFilters = () => {
+    setSearchQuery("");
+    setActiveTab("all");
+  };
+
+  const showSkeleton = isLoading && !hasAnyDocuments;
+
   return (
-    <div className="w-full space-y-5">
+    <div className="w-full space-y-4 sm:space-y-5">
       <RecordsHeader
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -73,220 +249,130 @@ export function PatientRecordsClient() {
         totalCount={reports.length}
       />
 
-      {/* Main Clean Minimal Shadcn Table */}
-      <div className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-xs">
-        {isLoading && reports.length === 0 ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-7 w-7 animate-spin text-primary" />
-          </div>
+      <Card className="overflow-hidden">
+        {showSkeleton ? (
+          <ListSkeleton />
         ) : filteredReports.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-            <div className="h-11 w-11 rounded-2xl bg-muted/80 flex items-center justify-center text-muted-foreground mb-3">
-              <FileText className="h-5 w-5" />
-            </div>
-            <h3 className="text-sm font-semibold text-foreground">No documents found</h3>
-            <p className="text-xs text-muted-foreground max-w-sm mt-1">
-              {searchQuery
-                ? "No documents match your search query."
-                : "You have not uploaded any documents in this category yet."}
-            </p>
-            <Button
-              size="sm"
-              onClick={() => setUploadModalOpen(true)}
-              className="mt-4 h-8.5 px-4 rounded-xl text-xs font-semibold gap-1.5 shadow-xs"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>Upload Document</span>
-            </Button>
-          </div>
+          hasAnyDocuments ? (
+            <EmptyState
+              icon={<SearchX className="h-5 w-5" />}
+              title="No documents match your filters"
+              description={
+                searchQuery.trim()
+                  ? `Nothing matches “${searchQuery.trim()}” in this category. Try a different term or clear the filters.`
+                  : "There are no documents in this category yet."
+              }
+              action={
+                <Button variant="outline" size="sm" onClick={clearFilters}>
+                  Clear filters
+                </Button>
+              }
+            />
+          ) : (
+            <EmptyState
+              icon={<FileText className="h-5 w-5" />}
+              title="No medical documents yet"
+              description="Upload lab results, scans or prescriptions to keep your clinical history in one place. Documents you upload stay private to you and the doctors you share them with."
+              action={
+                <Button
+                  size="sm"
+                  onClick={() => setUploadModalOpen(true)}
+                  className="gap-1.5"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Upload document</span>
+                </Button>
+              }
+            />
+          )
         ) : (
           <>
-            {/* Desktop Table */}
-            <div className="hidden md:block overflow-x-auto">
+            {/* Desktop table */}
+            <div className="hidden md:block">
               <Table>
-                <TableHeader className="bg-slate-50/70 dark:bg-slate-900/40 border-b border-border/60">
+                <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="py-2.5 px-5 font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
-                      Document Title
-                    </TableHead>
-                    <TableHead className="py-2.5 px-4 font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
-                      Category
-                    </TableHead>
-                    <TableHead className="py-2.5 px-4 font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
-                      Uploaded Date
-                    </TableHead>
-                    <TableHead className="py-2.5 px-4 font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
-                      Associated Doctor
-                    </TableHead>
-                    <TableHead className="py-2.5 px-5 text-right font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
-                      Actions
-                    </TableHead>
+                    <TableHead>Document</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Uploaded</TableHead>
+                    <TableHead>Consultation</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody className="divide-y divide-border/40">
-                  {filteredReports.map((report) => {
-                    const isPrescription = report.fileName.toLowerCase().includes("prescription");
-                    const dateFormatted = new Date(report.uploadedAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    });
-                    const doctorName = report.booking?.doctor?.user?.name || "Self-Uploaded";
-
-                    return (
-                      <TableRow
-                        key={report.id}
-                        className="hover:bg-muted/40 transition-colors group"
-                      >
-                        {/* Title & File icon */}
-                        <TableCell className="py-3 px-5">
-                          <div className="flex items-center gap-3">
-                            <div className="h-8.5 w-8.5 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                              <FileText className="h-4 w-4" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-semibold text-foreground text-xs sm:text-sm truncate">
-                                {report.fileName}
-                              </p>
-                              <p className="text-[11px] text-muted-foreground truncate">
-                                Medical Record
-                              </p>
-                            </div>
-                          </div>
-                        </TableCell>
-
-                        {/* Category badge */}
-                        <TableCell className="py-3 px-4">
-                          <span
-                            className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full border uppercase ${
-                              isPrescription
-                                ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
-                                : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                            }`}
-                          >
-                            {isPrescription ? "Prescription" : "Diagnostic"}
-                          </span>
-                        </TableCell>
-
-                        {/* Date */}
-                        <TableCell className="py-3 px-4 text-xs font-medium text-foreground">
-                          {dateFormatted}
-                        </TableCell>
-
-                        {/* Associated Doctor */}
-                        <TableCell className="py-3 px-4 text-xs text-muted-foreground">
-                          {doctorName}
-                        </TableCell>
-
-                        {/* Action Buttons */}
-                        <TableCell className="py-3 px-5 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {report.fileUrl && (
-                              <a
-                                href={report.fileUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-7.5 px-2.5 rounded-lg text-xs font-medium gap-1 border-border/80 hover:border-primary/50"
-                                >
-                                  <ExternalLink className="h-3 w-3" />
-                                  <span>View</span>
-                                </Button>
-                              </a>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setDeleteTargetId(report.id)}
-                              className="h-7.5 w-7.5 p-0 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                              title="Delete report"
+                <TableBody>
+                  {filteredReports.map((report) => (
+                    <TableRow key={report.id}>
+                      <TableCell className="max-w-[320px]">
+                        <div className="flex items-center gap-3">
+                          <DocumentIcon report={report} />
+                          <div className="min-w-0">
+                            <button
+                              type="button"
+                              onClick={() => setDetailsReport(report)}
+                              className="block max-w-full truncate text-sm font-medium text-foreground hover:text-primary transition-colors cursor-pointer text-left"
+                              title={report.fileName}
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
+                              {report.fileName}
+                            </button>
+                            <span className="block text-xs text-secondary-text">
+                              {getFileKind(report.fileName).label}
+                            </span>
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <CategoryBadge report={report} />
+                      </TableCell>
+
+                      <TableCell className="text-sm text-secondary-text whitespace-nowrap">
+                        {formatRecordDate(report.uploadedAt)}
+                      </TableCell>
+
+                      <TableCell className="text-sm text-secondary-text">
+                        <span className="block max-w-[220px] truncate" title={getConsultationSummary(report)}>
+                          {getConsultationSummary(report)}
+                        </span>
+                      </TableCell>
+
+                      <TableCell>
+                        <RecordActions
+                          report={report}
+                          onDeleteClick={setDeleteTargetId}
+                          compact
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </div>
 
-            {/* Mobile Compact View */}
-            <div className="md:hidden divide-y divide-border/60">
-              {filteredReports.map((report) => {
-                const isPrescription = report.fileName.toLowerCase().includes("prescription");
-                const dateFormatted = new Date(report.uploadedAt).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                });
-
-                return (
-                  <div key={report.id} className="p-3.5 space-y-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                          <FileText className="h-4 w-4" />
-                        </div>
-                        <p className="text-xs font-semibold text-foreground truncate">
-                          {report.fileName}
-                        </p>
-                      </div>
-
-                      <span
-                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border uppercase shrink-0 ${
-                          isPrescription
-                            ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
-                            : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                        }`}
-                      >
-                        {isPrescription ? "Prescription" : "Diagnostic"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-border/40">
-                      <span className="text-[11px]">{dateFormatted}</span>
-                      <div className="flex items-center gap-1.5">
-                        {report.fileUrl && (
-                          <a
-                            href={report.fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 px-2.5 rounded-lg text-xs font-medium border-border"
-                            >
-                              View
-                            </Button>
-                          </a>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setDeleteTargetId(report.id)}
-                          className="h-7 w-7 p-0 rounded-lg text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            {/* Mobile list */}
+            <div className="divide-y divide-border md:hidden">
+              {filteredReports.map((report) => (
+                <RecordItemCard
+                  key={report.id}
+                  report={report}
+                  onDeleteClick={setDeleteTargetId}
+                  onOpenDetails={setDetailsReport}
+                />
+              ))}
             </div>
           </>
         )}
-      </div>
+      </Card>
+
+      <RecordDetailsDialog
+        report={detailsReport}
+        onOpenChange={(open) => !open && setDetailsReport(null)}
+        onDeleteClick={setDeleteTargetId}
+      />
 
       <RecordDeleteConfirmDialog
         isOpen={Boolean(deleteTargetId)}
         isDeleting={deleteMutation.isPending}
+        fileName={deleteTarget?.fileName}
         onClose={() => setDeleteTargetId(null)}
         onConfirm={handleDeleteConfirm}
       />

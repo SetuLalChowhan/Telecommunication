@@ -16,6 +16,8 @@ import { Loader2 } from "lucide-react";
 interface RecordDeleteConfirmDialogProps {
   isOpen: boolean;
   isDeleting: boolean;
+  /** Shown in the description so the user can confirm they picked the right file. */
+  fileName?: string | null;
   onClose: () => void;
   onConfirm: () => void;
 }
@@ -23,32 +25,39 @@ interface RecordDeleteConfirmDialogProps {
 export const RecordDeleteConfirmDialog: React.FC<RecordDeleteConfirmDialogProps> = ({
   isOpen,
   isDeleting,
+  fileName,
   onClose,
   onConfirm,
 }) => {
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <AlertDialogContent className="rounded-2xl max-w-md">
+      <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete Medical Document?</AlertDialogTitle>
+          <AlertDialogTitle>Delete this document?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This document will be permanently removed from your medical profile and consultations history.
+            {fileName ? (
+              <>
+                <span className="font-medium text-foreground break-words">
+                  {fileName}
+                </span>{" "}
+                will be permanently removed from your medical records and from any
+                consultation it is attached to. This cannot be undone.
+              </>
+            ) : (
+              "This document will be permanently removed from your medical records. This cannot be undone."
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting} className="rounded-xl">
-            Cancel
-          </AlertDialogCancel>
-          <AlertDialogAction
-            disabled={isDeleting}
-            onClick={onConfirm}
-            className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-2"
-          >
-            {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
-            <span>Delete Document</span>
+          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction disabled={isDeleting} onClick={onConfirm}>
+            {isDeleting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            <span>Delete document</span>
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
 };
+
+export default RecordDeleteConfirmDialog;

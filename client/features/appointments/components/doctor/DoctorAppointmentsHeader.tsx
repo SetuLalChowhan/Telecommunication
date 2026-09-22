@@ -3,6 +3,7 @@
 import React from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/layout";
 
 interface DoctorAppointmentsHeaderProps {
   searchQuery: string;
@@ -16,23 +17,24 @@ export const DoctorAppointmentsHeader: React.FC<DoctorAppointmentsHeaderProps> =
   totalCount,
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Appointment Schedule</h1>
-        <p className="text-sm text-muted-foreground">
-          Review, confirm, and manage upcoming and past patient consultations. ({totalCount} appointments)
-        </p>
-      </div>
-
-      <div className="relative w-full sm:w-72">
-        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search patient name, condition..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-9 h-10 rounded-xl text-sm"
-        />
-      </div>
-    </div>
+    <PageHeader
+      eyebrow="Clinical"
+      title="Consultation queue"
+      meta={`${totalCount} total`}
+      description="Confirm requests and review scheduled patient consultations."
+      actions={
+        <div className="relative w-full sm:w-64">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            aria-label="Search consultations"
+            placeholder="Search patient or condition"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="h-8 rounded-md pl-8 text-xs"
+          />
+        </div>
+      }
+    />
   );
 };

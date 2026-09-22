@@ -8,6 +8,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogBody,
   DialogTitle,
   DialogDescription,
   DialogFooter,
@@ -122,20 +123,23 @@ export const EditWeeklySlotDialog: React.FC<EditWeeklySlotDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-[440px] p-6 sm:p-7">
-        <DialogHeader className="mb-4">
-          <DialogTitle className="text-lg font-bold text-foreground">
-            Edit Availability Window
-          </DialogTitle>
-          <DialogDescription className="text-xs text-secondary-text mt-1">
+      <DialogContent className="max-w-[440px]">
+        <DialogHeader>
+          <DialogTitle>Edit availability window</DialogTitle>
+          <DialogDescription>
             Update consultation hours for {slot.dayOfWeek.toLowerCase()}s.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-          {/* Day of Week */}
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex min-h-0 flex-1 flex-col"
+          noValidate
+        >
+          <DialogBody>
+          {/* Day of week */}
           <div className="space-y-1.5">
-            <Label htmlFor="edit-day-select">Day of Week</Label>
+            <Label htmlFor="edit-day-select">Day of week</Label>
             <Controller
               name="dayOfWeek"
               control={control}
@@ -145,7 +149,7 @@ export const EditWeeklySlotDialog: React.FC<EditWeeklySlotDialogProps> = ({
                   onValueChange={field.onChange}
                   disabled={isLoading}
                 >
-                  <SelectTrigger id="edit-day-select" className="h-10 text-xs sm:text-sm rounded-xl">
+                  <SelectTrigger id="edit-day-select" className="h-9 rounded-md text-sm">
                     <SelectValue placeholder="Select day" />
                   </SelectTrigger>
                   <SelectContent className="max-h-56">
@@ -163,7 +167,7 @@ export const EditWeeklySlotDialog: React.FC<EditWeeklySlotDialogProps> = ({
           {/* Start & End Times */}
           <div className="grid grid-cols-2 gap-3.5">
             <div className="space-y-1.5">
-              <Label htmlFor="edit-start-time">Start Time</Label>
+              <Label htmlFor="edit-start-time">Start time</Label>
               <Controller
                 name="startTime"
                 control={control}
@@ -173,7 +177,7 @@ export const EditWeeklySlotDialog: React.FC<EditWeeklySlotDialogProps> = ({
                     onValueChange={field.onChange}
                     disabled={isLoading}
                   >
-                    <SelectTrigger id="edit-start-time" className="h-10 text-xs sm:text-sm rounded-xl">
+                    <SelectTrigger id="edit-start-time" className="h-9 rounded-md text-sm">
                       <SelectValue placeholder="Start Time" />
                     </SelectTrigger>
                     <SelectContent className="max-h-56">
@@ -189,7 +193,7 @@ export const EditWeeklySlotDialog: React.FC<EditWeeklySlotDialogProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="edit-end-time">End Time</Label>
+              <Label htmlFor="edit-end-time">End time</Label>
               <Controller
                 name="endTime"
                 control={control}
@@ -201,7 +205,7 @@ export const EditWeeklySlotDialog: React.FC<EditWeeklySlotDialogProps> = ({
                   >
                     <SelectTrigger
                       id="edit-end-time"
-                      className={`h-10 text-xs sm:text-sm rounded-xl ${
+                      className={`h-9 rounded-md text-sm ${
                         errors.endTime ? "border-error focus:ring-error" : ""
                       }`}
                     >
@@ -220,12 +224,14 @@ export const EditWeeklySlotDialog: React.FC<EditWeeklySlotDialogProps> = ({
             </div>
           </div>
           {errors.endTime && (
-            <p className="text-xs text-error font-medium">{errors.endTime.message}</p>
+            <p className="text-[11px] font-medium text-error">
+              {errors.endTime.message}
+            </p>
           )}
 
-          {/* Consultation Duration */}
+          {/* Slot duration */}
           <div className="space-y-1.5">
-            <Label htmlFor="edit-duration-select">Slot Duration</Label>
+            <Label htmlFor="edit-duration-select">Slot duration</Label>
             <Controller
               name="consultationDuration"
               control={control}
@@ -235,7 +241,7 @@ export const EditWeeklySlotDialog: React.FC<EditWeeklySlotDialogProps> = ({
                   onValueChange={field.onChange}
                   disabled={isLoading}
                 >
-                  <SelectTrigger id="edit-duration-select" className="h-10 text-xs sm:text-sm rounded-xl">
+                  <SelectTrigger id="edit-duration-select" className="h-9 rounded-md text-sm">
                     <SelectValue placeholder="Slot duration" />
                   </SelectTrigger>
                   <SelectContent>
@@ -250,14 +256,14 @@ export const EditWeeklySlotDialog: React.FC<EditWeeklySlotDialogProps> = ({
             />
           </div>
 
-          {/* Active / Inactive Status Switch */}
-          <div className="flex items-center justify-between p-3.5 rounded-xl bg-muted/40 border border-border/60">
+          {/* Active / inactive switch */}
+          <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/40 p-3">
             <div className="space-y-0.5">
-              <Label htmlFor="edit-is-active" className="text-xs font-semibold text-foreground cursor-pointer">
-                Window Status
+              <Label htmlFor="edit-is-active" className="cursor-pointer text-xs font-semibold text-foreground">
+                Window status
               </Label>
-              <p className="text-[11px] text-secondary-text">
-                Disabled windows will not generate bookable patient slots.
+              <p className="text-[11px] text-muted-foreground">
+                Disabled windows do not generate bookable patient slots.
               </p>
             </div>
             <Controller
@@ -273,15 +279,16 @@ export const EditWeeklySlotDialog: React.FC<EditWeeklySlotDialogProps> = ({
               )}
             />
           </div>
+          </DialogBody>
 
-          <DialogFooter className="mt-6 pt-4 border-t border-border/60">
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
               size="sm"
               disabled={isLoading}
               onClick={() => handleOpenChange(false)}
-              className="h-9 px-4 text-xs rounded-xl"
+              className="h-8 rounded-md px-3 text-xs"
             >
               Cancel
             </Button>
@@ -289,15 +296,15 @@ export const EditWeeklySlotDialog: React.FC<EditWeeklySlotDialogProps> = ({
               type="submit"
               size="sm"
               disabled={isLoading}
-              className="h-9 px-5 text-xs font-semibold rounded-xl shadow-xs"
+              className="h-8 rounded-md px-3 text-xs font-semibold"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  <span>Saving Changes...</span>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Saving…</span>
                 </>
               ) : (
-                "Update Availability"
+                "Update availability"
               )}
             </Button>
           </DialogFooter>

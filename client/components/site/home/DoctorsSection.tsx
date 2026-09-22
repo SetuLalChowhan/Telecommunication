@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Star, ChevronRight } from "lucide-react";
@@ -82,76 +82,45 @@ const DOCTORS: Doctor[] = [
 
 export const DoctorsSection: React.FC = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [isHovered, setIsHovered] = useState(false);
-
-  // Auto-scroll every 3.5 seconds unless hovered
-  useEffect(() => {
-    if (isHovered) return;
-
-    const interval = setInterval(() => {
-      if (scrollContainerRef.current) {
-        const { scrollLeft, scrollWidth, clientWidth } =
-          scrollContainerRef.current;
-        if (scrollLeft + clientWidth >= scrollWidth - 10) {
-          scrollContainerRef.current.scrollTo({ left: 0, behavior: "smooth" });
-        } else {
-          scrollContainerRef.current.scrollBy({ left: 300, behavior: "smooth" });
-        }
-      }
-    }, 3500);
-
-    return () => clearInterval(interval);
-  }, [isHovered]);
 
   const handleScroll = (direction: "left" | "right") => {
-    if (scrollContainerRef.current) {
-      const scrollAmount = direction === "left" ? -300 : 300;
-      scrollContainerRef.current.scrollBy({
-        left: scrollAmount,
-        behavior: "smooth",
-      });
-    }
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    container.scrollBy({ left: direction === "left" ? -300 : 300, behavior: "smooth" });
   };
 
   return (
-    <section className="w-full bg-background py-14 sm:py-16 lg:py-20 border-b border-border overflow-hidden">
-      <div className="max-w-[1920px] mx-auto section-padding-x">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-          
-          {/* LEFT COLUMN: Eyebrow, Heading, Description, CTA, Controls */}
-          <div className="lg:col-span-4 flex flex-col justify-center space-y-6">
-            <div className="space-y-4 sm:space-y-5">
-              <span className="text-xs font-semibold tracking-wider text-primary uppercase block">
-                Top Specialists
-              </span>
-
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight tracking-tight text-foreground">
-                Consult with Verified Doctors
+    <section className="w-full border-b border-border/60 bg-background py-16 sm:py-20">
+      <div className="container-page">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+          {/* Header & controls */}
+          <div className="lg:col-span-4 flex flex-col gap-6">
+            <div className="space-y-4">
+              <span className="eyebrow-text block text-primary">Top specialists</span>
+              <h2 className="text-2xl sm:text-3xl font-semibold leading-tight tracking-tight text-foreground">
+                Consult with verified doctors
               </h2>
-
-              <p className="text-sm sm:text-[15px] leading-relaxed text-secondary-text">
-                Connect directly with verified specialists across medical disciplines.
-                Get personalized video consultations, digital prescriptions, and expert care.
+              <p className="text-sm leading-relaxed text-secondary-text">
+                Connect directly with verified specialists across medical disciplines. Get
+                personalized video consultations, digital prescriptions, and expert care.
               </p>
             </div>
 
-            {/* CTA + Navigation Arrows */}
-            <div className="pt-2 flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3">
               <Link
                 href="/doctors"
-                className="inline-flex items-center justify-center rounded-xl bg-primary hover:bg-primary-dark text-white px-5 py-2.5 text-sm font-semibold transition-all shadow-xs group"
+                className="inline-flex items-center justify-center rounded-lg bg-primary hover:bg-primary-dark text-primary-foreground px-5 py-2.5 text-sm font-semibold transition-colors group"
               >
-                <span>Browse All Doctors</span>
-                <ChevronRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                <span>Browse all doctors</span>
+                <ChevronRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
 
-              {/* Prev / Next Buttons */}
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => handleScroll("left")}
                   aria-label="Scroll doctors left"
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-foreground hover:bg-primary hover:text-white hover:border-primary transition-all shadow-xs active:scale-95 cursor-pointer"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card text-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </button>
@@ -159,7 +128,7 @@ export const DoctorsSection: React.FC = () => {
                   type="button"
                   onClick={() => handleScroll("right")}
                   aria-label="Scroll doctors right"
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-foreground hover:bg-primary hover:text-white hover:border-primary transition-all shadow-xs active:scale-95 cursor-pointer"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card text-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer"
                 >
                   <ArrowRight className="h-4 w-4" />
                 </button>
@@ -167,70 +136,51 @@ export const DoctorsSection: React.FC = () => {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Doctor Cards Carousel */}
-          <div
-            className="lg:col-span-8 overflow-hidden"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            onTouchStart={() => setIsHovered(true)}
-            onTouchEnd={() => setIsHovered(false)}
-          >
+          {/* Doctor cards */}
+          <div className="lg:col-span-8 min-w-0">
             <div
               ref={scrollContainerRef}
-              className="flex gap-5 overflow-x-auto scroll-smooth pb-3 pt-1 no-scrollbar"
-              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              className="flex gap-5 overflow-x-auto scroll-smooth pb-3 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {DOCTORS.map((doctor) => (
                 <div
                   key={doctor.id}
-                  className="group shrink-0 w-[250px] sm:w-[270px] flex flex-col rounded-2xl border border-border/80 bg-card overflow-hidden shadow-xs hover:border-primary/50 hover:shadow-subtle transition-all duration-200"
+                  className="group flex w-[260px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-primary/40"
                 >
-                  {/* Doctor Image Container */}
-                  <div className="relative aspect-[4/4.2] w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
+                  <div className="relative aspect-[4/4.2] w-full overflow-hidden bg-muted">
                     <Image
                       src={doctor.image}
                       alt={doctor.name}
                       fill
-                      sizes="270px"
-                      className="object-cover object-top transition-transform duration-300 group-hover:scale-103"
+                      sizes="260px"
+                      className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
                     />
-
-                    {/* Minimal Rating Chip */}
-                    <div className="absolute top-2.5 right-2.5 flex items-center gap-1 rounded-full bg-card/95 backdrop-blur-md px-2.5 py-0.5 border border-border shadow-xs">
+                    <div className="absolute top-2.5 right-2.5 flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-0.5">
                       <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                      <span className="text-xs font-bold text-foreground">
-                        {doctor.rating}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground font-medium">
-                        ({doctor.reviewsCount})
-                      </span>
+                      <span className="text-xs font-semibold text-foreground">{doctor.rating}</span>
+                      <span className="text-[10px] text-muted-foreground">({doctor.reviewsCount})</span>
                     </div>
                   </div>
 
-                  {/* Doctor Info Box */}
-                  <div className="p-4 flex flex-col justify-between flex-1 space-y-3">
-                    <div className="space-y-1 text-left">
+                  <div className="p-4 flex flex-1 flex-col justify-between gap-3">
+                    <div className="space-y-1">
                       <span className="inline-block text-[11px] font-semibold text-primary">
                         {doctor.specialty}
                       </span>
-                      <h3 className="text-sm sm:text-base font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                        <Link href={`/doctors/${doctor.slug}`}>
-                          {doctor.name}
-                        </Link>
+                      <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                        <Link href={`/doctors/${doctor.slug}`}>{doctor.name}</Link>
                       </h3>
-                      <p className="text-[11px] text-secondary-text truncate">
-                        {doctor.degrees}
-                      </p>
+                      <p className="text-[11px] text-secondary-text truncate">{doctor.degrees}</p>
                     </div>
 
                     <div className="pt-2.5 border-t border-border/70 flex items-center justify-between gap-2">
                       <div>
-                        <span className="text-[10px] text-muted-foreground block uppercase">Fee</span>
-                        <span className="text-xs sm:text-sm font-bold text-foreground">৳{doctor.fee}</span>
+                        <span className="block text-[10px] uppercase text-muted-foreground">Fee</span>
+                        <span className="text-sm font-semibold text-foreground">৳{doctor.fee}</span>
                       </div>
                       <Link
                         href={`/doctors/${doctor.slug}`}
-                        className="inline-flex items-center justify-center rounded-lg bg-primary/10 hover:bg-primary text-primary hover:text-white px-3 py-1.5 text-xs font-semibold transition-colors"
+                        className="inline-flex items-center justify-center rounded-lg bg-primary/10 hover:bg-primary px-3 py-1.5 text-xs font-semibold text-primary hover:text-primary-foreground transition-colors"
                       >
                         Consult
                       </Link>
@@ -240,7 +190,6 @@ export const DoctorsSection: React.FC = () => {
               ))}
             </div>
           </div>
-
         </div>
       </div>
     </section>

@@ -40,11 +40,11 @@ export const BookingFeeSummary: React.FC<BookingFeeSummaryProps> = ({
           value={notes}
           onChange={(e) => onNotesChange(e.target.value)}
           rows={2}
-          className="rounded-xl resize-none text-xs"
+          className="rounded-lg resize-none text-xs"
         />
       </div>
 
-      <div className="p-3.5 rounded-2xl bg-muted/40 border border-border/60 space-y-2 text-xs">
+      <div className="p-3.5 rounded-lg bg-muted/40 border border-border space-y-2 text-xs">
         <div className="flex items-center justify-between text-muted-foreground">
           <span>Consultation Type</span>
           <span className="font-semibold text-foreground flex items-center gap-1">
@@ -61,9 +61,9 @@ export const BookingFeeSummary: React.FC<BookingFeeSummaryProps> = ({
       {!isAuthenticated ? (
         <div className="space-y-2">
           <Link href="/login">
-            <Button className="w-full h-11 rounded-xl bg-primary hover:bg-primary-dark text-white font-semibold gap-2 shadow-sm shadow-primary/20">
+            <Button className="w-full h-11 rounded-lg font-semibold gap-2">
               <LogIn className="h-4 w-4" />
-              <span>Log in to Book Consultation</span>
+              <span>Log in to book consultation</span>
             </Button>
           </Link>
           <p className="text-[11px] text-center text-muted-foreground">
@@ -71,23 +71,23 @@ export const BookingFeeSummary: React.FC<BookingFeeSummaryProps> = ({
           </p>
         </div>
       ) : !isPatient ? (
-        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 text-center font-medium">
+        <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 text-center font-medium">
           Only patients can schedule appointments with doctors.
         </div>
       ) : (
         <Button
           onClick={onSubmit}
           disabled={!selectedSlot || isSubmitting}
-          className="w-full h-11 rounded-xl bg-primary hover:bg-primary-dark text-white font-semibold gap-2 shadow-sm shadow-primary/20 disabled:opacity-50"
+          className="w-full h-11 rounded-lg font-semibold gap-2"
         >
           {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Confirming Booking...</span>
+              <span>Confirming booking...</span>
             </>
           ) : (
             <>
-              <span>Confirm & Book Appointment</span>
+              <span>Confirm & book appointment</span>
               <ArrowRight className="h-4 w-4" />
             </>
           )}

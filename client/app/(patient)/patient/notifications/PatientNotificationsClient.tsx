@@ -8,7 +8,6 @@ import {
   FileText,
   Bell,
   AlertCircle,
-  Clock,
   Check,
   CheckCheck,
   Loader2,
@@ -20,20 +19,20 @@ import {
   useMarkNotificationAsRead,
   useMarkAllNotificationsAsRead,
 } from "@/features/notifications/api/queries";
-import { AppNotification } from "@/features/notifications/types";
+import { PageHeader } from "@/components/layout";
 
 function getNotificationIcon(type: string) {
   switch (type) {
     case "BOOKING_CONFIRMED":
-      return <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />;
+      return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />;
     case "BOOKING_CANCELLED":
-      return <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />;
+      return <AlertCircle className="h-3.5 w-3.5 text-destructive" />;
     case "APPOINTMENT_REMINDER":
-      return <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
+      return <Calendar className="h-3.5 w-3.5 text-primary" />;
     case "REPORT_UPLOADED":
-      return <FileText className="h-4 w-4 text-purple-600 dark:text-purple-400" />;
+      return <FileText className="h-3.5 w-3.5 text-secondary-text" />;
     default:
-      return <Bell className="h-4 w-4 text-primary" />;
+      return <Bell className="h-3.5 w-3.5 text-muted-foreground" />;
   }
 }
 
@@ -79,115 +78,101 @@ export function PatientNotificationsClient() {
   };
 
   return (
-    <div className="w-full space-y-6 sm:space-y-7">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-border/70">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
-              Notifications
-            </h1>
-            {unreadCount > 0 && (
-              <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-primary text-primary-foreground">
-                {unreadCount} unread
-              </span>
+    <div className="w-full space-y-4 sm:space-y-5">
+      <PageHeader
+        eyebrow="Activity"
+        title="Notifications"
+        meta={unreadCount > 0 ? `${unreadCount} unread` : undefined}
+        description="Appointment updates, report activity and account notices."
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleMarkAllAsRead}
+            disabled={unreadCount === 0 || markAllMutation.isPending}
+            className="h-8 shrink-0 gap-1.5 rounded-md px-3 text-xs font-semibold"
+          >
+            {markAllMutation.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <CheckCheck className="h-3.5 w-3.5" />
             )}
-          </div>
-          <p className="text-xs sm:text-sm text-secondary-text">
-            Stay informed on appointment requests, confirmations, medical reports, and clinical updates.
-          </p>
-        </div>
+            <span>Mark all as read</span>
+          </Button>
+        }
+      />
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleMarkAllAsRead}
-          disabled={unreadCount === 0 || markAllMutation.isPending}
-          className="h-9 px-3.5 text-xs font-semibold rounded-xl gap-1.5 self-start sm:self-auto shrink-0"
-        >
-          {markAllMutation.isPending ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <CheckCheck className="h-3.5 w-3.5 text-primary" />
+      <section className="panel overflow-hidden">
+        <div className="panel-header">
+          <h2 className="panel-title">Recent activity</h2>
+          {isFetching && (
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Updating
+            </span>
           )}
-          <span>Mark all as read</span>
-        </Button>
-      </div>
-
-      {/* Loading Indicator */}
-      {isFetching && (
-        <div className="flex items-center gap-2 text-xs text-primary font-medium">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          <span>Updating notifications...</span>
         </div>
-      )}
 
-      {/* Notifications List */}
-      {isLoading && notifications.length === 0 ? (
-        <div className="space-y-3">
-          {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="p-4 rounded-2xl border border-border/70 bg-card flex items-start gap-4 animate-pulse"
-            >
-              <div className="h-9 w-9 rounded-xl bg-muted shrink-0" />
-              <div className="space-y-2 flex-1">
-                <div className="h-4 w-1/3 bg-muted rounded" />
-                <div className="h-3 w-3/4 bg-muted rounded" />
+        {isLoading && notifications.length === 0 ? (
+          <div className="divide-y divide-border">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex items-start gap-3 p-3.5">
+                <div className="h-8 w-8 shrink-0 animate-pulse rounded-md bg-muted" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3.5 w-1/3 animate-pulse rounded bg-muted" />
+                  <div className="h-3 w-3/4 animate-pulse rounded bg-muted/70" />
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      ) : notifications.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-12 text-center space-y-3 bg-card/40">
-          <div className="h-12 w-12 mx-auto rounded-full bg-primary/10 text-primary flex items-center justify-center">
-            <Bell className="h-6 w-6" />
+            ))}
           </div>
-          <h3 className="text-base font-bold text-foreground">
-            No Notifications Yet
-          </h3>
-          <p className="text-xs sm:text-sm text-secondary-text max-w-sm mx-auto">
-            You will receive notices here when doctors confirm appointments, send meeting links, or upload digital prescriptions.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {notifications.map((n) => {
-            const timeRelative = formatRelativeTime(n.createdAt);
-
-            return (
-              <div
-                key={n.id}
-                onClick={() => handleMarkAsRead(n.id, n.isRead)}
-                className={`p-4 sm:p-5 rounded-2xl border flex items-start justify-between gap-4 transition-all cursor-pointer ${
-                  !n.isRead
-                    ? "bg-primary/[0.03] border-primary/30 shadow-xs ring-1 ring-primary/10"
-                    : "bg-card border-border/70 hover:border-border"
-                }`}
-              >
-                <div className="flex items-start gap-3.5 min-w-0 flex-1">
-                  <div className="p-2.5 rounded-xl bg-muted/60 shrink-0 mt-0.5 border border-border/50">
+        ) : notifications.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-muted text-muted-foreground">
+              <Bell className="h-4 w-4" />
+            </div>
+            <p className="text-sm font-semibold text-foreground">
+              No notifications
+            </p>
+            <p className="max-w-xs text-xs text-muted-foreground">
+              Appointment confirmations, meeting links and prescriptions will
+              appear here.
+            </p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-border">
+            {notifications.map((n) => (
+              <li key={n.id}>
+                <div
+                  onClick={() => handleMarkAsRead(n.id, n.isRead)}
+                  className={`flex cursor-pointer items-start gap-3 p-3.5 transition-colors ${
+                    !n.isRead ? "bg-accent/60 hover:bg-accent" : "hover:bg-muted/50"
+                  }`}
+                >
+                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card">
                     {getNotificationIcon(n.type)}
-                  </div>
+                  </span>
 
-                  <div className="space-y-1 min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 space-y-0.5">
                     <div className="flex items-center gap-2">
-                      <h3 className={`text-xs sm:text-sm font-bold truncate ${
-                        !n.isRead ? "text-foreground" : "text-foreground/90"
-                      }`}>
+                      <h3 className="truncate text-[13px] font-semibold text-foreground">
                         {n.title}
                       </h3>
                       {!n.isRead && (
-                        <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
+                        <span
+                          className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+                          aria-label="Unread"
+                        />
                       )}
                     </div>
 
-                    <p className="text-xs text-secondary-text leading-relaxed">
+                    <p className="text-xs leading-relaxed text-secondary-text">
                       {n.message}
                     </p>
 
-                    <div className="flex items-center gap-3 pt-1 text-[11px] text-muted-foreground">
-                      <span>{timeRelative}</span>
+                    <div className="flex items-center gap-3 pt-0.5 text-[11px] text-muted-foreground">
+                      <span className="tabular-nums">
+                        {formatRelativeTime(n.createdAt)}
+                      </span>
                       {n.relatedBookingId && (
                         <Link
                           href="/patient/appointments"
@@ -197,33 +182,35 @@ export function PatientNotificationsClient() {
                           }}
                           className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
                         >
-                          <span>View Appointment</span>
+                          <span>View appointment</span>
                           <ArrowRight className="h-3 w-3" />
                         </Link>
                       )}
                     </div>
                   </div>
-                </div>
 
-                {!n.isRead && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleMarkAsRead(n.id, false);
-                    }}
-                    className="h-8 px-2 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-primary shrink-0"
-                    title="Mark as read"
-                  >
-                    <Check className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+                  {!n.isRead && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMarkAsRead(n.id, false);
+                      }}
+                      className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+                      title="Mark as read"
+                      aria-label="Mark as read"
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }
+
+export default PatientNotificationsClient;

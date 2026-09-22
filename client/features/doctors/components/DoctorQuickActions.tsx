@@ -5,9 +5,9 @@ import Link from "next/link";
 import {
   ArrowUpRight,
   CalendarDays,
-  FileText,
+  Clock,
   MessagesSquare,
-  Stethoscope,
+  Users,
 } from "lucide-react";
 
 interface Shortcut {
@@ -19,32 +19,32 @@ interface Shortcut {
 
 const shortcuts: Shortcut[] = [
   {
-    label: "Book a consultation",
-    description: "Browse verified specialists",
-    href: "/doctors",
-    icon: Stethoscope,
-  },
-  {
-    label: "View appointments",
-    description: "Upcoming and past visits",
-    href: "/patient/appointments",
+    label: "Consultation queue",
+    description: "Review and confirm requests",
+    href: "/doctor/appointments",
     icon: CalendarDays,
   },
   {
-    label: "Upload a report",
-    description: "Add labs or prescriptions",
-    href: "/patient/records",
-    icon: FileText,
+    label: "Patient directory",
+    description: "Consultation histories",
+    href: "/doctor/patients",
+    icon: Users,
   },
   {
-    label: "Message a doctor",
+    label: "Availability & leaves",
+    description: "Set consulting hours",
+    href: "/doctor/schedule",
+    icon: Clock,
+  },
+  {
+    label: "Patient messages",
     description: "Secure clinical messaging",
-    href: "/patient/messages",
+    href: "/doctor/messages",
     icon: MessagesSquare,
   },
 ];
 
-export const PatientQuickActions: React.FC = () => {
+export const DoctorQuickActions: React.FC = () => {
   return (
     <section className="panel overflow-hidden">
       <div className="panel-header">
@@ -81,4 +81,4 @@ export const PatientQuickActions: React.FC = () => {
   );
 };
 
-export default PatientQuickActions;
+export default DoctorQuickActions;

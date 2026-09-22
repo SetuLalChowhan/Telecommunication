@@ -19,7 +19,15 @@ export const DoctorList: React.FC = () => {
   // Read initial query params from URL
   const initialSpecialty =
     searchParams.get("specialty") || searchParams.get("specialtySlug") || "";
-  const initialSearch = searchParams.get("search") || "";
+  // Match the server prefetch: the hero search links with `?q=`, older links use `search`.
+  const initialSearch = (searchParams.get("q") || searchParams.get("search") || "").trim();
+  // Every filter below must mirror the server prefetch exactly. If the initial
+  // client state builds a different query key than the one that was prefetched,
+  // React Query treats it as a cache miss and throws the hydrated data away.
+  const initialMinFee = searchParams.get("minFee") || "";
+  const initialMaxFee = searchParams.get("maxFee") || "";
+  const initialExperience =
+    searchParams.get("experience") || searchParams.get("minExperience") || "";
   const initialSortBy =
     (searchParams.get("sortBy") as DoctorSortOption) || "latest";
   const initialPage = Number(searchParams.get("page")) || 1;
@@ -27,38 +35,36 @@ export const DoctorList: React.FC = () => {
   // Staged / Draft filter inputs
   const [draftSearch, setDraftSearch] = useState(initialSearch);
   const [draftSpecialty, setDraftSpecialty] = useState(initialSpecialty);
-  const [draftMinFee, setDraftMinFee] = useState("");
-  const [draftMaxFee, setDraftMaxFee] = useState("");
-  const [draftExperience, setDraftExperience] = useState("");
+  const [draftMinFee, setDraftMinFee] = useState(initialMinFee);
+  const [draftMaxFee, setDraftMaxFee] = useState(initialMaxFee);
+  const [draftExperience, setDraftExperience] = useState(initialExperience);
 
   // Applied filter state (triggers the actual query fetch)
   const [appliedFilters, setAppliedFilters] = useState({
     search: initialSearch,
     specialty: initialSpecialty,
-    minFee: "",
-    maxFee: "",
-    experience: "",
+    minFee: initialMinFee,
+    maxFee: initialMaxFee,
+    experience: initialExperience,
   });
 
   const [sortBy, setSortBy] = useState<DoctorSortOption>(initialSortBy);
   const [page, setPage] = useState(initialPage);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
-  // Debounced search effect (350ms)
+  // Debounced search effect (350ms). Skips the initial mount so a deep link
+  // (e.g. `?q=cardio&page=3`) keeps the page/param it was prefetched with
+  // instead of resetting to page 1 and refetching.
   useEffect(() => {
+    if (draftSearch.trim() === appliedFilters.search) return;
+
     const handler = setTimeout(() => {
-      setAppliedFilters((prev) => {
-        if (prev.search === draftSearch.trim()) return prev;
-        return {
-          ...prev,
-          search: draftSearch.trim(),
-        };
-      });
+      setAppliedFilters((prev) => ({ ...prev, search: draftSearch.trim() }));
       setPage(1);
     }, 350);
 
     return () => clearTimeout(handler);
-  }, [draftSearch]);
+  }, [draftSearch, appliedFilters.search]);
 
   // Fetch real specialties from backend API
   const { data: specialties = [] } = useSpecialties();
@@ -123,8 +129,10 @@ export const DoctorList: React.FC = () => {
     setPage(1);
   };
 
-  // Show skeleton whenever initial loading OR refetching filters occurs
-  const showSkeleton = isLoading || isFetching;
+  // Skeletons only when there is genuinely no data yet (first visit / first load).
+  // Refetches for filters, search and pagination keep the previous results visible
+  // (see `placeholderData` in useDoctors) so the page never flashes between states.
+  const showSkeleton = isLoading;
 
   return (
     <div className="w-full bg-background min-h-screen">
@@ -143,7 +151,7 @@ export const DoctorList: React.FC = () => {
       />
 
       {/* Main Content Layout */}
-      <div className="max-w-[1920px] mx-auto section-padding-x py-10 sm:py-12">
+      <div className="container-page py-10 sm:py-12">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 items-start">
           {/* Filters Sidebar */}
           <DoctorFilters
@@ -166,14 +174,14 @@ export const DoctorList: React.FC = () => {
           {/* Doctor Cards Grid & Pagination Area */}
           <div className="flex-1 w-full min-w-0">
             {showSkeleton ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <DoctorCardSkeleton key={i} />
                 ))}
               </div>
             ) : doctorsList.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                   {doctorsList.map((doctor) => (
                     <DoctorCard key={doctor.id} doctor={doctor} />
                   ))}
@@ -188,27 +196,26 @@ export const DoctorList: React.FC = () => {
                 />
               </>
             ) : (
-              <div className="py-16 sm:py-20 flex flex-col items-center justify-center text-center rounded-2xl border border-border bg-card p-8 space-y-4 shadow-xs">
-                <div className="h-14 w-14 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+              <div className="py-16 sm:py-20 flex flex-col items-center justify-center text-center rounded-xl border border-border bg-card p-8 space-y-4">
+                <div className="h-14 w-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                   <Stethoscope className="h-7 w-7" />
                 </div>
                 <div className="space-y-1.5 max-w-md">
-                  <h3 className="text-lg font-bold text-foreground">
-                    No Doctors Found
+                  <h3 className="text-base font-semibold text-foreground">
+                    No doctors found
                   </h3>
                   <p className="text-xs sm:text-sm text-secondary-text leading-relaxed">
                     We couldn&apos;t find any certified doctors matching your current
-                    filter criteria. Try adjusting or resetting your search
-                    filters.
+                    filters. Try adjusting or resetting your search.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={handleResetFilters}
-                  className="mt-2 inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary-dark text-white px-5 py-2.5 text-xs sm:text-sm font-semibold transition-all shadow-xs cursor-pointer"
+                  className="mt-2 inline-flex items-center gap-2 rounded-lg bg-primary hover:bg-primary-dark text-primary-foreground px-5 py-2.5 text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
                 >
                   <RotateCcw className="h-4 w-4" />
-                  <span>Reset All Filters</span>
+                  <span>Reset all filters</span>
                 </button>
               </div>
             )}

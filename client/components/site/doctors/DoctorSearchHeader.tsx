@@ -32,26 +32,26 @@ export const DoctorSearchHeader: React.FC<DoctorSearchHeaderProps> = ({
   isSearching = false,
 }) => {
   return (
-    <div className="w-full bg-slate-50/60 dark:bg-slate-900/20 border-b border-border py-10 sm:py-14">
-      <div className="max-w-[1920px] mx-auto section-padding-x space-y-8">
+    <div className="w-full bg-muted/30 border-b border-border/60 py-10 sm:py-12">
+      <div className="container-page space-y-8">
         {/* Header Title Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-4 sm:space-y-5 max-w-2xl">
-            <span className="text-xs font-semibold tracking-wider text-primary uppercase block">
-              Online Medical Consultations
+            <span className="eyebrow-text block text-primary">
+              Online medical consultations
             </span>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground tracking-tight leading-tight">
-              Consult with Verified Doctors Online
+            <h1 className="text-2xl sm:text-3xl font-semibold text-foreground tracking-tight leading-tight">
+              Consult with verified doctors online
             </h1>
-            <p className="text-sm sm:text-[15px] text-secondary-text leading-relaxed">
+            <p className="text-sm text-secondary-text leading-relaxed">
               Connect with top certified doctors across specialties for private, secure video consultations from anywhere.
             </p>
           </div>
 
           {/* Results counter */}
           <div className="hidden sm:block text-right">
-            <span className="text-xs text-secondary-text block mb-1">Available Doctors</span>
-            <span className="text-2xl font-bold text-foreground flex items-center justify-end gap-2">
+            <span className="text-xs text-secondary-text block mb-1">Available doctors</span>
+            <span className="text-2xl font-semibold text-foreground flex items-center justify-end gap-2">
               {isSearching ? (
                 <span className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin inline-block" />
               ) : (
@@ -77,7 +77,7 @@ export const DoctorSearchHeader: React.FC<DoctorSearchHeaderProps> = ({
               placeholder="Search by doctor name, medical specialty, or symptom..."
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full rounded-xl border border-border bg-card pl-11 pr-10 py-3 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-xs"
+              className="w-full h-11 rounded-lg border border-border bg-card pl-11 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary transition-colors"
             />
             {search && (
               <button
@@ -101,7 +101,7 @@ export const DoctorSearchHeader: React.FC<DoctorSearchHeaderProps> = ({
                   onSortChange(val as DoctorSortOption)
                 }
               >
-                <SelectTrigger className="h-11 rounded-xl border-border bg-card px-4 text-sm font-medium shadow-xs hover:border-primary/40 focus:ring-primary/20">
+                <SelectTrigger className="h-11 rounded-lg border-border bg-card px-4 text-sm font-medium hover:border-primary/40 focus:ring-primary/20">
                   <div className="flex items-center gap-2 truncate">
                     <ArrowUpDown className="h-3.5 w-3.5 text-primary shrink-0" />
                     <SelectValue placeholder="Sort by" />
@@ -109,16 +109,16 @@ export const DoctorSearchHeader: React.FC<DoctorSearchHeaderProps> = ({
                 </SelectTrigger>
                 <SelectContent align="end" className="rounded-xl border-border bg-card shadow-lg">
                   <SelectItem value="latest" className="text-sm font-medium">
-                    Latest Doctors
+                    Latest doctors
                   </SelectItem>
                   <SelectItem value="rating" className="text-sm font-medium">
-                    Top Rated
+                    Top rated
                   </SelectItem>
                   <SelectItem value="fee" className="text-sm font-medium">
-                    Fee: Low to High
+                    Fee: low to high
                   </SelectItem>
                   <SelectItem value="experience" className="text-sm font-medium">
-                    Most Experienced
+                    Most experienced
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -128,7 +128,7 @@ export const DoctorSearchHeader: React.FC<DoctorSearchHeaderProps> = ({
             <button
               type="button"
               onClick={onOpenMobileFilters}
-              className="lg:hidden flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-border bg-card text-sm font-medium text-foreground shadow-xs hover:border-primary/40 transition-colors cursor-pointer"
+              className="lg:hidden flex items-center justify-center gap-2 h-11 px-4 rounded-lg border border-border bg-card text-sm font-medium text-foreground hover:border-primary/40 transition-colors cursor-pointer"
             >
               <SlidersHorizontal className="h-4 w-4 text-primary" />
               <span>Filters</span>

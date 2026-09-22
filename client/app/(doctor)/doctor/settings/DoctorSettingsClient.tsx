@@ -14,6 +14,7 @@ import {
 import { DoctorProfileTab, DoctorProfileFormData } from "@/features/doctors/components/settings/DoctorProfileTab";
 import { DoctorGoogleTab } from "@/features/doctors/components/settings/DoctorGoogleTab";
 import { DoctorDocumentsTab } from "@/features/doctors/components/settings/DoctorDocumentsTab";
+import { PageHeader } from "@/components/layout";
 
 export function DoctorSettingsClient() {
   const router = useRouter();
@@ -119,23 +120,26 @@ export function DoctorSettingsClient() {
   };
 
   return (
-    <div className="w-full space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Doctor Account & Practice Settings</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage your credentials, calendar integrations, and verification documents.
-        </p>
-      </div>
+    <div className="w-full space-y-4 sm:space-y-5">
+      <PageHeader
+        eyebrow="Account"
+        title="Profile & practice"
+        description="Credentials, calendar integrations and verification documents."
+      />
 
       {/* Tab Switcher */}
-      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-muted/60 border border-border w-fit">
+      <div
+        role="tablist"
+        aria-label="Settings sections"
+        className="flex w-full items-center gap-0.5 overflow-x-auto border-b border-border"
+      >
         <button
           type="button"
           onClick={() => setActiveTab("profile")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+          className={`-mb-px flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2 text-xs font-semibold transition-colors ${
             activeTab === "profile"
-              ? "bg-card text-foreground shadow-xs border border-border"
-              : "text-muted-foreground hover:text-foreground"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           <User className="h-4 w-4" />
@@ -144,10 +148,10 @@ export function DoctorSettingsClient() {
         <button
           type="button"
           onClick={() => setActiveTab("integrations")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+          className={`-mb-px flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2 text-xs font-semibold transition-colors ${
             activeTab === "integrations"
-              ? "bg-card text-foreground shadow-xs border border-border"
-              : "text-muted-foreground hover:text-foreground"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           <Calendar className="h-4 w-4" />
@@ -156,10 +160,10 @@ export function DoctorSettingsClient() {
         <button
           type="button"
           onClick={() => setActiveTab("documents")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+          className={`-mb-px flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2 text-xs font-semibold transition-colors ${
             activeTab === "documents"
-              ? "bg-card text-foreground shadow-xs border border-border"
-              : "text-muted-foreground hover:text-foreground"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           <ShieldCheck className="h-4 w-4" />

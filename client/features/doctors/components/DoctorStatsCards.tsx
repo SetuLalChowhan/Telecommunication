@@ -1,12 +1,19 @@
 "use client";
 
 import React from "react";
-import { CalendarCheck, Calendar, Clock, CheckCircle2 } from "lucide-react";
 import { DoctorDashboardStats } from "../types";
+import { cn } from "@/lib/utils";
 
 interface DoctorStatsCardsProps {
   stats?: DoctorDashboardStats;
   isLoading?: boolean;
+}
+
+interface Metric {
+  label: string;
+  value: number;
+  caption: string;
+  tone?: "warning" | "accent";
 }
 
 export const DoctorStatsCards: React.FC<DoctorStatsCardsProps> = ({
@@ -15,103 +22,78 @@ export const DoctorStatsCards: React.FC<DoctorStatsCardsProps> = ({
 }) => {
   if (isLoading || !stats) {
     return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5 shadow-xs animate-pulse space-y-3"
-          >
-            <div className="flex items-center justify-between">
-              <div className="h-4 w-24 bg-muted rounded-md" />
-              <div className="h-8 w-8 rounded-xl bg-muted" />
+      <div className="panel overflow-hidden">
+        <div className="kpi-strip">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="kpi-cell">
+              <div className="h-2.5 w-20 animate-pulse rounded bg-muted" />
+              <div className="h-6 w-12 animate-pulse rounded bg-muted" />
+              <div className="h-2.5 w-24 animate-pulse rounded bg-muted/70" />
             </div>
-            <div className="h-8 w-16 bg-muted rounded-lg" />
-            <div className="h-3 w-32 bg-muted/70 rounded-md" />
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     );
   }
 
-  const items = [
+  const metrics: Metric[] = [
     {
-      title: "Total Visits",
-      value: stats.totalConsultations,
-      description: "Lifetime patient visits",
-      icon: CalendarCheck,
-      color: "text-primary",
-      bgColor: "bg-primary/10",
-      borderColor: "hover:border-primary/40",
-    },
-    {
-      title: "Today's Schedule",
+      label: "Today's schedule",
       value: stats.todayConsultationsCount,
-      description: "Scheduled for today",
-      icon: Calendar,
-      color: "text-emerald-600 dark:text-emerald-400",
-      bgColor: "bg-emerald-500/10",
-      borderColor: "hover:border-emerald-500/40",
-      highlight: stats.todayConsultationsCount > 0,
+      caption: "Scheduled for today",
+      tone: "accent",
     },
     {
-      title: "Pending Review",
+      label: "Awaiting confirmation",
       value: stats.pendingConfirmationCount,
-      description: "Awaiting your confirmation",
-      icon: Clock,
-      color: "text-amber-600 dark:text-amber-400",
-      bgColor: "bg-amber-500/10",
-      borderColor: "hover:border-amber-500/40",
-      highlight: stats.pendingConfirmationCount > 0,
+      caption:
+        stats.pendingConfirmationCount > 0
+          ? "Patient requests to review"
+          : "Nothing pending",
+      tone: stats.pendingConfirmationCount > 0 ? "warning" : undefined,
     },
     {
-      title: "Completed",
+      label: "Completed",
       value: stats.completedConsultationsCount,
-      description: "Successful reviews",
-      icon: CheckCircle2,
-      color: "text-blue-600 dark:text-blue-400",
-      bgColor: "bg-blue-500/10",
-      borderColor: "hover:border-blue-500/40",
+      caption: "Closed consultations",
+    },
+    {
+      label: "Total visits",
+      value: stats.totalConsultations,
+      caption: "Lifetime patient visits",
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-      {items.map((item, idx) => {
-        const Icon = item.icon;
-        return (
+    <div className="panel overflow-hidden">
+      <div className="kpi-strip">
+        {metrics.map((metric, index) => (
           <div
-            key={idx}
-            className={`group relative rounded-2xl border border-border/70 bg-card p-4 sm:p-5 shadow-xs transition-all duration-200 hover:shadow-sm ${item.borderColor}`}
+            key={metric.label}
+            className={cn(
+              "kpi-cell",
+              // 2-column grid on mobile, single row of 4 from lg up.
+              index >= 2 && "border-t border-border lg:border-t-0",
+              index % 2 === 1 && "border-l border-border",
+              index > 0 && "lg:border-l lg:border-border"
+            )}
           >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs sm:text-sm font-semibold text-secondary-text truncate">
-                {item.title}
-              </span>
-              <div
-                className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 ${item.bgColor} ${item.color}`}
-              >
-                <Icon className="h-4 w-4" />
-              </div>
-            </div>
-
-            <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-                {item.value}
-              </span>
-              {item.highlight && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Active
-                </span>
+            <span className="data-label">{metric.label}</span>
+            <span
+              className={cn(
+                "data-value",
+                metric.tone === "warning" && "text-amber-600 dark:text-amber-400",
+                metric.tone === "accent" && "text-primary"
               )}
-            </div>
-
-            <p className="mt-1 text-xs text-muted-foreground truncate">
-              {item.description}
-            </p>
+            >
+              {metric.value}
+            </span>
+            <span className="text-[11px] text-muted-foreground">
+              {metric.caption}
+            </span>
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 };

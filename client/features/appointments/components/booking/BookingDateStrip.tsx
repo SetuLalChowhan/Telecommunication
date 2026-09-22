@@ -46,8 +46,8 @@ export const BookingDateStrip: React.FC<BookingDateStripProps> = ({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Select Date
+        <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Select date
         </label>
         <div className="flex items-center gap-1">
           <Button
@@ -78,10 +78,10 @@ export const BookingDateStrip: React.FC<BookingDateStripProps> = ({
                 className="h-7 px-2 text-xs rounded-lg gap-1 border-border/80"
               >
                 <CalendarDays className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Pick Date</span>
+                <span className="hidden sm:inline">Pick date</span>
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-auto p-0 rounded-2xl">
+            <PopoverContent align="end" className="w-auto p-0 rounded-xl">
               <Calendar
                 selected={selectedDate}
                 onSelect={(d) => {
@@ -108,17 +108,17 @@ export const BookingDateStrip: React.FC<BookingDateStripProps> = ({
               key={item.dateString}
               type="button"
               onClick={() => onSelectDate(item.date)}
-              className={`flex flex-col items-center justify-center min-w-[62px] py-2.5 px-2 rounded-2xl border text-xs transition-all snap-start shrink-0 ${
+              className={`flex flex-col items-center justify-center min-w-[62px] py-2.5 px-2 rounded-lg border text-xs transition-colors snap-start shrink-0 ${
                 isSelected
-                  ? "bg-primary text-white border-primary shadow-sm shadow-primary/20 scale-102"
-                  : "bg-card hover:bg-muted/60 border-border/80 text-foreground"
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-card hover:bg-muted/60 border-border text-foreground"
               }`}
             >
-              <span className={`text-[10px] font-semibold ${isSelected ? "text-white/80" : "text-muted-foreground"}`}>
+              <span className={`text-[10px] font-semibold ${isSelected ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
                 {item.isToday ? "Today" : item.dayName}
               </span>
-              <span className="text-base font-bold my-0.5">{item.dayNum}</span>
-              <span className={`text-[10px] ${isSelected ? "text-white/80" : "text-muted-foreground"}`}>
+              <span className="text-base font-semibold my-0.5">{item.dayNum}</span>
+              <span className={`text-[10px] ${isSelected ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
                 {item.monthName}
               </span>
             </button>

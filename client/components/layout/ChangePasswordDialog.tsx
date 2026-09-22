@@ -8,6 +8,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogBody,
   DialogTitle,
   DialogDescription,
   DialogFooter,
@@ -15,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 
 const changePasswordSchema = z
   .object({
@@ -34,6 +35,24 @@ interface ChangePasswordDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+const fields = [
+  {
+    id: "currentPassword",
+    label: "Current password",
+    placeholder: "••••••••",
+  },
+  {
+    id: "newPassword",
+    label: "New password",
+    placeholder: "At least 8 characters",
+  },
+  {
+    id: "confirmPassword",
+    label: "Confirm new password",
+    placeholder: "Re-type new password",
+  },
+] as const;
 
 export const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({
   open,
@@ -56,6 +75,15 @@ export const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({
     },
   });
 
+  const handleOpenChange = (next: boolean) => {
+    if (!next) {
+      setApiError("");
+      setSuccess(false);
+      reset();
+    }
+    onOpenChange(next);
+  };
+
   const onSubmit = async (_values: ChangePasswordFormValues) => {
     try {
       setApiError("");
@@ -73,87 +101,66 @@ export const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[440px] p-6 sm:p-7">
-        <DialogHeader className="mb-5">
-          <DialogTitle className="text-lg font-bold text-foreground">
-            Change Password
-          </DialogTitle>
-          <DialogDescription className="text-xs text-secondary-text mt-1">
-            Enter your current password and choose a secure new password.
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-[420px]">
+        <DialogHeader>
+          <DialogTitle>Change password</DialogTitle>
+          <DialogDescription>
+            Enter your current password and choose a secure new one.
           </DialogDescription>
         </DialogHeader>
 
-        {apiError && (
-          <div className="p-3 rounded-xl bg-destructive/10 text-destructive text-xs font-medium mb-3">
-            {apiError}
-          </div>
-        )}
-
         {success ? (
-          <div className="py-6 text-center space-y-2">
-            <CheckCircle2 className="h-8 w-8 text-emerald-600 mx-auto" />
+          <DialogBody className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+            <CheckCircle2 className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
             <p className="text-sm font-semibold text-foreground">
-              Password updated successfully!
+              Password updated
             </p>
-          </div>
+            <p className="text-xs text-muted-foreground">
+              Your new password is active immediately.
+            </p>
+          </DialogBody>
         ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="currentPassword">Current Password</Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                {...register("currentPassword")}
-                placeholder="••••••••"
-                className="h-10 text-xs sm:text-sm rounded-xl"
-              />
-              {errors.currentPassword && (
-                <p className="text-[11px] text-destructive font-medium">
-                  {errors.currentPassword.message}
-                </p>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex min-h-0 flex-1 flex-col"
+            noValidate
+          >
+            <DialogBody>
+              {apiError && (
+                <div className="flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive/10 p-2.5 text-xs font-medium text-destructive">
+                  <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" />
+                  <span>{apiError}</span>
+                </div>
               )}
-            </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="newPassword">New Password</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                {...register("newPassword")}
-                placeholder="At least 8 characters"
-                className="h-10 text-xs sm:text-sm rounded-xl"
-              />
-              {errors.newPassword && (
-                <p className="text-[11px] text-destructive font-medium">
-                  {errors.newPassword.message}
-                </p>
-              )}
-            </div>
+              {fields.map((field) => (
+                <div key={field.id} className="space-y-1.5">
+                  <Label htmlFor={field.id}>{field.label}</Label>
+                  <Input
+                    id={field.id}
+                    type="password"
+                    placeholder={field.placeholder}
+                    aria-invalid={Boolean(errors[field.id])}
+                    className="h-9 rounded-md text-sm"
+                    {...register(field.id)}
+                  />
+                  {errors[field.id] && (
+                    <p className="text-[11px] font-medium text-destructive">
+                      {errors[field.id]?.message}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </DialogBody>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                {...register("confirmPassword")}
-                placeholder="Re-type new password"
-                className="h-10 text-xs sm:text-sm rounded-xl"
-              />
-              {errors.confirmPassword && (
-                <p className="text-[11px] text-destructive font-medium">
-                  {errors.confirmPassword.message}
-                </p>
-              )}
-            </div>
-
-            <DialogFooter className="mt-6 pt-4 border-t border-border/60">
+            <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => onOpenChange(false)}
-                className="h-9 px-4 text-xs rounded-xl"
+                onClick={() => handleOpenChange(false)}
+                className="h-8 rounded-md px-3 text-xs"
               >
                 Cancel
               </Button>
@@ -161,12 +168,12 @@ export const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({
                 type="submit"
                 size="sm"
                 disabled={isSubmitting}
-                className="h-9 px-5 text-xs font-semibold rounded-xl shadow-xs"
+                className="h-8 rounded-md px-3 text-xs font-semibold"
               >
                 {isSubmitting && (
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 )}
-                Update Password
+                <span>Update password</span>
               </Button>
             </DialogFooter>
           </form>

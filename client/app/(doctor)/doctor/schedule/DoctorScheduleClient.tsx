@@ -16,6 +16,7 @@ import {
 import { DoctorDayOff } from "@/features/doctors/types";
 import { to24Hour } from "@/lib/time-utils";
 import { toast } from "react-toastify";
+import { PageHeader } from "@/components/layout";
 
 function adaptDayOff(d: DoctorDayOff): DayOffItem {
   const dateObj = new Date(d.date);
@@ -200,18 +201,12 @@ export function DoctorScheduleClient() {
   };
 
   return (
-    <div className="w-full space-y-6 sm:space-y-7">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-border/70">
-        <div className="space-y-1.5">
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
-            Availability & Leave Schedule
-          </h1>
-          <p className="text-xs sm:text-sm text-secondary-text">
-            Configure your regular consultation hours and manage planned leaves.
-          </p>
-        </div>
-      </div>
+    <div className="w-full space-y-4 sm:space-y-5">
+      <PageHeader
+        eyebrow="Clinical"
+        title="Availability &amp; leaves"
+        description="Configure regular consultation hours and manage planned leaves."
+      />
 
       {/* 1. Weekly Consultation Schedule Table */}
       <DoctorAvailabilityTable

@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Video, Check, CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
+import { Video, Check, CheckCircle2, ArrowRight, Loader2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DoctorScheduleItem } from "@/lib/dashboard-mock-data";
+import { cn } from "@/lib/utils";
 
 interface DoctorTodayScheduleTableProps {
   schedule: DoctorScheduleItem[];
@@ -23,6 +24,15 @@ interface DoctorTodayScheduleTableProps {
   showViewAllLink?: boolean;
 }
 
+const statusChip: Record<string, string> = {
+  CONFIRMED:
+    "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  PENDING:
+    "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  COMPLETED: "border-border bg-muted text-muted-foreground",
+  CANCELLED: "border-border bg-muted text-muted-foreground",
+};
+
 export const DoctorTodayScheduleTable: React.FC<DoctorTodayScheduleTableProps> = ({
   schedule,
   onMarkComplete,
@@ -31,21 +41,20 @@ export const DoctorTodayScheduleTable: React.FC<DoctorTodayScheduleTableProps> =
   showViewAllLink = true,
 }) => {
   return (
-    <section className="space-y-3.5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-base sm:text-lg font-bold text-foreground">
-            Today&apos;s Schedule
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            {schedule.length} consultations scheduled for today
+    <section className="panel overflow-hidden">
+      <div className="panel-header">
+        <div className="min-w-0">
+          <h2 className="panel-title">Today&apos;s queue</h2>
+          <p className="text-[11px] text-muted-foreground">
+            {schedule.length} consultation{schedule.length === 1 ? "" : "s"}{" "}
+            scheduled
           </p>
         </div>
 
         {showViewAllLink && (
           <Link
             href="/doctor/appointments"
-            className="text-xs font-semibold text-primary hover:text-primary-dark inline-flex items-center gap-1 transition-colors"
+            className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary transition-colors hover:text-primary-dark"
           >
             <span>View all</span>
             <ArrowRight className="h-3.5 w-3.5" />
@@ -53,193 +62,239 @@ export const DoctorTodayScheduleTable: React.FC<DoctorTodayScheduleTableProps> =
         )}
       </div>
 
-      <div className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-xs">
-        {/* Desktop Table */}
-        <div className="hidden md:block">
-          <Table>
-            <TableHeader className="bg-slate-50/60 dark:bg-slate-900/40 border-b border-border/60">
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="py-2.5 px-6 font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">Patient</TableHead>
-                <TableHead className="py-2.5 px-4 font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">Time</TableHead>
-                <TableHead className="py-2.5 px-4 font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">Type</TableHead>
-                <TableHead className="py-2.5 px-4 font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">Status</TableHead>
-                <TableHead className="py-2.5 px-6 text-right font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="divide-y divide-border/40">
-              {schedule.map((item) => {
-                const isLoadingThis = actionLoadingId === item.id;
+      {schedule.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
+          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-muted text-muted-foreground">
+            <Calendar className="h-4 w-4" />
+          </div>
+          <p className="text-sm font-semibold text-foreground">
+            Nothing scheduled today
+          </p>
+          <p className="max-w-xs text-xs text-muted-foreground">
+            New patient bookings will appear in this queue automatically.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Desktop table */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-b border-border hover:bg-transparent">
+                  <TableHead className="h-9 px-4 text-[10px] tracking-wider">
+                    Patient
+                  </TableHead>
+                  <TableHead className="h-9 px-4 text-[10px] tracking-wider">
+                    Time
+                  </TableHead>
+                  <TableHead className="h-9 px-4 text-[10px] tracking-wider">
+                    Type
+                  </TableHead>
+                  <TableHead className="h-9 px-4 text-[10px] tracking-wider">
+                    Status
+                  </TableHead>
+                  <TableHead className="h-9 px-4 text-right text-[10px] tracking-wider">
+                    Action
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="divide-y divide-border">
+                {schedule.map((item) => {
+                  const isLoadingThis = actionLoadingId === item.id;
 
-                return (
-                  <TableRow key={item.id} className="hover:bg-muted/40 transition-colors">
-                    <TableCell className="py-3 px-6">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9 ring-1 ring-primary/15 shrink-0">
-                          <AvatarImage src={item.patientAvatar} alt={item.patientName} />
-                          <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">
-                            {item.patientName.slice(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <p className="font-semibold text-foreground text-xs sm:text-sm truncate">{item.patientName}</p>
-                          <p className="text-[11px] text-muted-foreground">
-                            {item.patientAge}y &bull; {item.patientGender}
-                          </p>
+                  return (
+                    <TableRow
+                      key={item.id}
+                      className="border-0 transition-colors hover:bg-muted/50"
+                    >
+                      <TableCell className="px-4 py-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <Avatar className="h-8 w-8 shrink-0">
+                            <AvatarImage
+                              src={item.patientAvatar}
+                              alt={item.patientName}
+                            />
+                            <AvatarFallback className="bg-muted text-[11px] font-semibold text-foreground">
+                              {item.patientName.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <p className="truncate text-[13px] font-semibold text-foreground">
+                              {item.patientName}
+                            </p>
+                            <p className="truncate text-[11px] text-muted-foreground">
+                              {item.patientAge}y · {item.patientGender}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3 px-4 font-medium text-foreground text-xs">
-                      {item.time}
-                    </TableCell>
-                    <TableCell className="py-3 px-4 text-xs text-secondary-text">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-foreground font-medium text-[11px]">
+                      </TableCell>
+                      <TableCell className="px-4 py-2.5 text-xs font-medium tabular-nums text-foreground">
+                        {item.time}
+                      </TableCell>
+                      <TableCell className="px-4 py-2.5 text-xs text-secondary-text">
                         {item.consultationType}
-                      </span>
-                    </TableCell>
-                    <TableCell className="py-3 px-4">
-                      <span
-                        className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full border uppercase ${
-                          item.status === "CONFIRMED"
-                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                            : item.status === "PENDING"
-                            ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                            : item.status === "COMPLETED"
-                            ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
-                            : "bg-muted text-muted-foreground border-border"
-                        }`}
-                      >
-                        {item.status}
-                      </span>
-                    </TableCell>
-                    <TableCell className="py-3 px-6 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        {item.status === "PENDING" && onConfirm && (
-                          <Button
-                            size="sm"
-                            disabled={isLoadingThis}
-                            onClick={() => onConfirm(item.id)}
-                            className="h-7.5 px-2.5 rounded-lg text-xs font-semibold gap-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer"
-                          >
-                            {isLoadingThis ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <Check className="h-3 w-3" />
-                            )}
-                            <span>Confirm</span>
-                          </Button>
-                        )}
-                        {item.meetLink && item.status === "CONFIRMED" && (
-                          <a href={item.meetLink} target="_blank" rel="noopener noreferrer">
-                            <Button size="sm" className="h-7.5 px-2.5 rounded-lg text-xs font-semibold gap-1 bg-emerald-600 hover:bg-emerald-700 text-white">
-                              <Video className="h-3 w-3" />
-                              <span>Call</span>
+                      </TableCell>
+                      <TableCell className="px-4 py-2.5">
+                        <span
+                          className={cn(
+                            "status-chip",
+                            statusChip[item.status] ?? statusChip.COMPLETED
+                          )}
+                        >
+                          {item.status}
+                        </span>
+                      </TableCell>
+                      <TableCell className="px-4 py-2.5 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {item.status === "PENDING" && onConfirm && (
+                            <Button
+                              size="sm"
+                              disabled={isLoadingThis}
+                              onClick={() => onConfirm(item.id)}
+                              className="h-7 rounded-md px-2.5 text-xs font-semibold"
+                            >
+                              {isLoadingThis ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Check className="h-3 w-3" />
+                              )}
+                              <span>Confirm</span>
                             </Button>
-                          </a>
-                        )}
-                        {item.status === "CONFIRMED" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={isLoadingThis}
-                            onClick={() => onMarkComplete(item.id)}
-                            className="h-7.5 px-2.5 rounded-lg text-xs font-semibold border-border hover:border-emerald-500 hover:text-emerald-600"
-                          >
-                            {isLoadingThis ? (
-                              <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                            ) : (
-                              <Check className="h-3 w-3 mr-1 text-muted-foreground" />
-                            )}
-                            <span>Done</span>
-                          </Button>
-                        )}
-                        {item.status === "COMPLETED" && (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-md">
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            <span>Done</span>
-                          </span>
-                        )}
+                          )}
+                          {item.meetLink && item.status === "CONFIRMED" && (
+                            <a
+                              href={item.meetLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Button
+                                size="sm"
+                                className="h-7 rounded-md px-2.5 text-xs font-semibold"
+                              >
+                                <Video className="h-3 w-3" />
+                                <span>Call</span>
+                              </Button>
+                            </a>
+                          )}
+                          {item.status === "CONFIRMED" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={isLoadingThis}
+                              onClick={() => onMarkComplete(item.id)}
+                              className="h-7 rounded-md px-2.5 text-xs font-semibold"
+                            >
+                              {isLoadingThis ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Check className="h-3 w-3" />
+                              )}
+                              <span>Done</span>
+                            </Button>
+                          )}
+                          {item.status === "COMPLETED" && (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              <span>Closed</span>
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile list */}
+          <ul className="divide-y divide-border md:hidden">
+            {schedule.map((item) => {
+              const isLoadingThis = actionLoadingId === item.id;
+
+              return (
+                <li key={item.id} className="space-y-2.5 p-3.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <Avatar className="h-8 w-8 shrink-0">
+                        <AvatarImage src={item.patientAvatar} alt={item.patientName} />
+                        <AvatarFallback className="bg-muted text-[11px] font-semibold text-foreground">
+                          {item.patientName.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-semibold text-foreground">
+                          {item.patientName}
+                        </p>
+                        <p className="truncate text-[11px] text-muted-foreground">
+                          {item.time} · {item.patientAge}y · {item.patientGender}
+                        </p>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* Mobile Responsive Compact View */}
-        <div className="md:hidden divide-y divide-border/60">
-          {schedule.map((item) => {
-            const isLoadingThis = actionLoadingId === item.id;
-
-            return (
-              <div key={item.id} className="p-3.5 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <Avatar className="h-8.5 w-8.5 ring-1 ring-primary/20">
-                      <AvatarImage src={item.patientAvatar} alt={item.patientName} />
-                      <AvatarFallback className="text-[11px] bg-primary/10 text-primary font-bold">
-                        {item.patientName.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-foreground truncate">{item.patientName}</p>
-                      <p className="text-[11px] text-muted-foreground">{item.time} &bull; {item.consultationType}</p>
                     </div>
+                    <span
+                      className={cn(
+                        "status-chip shrink-0",
+                        statusChip[item.status] ?? statusChip.COMPLETED
+                      )}
+                    >
+                      {item.status}
+                    </span>
                   </div>
-                  <span
-                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border uppercase ${
-                      item.status === "CONFIRMED"
-                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                        : item.status === "PENDING"
-                        ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                        : item.status === "COMPLETED"
-                        ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
-                        : "bg-muted text-muted-foreground border-border"
-                    }`}
-                  >
-                    {item.status}
-                  </span>
-                </div>
 
-                <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-border/40">
-                  {item.status === "PENDING" && onConfirm && (
-                    <Button
-                      size="sm"
-                      disabled={isLoadingThis}
-                      onClick={() => onConfirm(item.id)}
-                      className="h-7 px-2.5 rounded-lg text-xs font-semibold gap-1 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
-                    >
-                      {isLoadingThis ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
-                      <span>Confirm</span>
-                    </Button>
-                  )}
-                  {item.meetLink && item.status === "CONFIRMED" && (
-                    <a href={item.meetLink} target="_blank" rel="noopener noreferrer">
-                      <Button size="sm" className="h-7 px-2.5 rounded-lg text-xs font-semibold gap-1 bg-emerald-600 text-white">
-                        <Video className="h-3 w-3" />
-                        <span>Join</span>
+                  <div className="flex items-center justify-end gap-1.5">
+                    {item.status === "PENDING" && onConfirm && (
+                      <Button
+                        size="sm"
+                        disabled={isLoadingThis}
+                        onClick={() => onConfirm(item.id)}
+                        className="h-7 rounded-md px-2.5 text-xs font-semibold"
+                      >
+                        {isLoadingThis ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Check className="h-3 w-3" />
+                        )}
+                        <span>Confirm</span>
                       </Button>
-                    </a>
-                  )}
-                  {item.status === "CONFIRMED" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={isLoadingThis}
-                      onClick={() => onMarkComplete(item.id)}
-                      className="h-7 px-2.5 rounded-lg text-xs font-semibold"
-                    >
-                      {isLoadingThis ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Check className="h-3 w-3 mr-1" />}
-                      <span>Done</span>
-                    </Button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+                    )}
+                    {item.meetLink && item.status === "CONFIRMED" && (
+                      <a
+                        href={item.meetLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button
+                          size="sm"
+                          className="h-7 rounded-md px-2.5 text-xs font-semibold"
+                        >
+                          <Video className="h-3 w-3" />
+                          <span>Join</span>
+                        </Button>
+                      </a>
+                    )}
+                    {item.status === "CONFIRMED" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={isLoadingThis}
+                        onClick={() => onMarkComplete(item.id)}
+                        className="h-7 rounded-md px-2.5 text-xs font-semibold"
+                      >
+                        {isLoadingThis ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Check className="h-3 w-3" />
+                        )}
+                        <span>Done</span>
+                      </Button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
     </section>
   );
 };
