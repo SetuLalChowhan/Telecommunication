@@ -47,6 +47,26 @@ export async function fetchDoctors(
 }
 
 /**
+ * Fetch a short list of doctors matching a search term, for autocomplete.
+ * Capped at 6 results — this backs a dropdown, not a results page.
+ */
+export async function fetchDoctorSuggestions(
+  term: string
+): Promise<DoctorProfile[]> {
+  const trimmed = term.trim();
+  if (!trimmed) return [];
+
+  const response = await fetchDoctors({
+    search: trimmed,
+    limit: 6,
+    page: 1,
+    sortBy: "rating",
+  });
+
+  return Array.isArray(response?.data) ? response.data : [];
+}
+
+/**
  * Fetch a single verified doctor by CUID ID or SEO slug
  */
 export async function fetchDoctorById(idOrSlug: string): Promise<DoctorProfile> {

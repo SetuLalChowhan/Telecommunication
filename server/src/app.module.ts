@@ -23,6 +23,7 @@ import { HealthModule } from './health/health.module.js';
 import { CloudinaryModule } from './common/cloudinary/cloudinary.module.js';
 import { CmsModule } from './cms/cms.module.js';
 import { BlogsModule } from './blogs/blogs.module.js';
+import { ContactsModule } from './contacts/contacts.module.js';
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
 @Module({
@@ -58,6 +59,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     GoogleModule,
     CmsModule,
     BlogsModule,
+    ContactsModule,
   ],
   providers: [
     {

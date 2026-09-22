@@ -5,76 +5,72 @@ import {
   BookScheduleSvg,
   GetConsultationSvg,
 } from "@/components/svgs/HowItWorksSvgs";
+import howItWorksImage from "@/assets/images/HowItWorksDoctor.jpg";
+import { CMS_KEYS, resolveHowItWorks, resolveSectionImage } from "@/features/cms";
+import { getCmsSectionsServer } from "@/features/cms/api/server";
 
-const STEPS = [
-  {
-    step: "01",
-    title: "Find a doctor",
-    subtitle: "Search verified specialists",
-    SvgComponent: FindDoctorSvg,
-  },
-  {
-    step: "02",
-    title: "Book a schedule",
-    subtitle: "Pick your date & time slot",
-    SvgComponent: BookScheduleSvg,
-  },
-  {
-    step: "03",
-    title: "Get consultation",
-    subtitle: "HD video call & prescription",
-    SvgComponent: GetConsultationSvg,
-  },
-];
+/** Illustrations are positional — the CMS supplies the step copy, not artwork. */
+const STEP_ILLUSTRATIONS = [FindDoctorSvg, BookScheduleSvg, GetConsultationSvg];
 
-export const HowItWorksSection: React.FC = () => {
+const HowItWorksSection = async () => {
+  const store = await getCmsSectionsServer();
+  const content = resolveHowItWorks(store);
+  const image = resolveSectionImage(
+    store[CMS_KEYS.homeHowItWorks]?.imageUrl,
+    howItWorksImage
+  );
+
   return (
     <section className="w-full border-b border-border/60 bg-muted/30 py-16 sm:py-20">
       <div className="container-page">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-14">
           {/* Steps */}
-          <div className="lg:col-span-6 flex flex-col gap-6">
+          <div className="flex flex-col gap-6 lg:col-span-6">
             <div className="space-y-4">
-              <span className="eyebrow-text block text-primary">How it works</span>
-              <h2 className="text-2xl sm:text-3xl font-semibold leading-tight tracking-tight text-foreground">
-                Consult online in three simple steps
+              <span className="eyebrow-text block text-primary">{content.badge}</span>
+              <h2 className="text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
+                {content.title}
               </h2>
-              <p className="text-sm leading-relaxed text-secondary-text max-w-xl">
-                Connect with leading medical specialists in minutes — schedule an appointment,
-                consult over high-quality video, and receive your digital prescription.
+              <p className="max-w-xl text-sm leading-relaxed text-secondary-text">
+                {content.subtitle}
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {STEPS.map((item) => {
-                const SvgIcon = item.SvgComponent;
+            <ol className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {content.steps.map((item, index) => {
+                const Illustration =
+                  STEP_ILLUSTRATIONS[index % STEP_ILLUSTRATIONS.length];
                 return (
-                  <div
-                    key={item.step}
+                  <li
+                    key={`${item.step}-${index}`}
                     className="flex flex-col rounded-xl border border-border bg-card p-3"
                   >
                     <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border border-border/60 bg-muted/40">
-                      <SvgIcon />
-                      <span className="absolute top-2 left-2 flex h-6 w-6 items-center justify-center rounded-md bg-primary text-[11px] font-semibold text-primary-foreground">
+                      <Illustration />
+                      <span className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-md bg-primary text-[11px] font-semibold text-primary-foreground">
                         {item.step}
                       </span>
                     </div>
 
                     <div className="mt-3 px-1 pb-0.5">
-                      <h4 className="text-sm font-semibold text-foreground">{item.title}</h4>
-                      <p className="text-[11px] text-secondary-text mt-0.5">{item.subtitle}</p>
+                      <h3 className="text-sm font-semibold text-foreground">
+                        {item.title}
+                      </h3>
+                      <p className="mt-0.5 text-[11px] text-secondary-text">
+                        {item.subtitle}
+                      </p>
                     </div>
-                  </div>
+                  </li>
                 );
               })}
-            </div>
+            </ol>
           </div>
 
           {/* Consultation scene */}
           <div className="lg:col-span-6">
-            <div className="relative w-full aspect-[4/3] sm:aspect-[14/11] overflow-hidden rounded-xl border border-border bg-muted">
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-border bg-muted sm:aspect-[14/11]">
               <Image
-                src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=1200&q=80"
+                src={image}
                 alt="Medical specialist ready for an online consultation"
                 fill
                 sizes="(min-width: 1024px) 50vw, 100vw"

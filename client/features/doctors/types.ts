@@ -236,6 +236,45 @@ export interface GoogleConnectionStatus {
 }
 
 /**
+ * Compact doctor shape used by search autocomplete in the hero / header.
+ * Keeps the suggestions payload tiny compared to a full `DoctorProfile`.
+ */
+export interface DoctorSuggestion {
+  id: string;
+  slug: string;
+  name: string;
+  image: string | null;
+  specialty: string;
+  fee: number;
+  experienceYears: number | null;
+  verified: boolean;
+}
+
+/** Maps a full API doctor profile onto the autocomplete view model. */
+export function toDoctorSuggestion(doctor: DoctorProfile): DoctorSuggestion {
+  const name =
+    doctor.user?.name ||
+    [doctor.user?.firstName, doctor.user?.lastName].filter(Boolean).join(" ") ||
+    "Doctor";
+
+  const specialty =
+    doctor.mainSpecialty?.name ||
+    doctor.specialties?.[0]?.specialty?.name ||
+    "General physician";
+
+  return {
+    id: doctor.id,
+    slug: doctor.slug || doctor.id,
+    name,
+    image: doctor.user?.image ?? null,
+    specialty,
+    fee: Number(doctor.fee ?? 0),
+    experienceYears: doctor.experienceYears ?? null,
+    verified: Boolean(doctor.verified),
+  };
+}
+
+/**
  * Unified Doctor Query Keys
  */
 export const doctorKeys = {
@@ -286,6 +325,8 @@ export const doctorKeys = {
     ] as const,
   myPatients: (search?: string) =>
     [...doctorKeys.all, "myPatients", search ? search.trim().toLowerCase() : ""] as const,
+  suggestions: (term: string) =>
+    [...doctorKeys.all, "suggestions", term.trim().toLowerCase()] as const,
   googleStatus: () => [...doctorKeys.all, "googleStatus"] as const,
   specialties: () => [...doctorKeys.all, "specialties"] as const,
 };

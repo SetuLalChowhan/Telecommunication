@@ -154,7 +154,7 @@ export class DoctorService {
     }
 
     // Specialty resolution
-    const targetMainId = dto.mainSpecialtyId;
+    const targetMainId = dto.mainSpecialtyId || dto.primarySpecialtyId;
     const targetOtherIds = dto.otherSpecialtyIds || [];
     let allSpecialtyIds: string[] = [];
 
@@ -189,6 +189,7 @@ export class DoctorService {
     // Build specialty payload
     const specialtyPayload =
       dto.mainSpecialtyId !== undefined ||
+      dto.primarySpecialtyId !== undefined ||
       dto.otherSpecialtyIds !== undefined ||
       dto.specialtyIds !== undefined
         ? targetMainId || targetOtherIds.length > 0
@@ -204,11 +205,13 @@ export class DoctorService {
 
     const qualifications = dto.qualifications !== undefined
       ? dto.qualifications.map((q) => ({
-          degree: q.degree,
-          field: q.field as string,
-          institute: q.institute,
-          passingYear: q.passingYear as number,
-          result: q.result,
+          degree: q.degree.trim(),
+          field: q.field ? q.field.trim() : null,
+          institute: q.institute.trim(),
+          passingYear: q.passingYear !== undefined && q.passingYear !== null && !isNaN(Number(q.passingYear))
+            ? Number(q.passingYear)
+            : null,
+          result: q.result ? q.result.trim() : null,
         }))
       : null;
 

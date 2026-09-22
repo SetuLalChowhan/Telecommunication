@@ -88,20 +88,40 @@ export function DoctorSettingsClient() {
     e.preventDefault();
     const data = new FormData();
     if (avatarFile) data.append("image", avatarFile);
-    data.append("name", formData.name);
-    data.append("phone", formData.phone);
-    data.append("designation", formData.designation);
-    data.append("bmdcNumber", formData.bmdcNumber);
-    data.append("hospitalAffiliation", formData.hospitalAffiliation);
-    data.append("clinicAddress", formData.clinicAddress);
+    data.append("name", formData.name.trim());
+    data.append("phone", formData.phone.trim());
+    data.append("designation", formData.designation.trim());
+    data.append("bmdcNumber", formData.bmdcNumber.trim());
+    data.append("hospitalAffiliation", formData.hospitalAffiliation.trim());
+    data.append("clinicAddress", formData.clinicAddress.trim());
     if (formData.fee) data.append("fee", formData.fee);
     if (formData.experienceYears) data.append("experienceYears", formData.experienceYears);
-    data.append("bio", formData.bio);
-    if (formData.primarySpecialtyId) data.append("primarySpecialtyId", formData.primarySpecialtyId);
-    data.append("qualifications", JSON.stringify(formData.qualifications));
+    data.append("bio", formData.bio.trim());
+    if (formData.primarySpecialtyId) {
+      data.append("primarySpecialtyId", formData.primarySpecialtyId);
+      data.append("mainSpecialtyId", formData.primarySpecialtyId);
+    }
+    
+    const sanitizedQualifications = (formData.qualifications || [])
+      .map((q) => ({
+        degree: q.degree?.trim() || "",
+        institute: q.institute?.trim() || "",
+        ...(q.field ? { field: q.field.trim() } : {}),
+        ...(q.passingYear ? { passingYear: Number(q.passingYear) } : {}),
+        ...(q.result ? { result: q.result.trim() } : {}),
+      }))
+      .filter((q) => q.degree && q.institute);
+
+    data.append("qualifications", JSON.stringify(sanitizedQualifications));
 
     try {
-      await updateMutation.mutateAsync(data);
+      const updatedProfile = await updateMutation.mutateAsync(data);
+      if (updatedProfile && (updatedProfile as any).qualifications) {
+        setFormData((prev) => ({
+          ...prev,
+          qualifications: (updatedProfile as any).qualifications,
+        }));
+      }
       toast.success("Doctor profile successfully updated");
       setAvatarFile(null);
     } catch (err: any) {

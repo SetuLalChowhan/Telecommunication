@@ -14,7 +14,9 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
+import { useSubmitContactMessage } from "@/features/contact";
+import type { ContactSource } from "@/features/contact";
 
 const contactFormSchema = z.object({
   fullName: z
@@ -37,14 +39,23 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 interface ContactModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Page the inquiry originated from, stored with the message. */
+  source?: ContactSource;
 }
 
 export const ContactModal: React.FC<ContactModalProps> = ({
   isOpen,
   onOpenChange,
+  source = "home",
 }) => {
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const { mutateAsync: submitMessage, isPending: isSubmitting } =
+    useSubmitContactMessage({
+      onSuccess: () => setIsSubmitted(true),
+      onError: (message) => setErrorMessage(message),
+    });
 
   const {
     register,
@@ -62,19 +73,21 @@ export const ContactModal: React.FC<ContactModalProps> = ({
     },
   });
 
-  const onSubmit = (data: ContactFormValues) => {
-    setIsSubmitting(true);
-    console.log("Contact form submitted:", data);
+  const onSubmit = async (data: ContactFormValues) => {
+    setErrorMessage(null);
 
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setIsSubmitted(true);
-    }, 500);
+    try {
+      await submitMessage({ ...data, source });
+    } catch {
+      // The message is surfaced through the hook's onError handler; the form
+      // stays filled in so the visitor does not retype their inquiry.
+    }
   };
 
   const handleClose = (open: boolean) => {
     onOpenChange(open);
     if (!open) {
+      setErrorMessage(null);
       setTimeout(() => {
         setIsSubmitted(false);
         reset();
@@ -120,6 +133,16 @@ export const ContactModal: React.FC<ContactModalProps> = ({
               className="flex min-h-0 flex-1 flex-col"
             >
               <DialogBody>
+              {errorMessage && (
+                <div
+                  role="alert"
+                  className="flex items-start gap-2.5 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive"
+                >
+                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  <span className="leading-relaxed">{errorMessage}</span>
+                </div>
+              )}
+
               {/* Full Name */}
               <div className="space-y-1.5">
                 <label htmlFor="fullName" className="text-xs font-medium text-foreground">

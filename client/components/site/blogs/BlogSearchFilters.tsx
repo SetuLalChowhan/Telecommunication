@@ -1,23 +1,34 @@
 "use client";
 
 import React from "react";
-import { Search, X, SlidersHorizontal } from "lucide-react";
+import { Loader2, Search, SlidersHorizontal, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { BLOG_CATEGORIES } from "@/lib/blog-data";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { BlogCategory, BlogSortBy } from "@/features/blogs";
 import { cn } from "@/lib/utils";
 
 interface BlogSearchFiltersProps {
   searchQuery: string;
-  onSearchChange: (val: string) => void;
+  onSearchChange: (value: string) => void;
   selectedCategory: string;
   onSelectCategory: (category: string) => void;
-  sortBy: "latest" | "readTime" | "title";
-  onSortChange: (sort: "latest" | "readTime" | "title") => void;
+  sortBy: BlogSortBy;
+  onSortChange: (sort: BlogSortBy) => void;
+  categories: BlogCategory[];
+  /** Total matches reported by the API for the current query. */
   totalCount: number;
-  filteredCount: number;
+  isLoading: boolean;
   onReset: () => void;
 }
+
+const ALL = "all";
 
 export const BlogSearchFilters: React.FC<BlogSearchFiltersProps> = ({
   searchQuery,
@@ -26,101 +37,137 @@ export const BlogSearchFilters: React.FC<BlogSearchFiltersProps> = ({
   onSelectCategory,
   sortBy,
   onSortChange,
+  categories,
   totalCount,
-  filteredCount,
+  isLoading,
   onReset,
 }) => {
-  const isFiltered = searchQuery.trim() !== "" || selectedCategory !== "All Articles";
+  const isFiltered =
+    searchQuery.trim() !== "" || (selectedCategory !== ALL && selectedCategory !== "");
 
   return (
-    <div className="space-y-6">
-      {/* Top Search Bar & Sort Row */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5">
-        {/* Search Input */}
-        <div className="relative flex-1 max-w-xl">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+    <div className="space-y-5">
+      {/* Search + sort */}
+      <div className="flex flex-col items-stretch justify-between gap-3 border-b border-border pb-5 sm:flex-row sm:items-center">
+        <div className="relative max-w-xl flex-1">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <label htmlFor="blog-search" className="sr-only">
+            Search articles
+          </label>
           <Input
-            type="text"
+            id="blog-search"
+            type="search"
             value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
+            onChange={(event) => onSearchChange(event.target.value)}
             placeholder="Search articles by title, topic, condition, or author..."
-            className="pl-10 pr-9 h-11 rounded-lg bg-card border-border text-sm placeholder:text-muted-foreground focus-visible:ring-primary/20"
+            className="h-10 pl-9 pr-9"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => onSearchChange("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded-md"
               aria-label="Clear search"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <X className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
 
-        {/* Sort & Quick Stats */}
-        <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <SlidersHorizontal className="h-3.5 w-3.5" />
-            <span>Sort by:</span>
-          </div>
-          <select
+        <div className="flex shrink-0 items-center justify-between gap-2.5 sm:justify-end">
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
+            Sort
+          </span>
+          <Select
             value={sortBy}
-            onChange={(e) => onSortChange(e.target.value as "latest" | "readTime" | "title")}
-            className="h-10 px-3 py-1 text-xs sm:text-sm font-medium rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+            onValueChange={(value) => onSortChange(value as BlogSortBy)}
           >
-            <option value="latest">Latest Published</option>
-            <option value="readTime">Shortest Read Time</option>
-            <option value="title">Alphabetical (A-Z)</option>
-          </select>
+            <SelectTrigger className="h-10 w-[170px]">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent align="end">
+              <SelectItem value="newest">Newest first</SelectItem>
+              <SelectItem value="oldest">Oldest first</SelectItem>
+              <SelectItem value="popular">Most read</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      {/* Category Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
-        {BLOG_CATEGORIES.map((category) => {
-          const isSelected = selectedCategory === category;
-          return (
+      {/* Category pills */}
+      {categories.length > 0 && (
+        <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <button
+            type="button"
+            onClick={() => onSelectCategory(ALL)}
+            className={cn(
+              "shrink-0 cursor-pointer rounded-lg border px-3.5 py-1.5 text-xs font-semibold transition-colors",
+              selectedCategory === ALL || selectedCategory === ""
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
+            )}
+          >
+            All articles
+          </button>
+
+          {categories.map((category) => (
             <button
-              key={category}
+              key={category.name}
               type="button"
-              onClick={() => onSelectCategory(category)}
+              onClick={() => onSelectCategory(category.name)}
               className={cn(
-                "px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors border cursor-pointer",
-                isSelected
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-foreground"
+                "shrink-0 cursor-pointer rounded-lg border px-3.5 py-1.5 text-xs font-semibold transition-colors",
+                selectedCategory === category.name
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
               )}
             >
-              {category}
+              {category.name}
+              <span className="ml-1.5 text-[10px] opacity-70">{category.count}</span>
             </button>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {/* Results status and clear button */}
-      {isFiltered && (
-        <div className="flex items-center justify-between bg-primary/5 border border-primary/15 rounded-lg px-4 py-2.5 text-xs">
-          <span className="text-secondary-text">
-            Showing <strong className="text-foreground">{filteredCount}</strong> of{" "}
-            {totalCount} articles
-            {selectedCategory !== "All Articles" && (
-              <> in <strong className="text-primary">{selectedCategory}</strong></>
-            )}
-            {searchQuery && (
-              <> matching &ldquo;<strong className="text-primary">{searchQuery}</strong>&rdquo;</>
-            )}
-          </span>
+      {/* Result count */}
+      <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          {isLoading ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+              Updating results…
+            </>
+          ) : (
+            <>
+              <strong className="font-semibold text-foreground">{totalCount}</strong>
+              {totalCount === 1 ? "article" : "articles"}
+              {selectedCategory !== ALL && selectedCategory !== "" && (
+                <>
+                  {" in "}
+                  <strong className="font-semibold text-foreground">
+                    {selectedCategory}
+                  </strong>
+                </>
+              )}
+            </>
+          )}
+        </span>
+
+        {isFiltered && (
           <Button
             variant="ghost"
             size="sm"
             onClick={onReset}
-            className="h-7 text-xs font-semibold text-primary hover:text-primary-dark p-0 hover:bg-transparent"
+            className="h-7 px-2 text-xs font-semibold"
           >
-            Reset Filters
+            Reset filters
           </Button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

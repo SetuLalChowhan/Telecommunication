@@ -1,210 +1,219 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { Search, X, ChevronLeft, ChevronRight, SlidersHorizontal, FileQuestion } from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ChevronLeft, ChevronRight, FileQuestion, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { BLOG_POSTS } from "@/lib/blog-data";
 import BlogCard from "@/components/site/blogs/BlogCard";
+import BlogSearchFilters from "@/components/site/blogs/BlogSearchFilters";
+import { useBlogCategories, useBlogs } from "@/features/blogs";
+import type { BlogCategory, BlogListResult, BlogSortBy } from "@/features/blogs";
+import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 
-const ITEMS_PER_PAGE = 6;
+const SEARCH_DEBOUNCE_MS = 400;
+const SORT_OPTIONS: BlogSortBy[] = ["newest", "oldest", "popular"];
 
-export function BlogsClient() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
-  const [currentPage, setCurrentPage] = useState(1);
+interface BlogsClientProps {
+  /**
+   * Prefetched on the server for the current URL, then handed to React Query as
+   * `initialData`. The first paint is fully server-rendered — the client does
+   * not refetch on mount.
+   */
+  initialData: BlogListResult;
+  initialCategories: BlogCategory[];
+}
 
-  const filteredPosts = useMemo(() => {
-    let result = [...BLOG_POSTS];
+export function BlogsClient({ initialData, initialCategories }: BlogsClientProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-    if (searchQuery.trim() !== "") {
-      const q = searchQuery.toLowerCase().trim();
-      result = result.filter(
-        (post) =>
-          post.title.toLowerCase().includes(q) ||
-          post.excerpt.toLowerCase().includes(q) ||
-          post.author.name.toLowerCase().includes(q)
-      );
+  // --- URL is the single source of truth for every filter -------------------
+  const urlSearch = searchParams.get("q") ?? "";
+  const category = searchParams.get("category") ?? "all";
+  const sortParam = searchParams.get("sort");
+  const sortBy: BlogSortBy = SORT_OPTIONS.includes(sortParam as BlogSortBy)
+    ? (sortParam as BlogSortBy)
+    : "newest";
+  const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
+
+  const [searchInput, setSearchInput] = useState(urlSearch);
+  const debouncedSearch = useDebouncedValue(searchInput, SEARCH_DEBOUNCE_MS);
+
+  // `lastPushed` is the query string this client last wrote to the URL. It is
+  // what lets us tell "the user typed" apart from "the user hit Back", so the
+  // input and the URL can sync in both directions without an update loop.
+  const lastPushedRef = useRef(urlSearch);
+  const skipNextPushRef = useRef(false);
+
+  const applyParams = useCallback(
+    (patch: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      for (const [key, value] of Object.entries(patch)) {
+        if (value === null || value === "") params.delete(key);
+        else params.set(key, value);
+      }
+
+      const queryString = params.toString();
+      router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
+        scroll: false,
+      });
+    },
+    [pathname, router, searchParams]
+  );
+
+  // URL -> input (Back/Forward, or arriving from a shared link).
+  useEffect(() => {
+    if (urlSearch === lastPushedRef.current) return;
+    lastPushedRef.current = urlSearch;
+    skipNextPushRef.current = true;
+    setSearchInput(urlSearch);
+  }, [urlSearch]);
+
+  // input -> URL, debounced so typing does not navigate on every keystroke.
+  useEffect(() => {
+    if (skipNextPushRef.current) {
+      skipNextPushRef.current = false;
+      return;
     }
 
-    if (sortBy === "newest") {
-      result.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-    } else if (sortBy === "oldest") {
-      result.sort((a, b) => new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime());
-    }
+    const trimmed = debouncedSearch.trim();
+    if (trimmed === lastPushedRef.current.trim()) return;
 
-    return result;
-  }, [searchQuery, sortBy]);
+    lastPushedRef.current = trimmed;
+    applyParams({ q: trimmed || null, page: null });
+  }, [debouncedSearch, applyParams]);
 
-  const totalPages = Math.ceil(filteredPosts.length / ITEMS_PER_PAGE) || 1;
-  const paginatedPosts = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredPosts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredPosts, currentPage]);
+  const { data, isFetching, isPlaceholderData } = useBlogs(
+    { search: urlSearch, category, sortBy, page },
+    { initialData }
+  );
 
-  const handleSearchChange = (val: string) => {
-    setSearchQuery(val);
-    setCurrentPage(1);
+  const { data: categories = initialCategories } = useBlogCategories({
+    initialData: initialCategories,
+  });
+
+  const posts = data?.items ?? [];
+  const meta = data?.meta ?? initialData.meta;
+  const totalPages = Math.max(1, meta.totalPages);
+  const showSpinner = isFetching && isPlaceholderData;
+
+  const handleCategoryChange = (next: string) => {
+    applyParams({ category: next === "all" ? null : next, page: null });
+  };
+
+  const handleSortChange = (next: BlogSortBy) => {
+    applyParams({ sort: next === "newest" ? null : next, page: null });
   };
 
   const handleReset = () => {
-    setSearchQuery("");
-    setSortBy("newest");
-    setCurrentPage(1);
+    lastPushedRef.current = "";
+    setSearchInput("");
+    applyParams({ q: null, category: null, sort: null, page: null });
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      {/* Header Section */}
-      <section className="w-full bg-muted/30 py-12 sm:py-16 border-b border-border/60">
-        <div className="container-page">
-          <div className="text-center max-w-2xl mx-auto space-y-3 sm:space-y-4">
-            <span className="eyebrow-text block text-primary">
-              Health insights & articles
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-semibold leading-tight tracking-tight text-foreground">
-              Healthcare articles & blogs
-            </h1>
-            <p className="text-sm text-secondary-text max-w-lg mx-auto leading-relaxed">
-              Stay informed with verified medical advice, preventative care tips, and telehealth guidance from certified doctors.
-            </p>
-          </div>
-        </div>
-      </section>
+    <main className="container-page space-y-8 pb-20 pt-10 sm:pt-12">
+      <BlogSearchFilters
+        searchQuery={searchInput}
+        onSearchChange={setSearchInput}
+        selectedCategory={category}
+        onSelectCategory={handleCategoryChange}
+        sortBy={sortBy}
+        onSortChange={handleSortChange}
+        categories={categories}
+        totalCount={meta.total}
+        isLoading={isFetching && isPlaceholderData}
+        onReset={handleReset}
+      />
 
-      {/* Main Content Area */}
-      <main className="container-page pt-10 sm:pt-12 space-y-8 sm:space-y-10">
-        {/* Simple Search & Sort Controls */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-6 border-b border-border">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="Search blogs by title, topic, or author..."
-              className="w-full h-11 rounded-lg border border-border bg-card pl-11 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary transition-colors"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => handleSearchChange("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted transition-colors cursor-pointer"
-                aria-label="Clear search"
-                title="Clear search"
-              >
-                <X className="h-4 w-4" />
-              </button>
+      {posts.length > 0 ? (
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {posts.map((post) => (
+            <BlogCard key={post.id} post={post} />
+          ))}
+        </div>
+      ) : (
+        <div className="mx-auto max-w-md space-y-4 rounded-xl border border-dashed border-border bg-card p-12 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+            {showSpinner ? (
+              <Loader2 className="h-6 w-6 animate-spin" />
+            ) : (
+              <FileQuestion className="h-6 w-6" />
             )}
           </div>
-
-          <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              <span>Sort:</span>
-            </div>
-            <Select
-              value={sortBy}
-              onValueChange={(val: "newest" | "oldest") => {
-                setSortBy(val);
-                setCurrentPage(1);
-              }}
-            >
-              <SelectTrigger className="h-11 w-[160px] rounded-lg border border-border bg-card text-foreground px-3.5 text-xs sm:text-sm font-medium focus:ring-2 focus:ring-primary/20">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent align="end" className="rounded-xl border border-border bg-popover p-1.5 shadow-lg">
-                <SelectItem value="newest" className="rounded-lg text-xs sm:text-sm cursor-pointer">
-                  Newest first
-                </SelectItem>
-                <SelectItem value="oldest" className="rounded-lg text-xs sm:text-sm cursor-pointer">
-                  Oldest first
-                </SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="space-y-1">
+            <h3 className="text-base font-semibold text-foreground">
+              {showSpinner ? "Loading articles" : "No articles found"}
+            </h3>
+            <p className="text-xs text-muted-foreground sm:text-sm">
+              {showSpinner
+                ? "Fetching the latest matching articles…"
+                : `We couldn't find articles matching the current filters.`}
+            </p>
           </div>
+          {!showSpinner && (
+            <Button onClick={handleReset} variant="outline" className="h-9 text-xs">
+              Clear filters
+            </Button>
+          )}
         </div>
+      )}
 
-        {/* Blog Post 3-Column Grid */}
-        {paginatedPosts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {paginatedPosts.map((post) => (
-              <BlogCard key={post.id} post={post} />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-xl border border-dashed border-border bg-card p-12 text-center max-w-md mx-auto space-y-4">
-            <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center mx-auto text-muted-foreground">
-              <FileQuestion className="h-6 w-6" />
+      {totalPages > 1 && (
+        <div className="flex flex-col items-center justify-between gap-4 border-t border-border pt-6 sm:flex-row">
+          <span className="text-xs text-muted-foreground">
+            Page <strong className="font-semibold text-foreground">{meta.page}</strong> of{" "}
+            <strong className="font-semibold text-foreground">{totalPages}</strong> ·{" "}
+            {meta.total} {meta.total === 1 ? "article" : "articles"}
+          </span>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => applyParams({ page: page > 2 ? String(page - 1) : null })}
+              disabled={page <= 1}
+              className="h-9 gap-1 px-3 text-xs"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span>Prev</span>
+            </Button>
+
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, index) => index + 1).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => applyParams({ page: value > 1 ? String(value) : null })}
+                  aria-current={value === page ? "page" : undefined}
+                  className={`h-9 w-9 cursor-pointer rounded-lg text-xs font-semibold transition-colors ${
+                    value === page
+                      ? "bg-primary text-primary-foreground"
+                      : "text-foreground hover:bg-muted"
+                  }`}
+                >
+                  {value}
+                </button>
+              ))}
             </div>
-            <div className="space-y-1">
-              <h3 className="text-base font-semibold text-foreground">No articles found</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                We couldn&apos;t find any articles matching &ldquo;{searchQuery}&rdquo;.
-              </p>
-            </div>
-            <Button onClick={handleReset} variant="outline" className="rounded-lg text-xs h-9">
-              Clear search
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => applyParams({ page: String(page + 1) })}
+              disabled={page >= totalPages}
+              className="h-9 gap-1 px-3 text-xs"
+            >
+              <span>Next</span>
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-        )}
-
-        {/* Simple Clean Pagination */}
-        {totalPages > 1 && (
-          <div className="pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-            <span className="text-xs text-muted-foreground">
-              Showing page <strong>{currentPage}</strong> of <strong>{totalPages}</strong> ({filteredPosts.length} total blogs)
-            </span>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="rounded-lg h-9 px-3 gap-1 text-xs border-border"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                <span>Prev</span>
-              </Button>
-
-              <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    type="button"
-                    onClick={() => setCurrentPage(page)}
-                    className={`h-9 w-9 rounded-lg text-xs font-semibold transition-colors ${
-                      currentPage === page
-                        ? "bg-primary text-primary-foreground"
-                        : "text-foreground hover:bg-muted"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="rounded-lg h-9 px-3 gap-1 text-xs border-border"
-              >
-                <span>Next</span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
+        </div>
+      )}
+    </main>
   );
 }
+
+export default BlogsClient;

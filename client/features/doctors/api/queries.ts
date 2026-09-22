@@ -28,6 +28,7 @@ import {
   fetchGoogleAuthUrl,
   disconnectGoogle,
   uploadDoctorDocument,
+  fetchDoctorSuggestions,
   DoctorsListResponse,
 } from "./client";
 import {
@@ -46,6 +47,8 @@ import {
   CreateDayOffInput,
   DoctorPatientRegistryItem,
   GoogleConnectionStatus,
+  DoctorSuggestion,
+  toDoctorSuggestion,
   doctorKeys,
 } from "../types";
 
@@ -147,13 +150,35 @@ export function useUpdateDoctorProfile() {
 }
 
 /**
- * Hook to query all medical specialties
+ * Hook to query all medical specialties.
+ * Pass `initialData` from an RSC prefetch so the hero select renders from
+ * server data and does not refetch on mount.
  */
-export function useSpecialties() {
+export function useSpecialties(options?: { initialData?: Specialty[] }) {
   return useQuery<Specialty[]>({
     queryKey: doctorKeys.specialties(),
     queryFn: fetchSpecialties,
+    initialData: options?.initialData,
     staleTime: 1000 * 60 * 10, // 10 minutes cache
+  });
+}
+
+/**
+ * Debounced-search autocomplete for doctors.
+ *
+ * Disabled below 2 characters so an empty hero input never hits the API, and
+ * short-cached by term so backtracking through a query is instant.
+ */
+export function useDoctorSuggestions(term: string) {
+  const trimmed = term.trim();
+
+  return useQuery<DoctorSuggestion[]>({
+    queryKey: doctorKeys.suggestions(trimmed),
+    queryFn: async () =>
+      (await fetchDoctorSuggestions(trimmed)).map(toDoctorSuggestion),
+    enabled: trimmed.length >= 2,
+    staleTime: 1000 * 60 * 5,
+    placeholderData: (previous) => previous,
   });
 }
 

@@ -227,10 +227,10 @@ export class DoctorRepository {
     qualifications:
       | Array<{
           degree: string;
-          field: string;
+          field?: string | null;
           institute: string;
-          passingYear: number;
-          result?: string;
+          passingYear?: number | null;
+          result?: string | null;
         }>
       | null,
   ) {

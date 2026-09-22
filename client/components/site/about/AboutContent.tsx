@@ -1,147 +1,99 @@
-"use client";
-
 import React from "react";
 import Link from "next/link";
-import {
-  ShieldCheck,
-  Lock,
-  FileCheck,
-  HeartHandshake,
-  ArrowRight,
-  CheckCircle2,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  resolveAboutHero,
+  resolveAboutLeadership,
+  resolveAboutPrinciples,
+  resolveAboutStats,
+  resolveIcon,
+} from "@/features/cms";
+import { getCmsSectionsServer } from "@/features/cms/api/server";
 
-const STATS = [
-  { value: "50,000+", label: "Successful Consultations", subtext: "Across general & specialist care" },
-  { value: "250+", label: "BMDC-Verified Doctors", subtext: "Stringently credentialed physicians" },
-  { value: "< 10 min", label: "Average Response Time", subtext: "Instant virtual queue connection" },
-  { value: "98.4%", label: "Patient Satisfaction", subtext: "Based on verified post-consult reviews" },
-];
+/**
+ * About page body.
+ *
+ * Every block (hero, stats, principles, leadership) is CMS-backed with a
+ * hard-coded default, so the page renders complete content even when the CMS
+ * row has never been created.
+ */
+export async function AboutContent() {
+  const store = await getCmsSectionsServer();
 
-const PRINCIPLES = [
-  {
-    icon: ShieldCheck,
-    title: "Clinical Rigor & Verification",
-    description:
-      "Every physician on our platform undergoes multi-tier credential verification, including BMDC registration checks, specialty certification validation, and peer clinical reviews.",
-  },
-  {
-    icon: Lock,
-    title: "Strict Health Data Privacy",
-    description:
-      "We treat patient confidentiality with the utmost seriousness. Consultations and electronic health records are protected with bank-grade encryption and HIPAA-aligned security protocols.",
-  },
-  {
-    icon: FileCheck,
-    title: "Verified Digital Prescriptions",
-    description:
-      "Prescriptions issued through the platform contain verifiable doctor digital signatures and registration numbers, making them universally accepted at pharmacies nationwide.",
-  },
-  {
-    icon: HeartHandshake,
-    title: "Transparent, Fair Pricing",
-    description:
-      "We believe high-quality healthcare must be accessible. Doctor fees are displayed upfront with zero hidden booking charges or surprise facility fees.",
-  },
-];
+  const hero = resolveAboutHero(store);
+  const stats = resolveAboutStats(store);
+  const principles = resolveAboutPrinciples(store);
+  const leadership = resolveAboutLeadership(store);
 
-const LEADERSHIP = [
-  {
-    name: "Prof. Dr. Tariqul Islam",
-    role: "Chief Medical Officer & Clinical Lead",
-    qualifications: "MBBS, FCPS (Medicine), MD, FACP",
-    avatar: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=400&q=80",
-    bmdc: "BMDC-A-21045",
-    bio: "Over 22 years of clinical practice and hospital administration. Oversees platform clinical guidelines and physician onboarding quality.",
-  },
-  {
-    name: "Dr. Farhana Rahman",
-    role: "Head of Patient Safety & Protocols",
-    qualifications: "MBBS, DGO, FCPS (Obs & Gynae)",
-    avatar: "https://images.unsplash.com/photo-1594824813580-0a2569260c68?auto=format&fit=crop&w=400&q=80",
-    bmdc: "BMDC-A-34890",
-    bio: "Leading specialist in women's health with 15+ years experience. Champions patient advocacy and maternal telehealth initiatives.",
-  },
-  {
-    name: "Dr. Mahfuzur Khan",
-    role: "Director of Digital Health Integration",
-    qualifications: "MBBS, MS (Orthopaedics), MPH (Epidemiology)",
-    avatar: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=400&q=80",
-    bmdc: "BMDC-A-18234",
-    bio: "Pioneer in health informatics with deep expertise in optimizing remote clinical workflows and electronic health record architecture.",
-  },
-];
-
-export function AboutContent() {
   return (
     <div className="min-h-screen bg-background">
-      {/* 1. Hero Section */}
+      {/* Hero */}
       <section className="border-b border-border/60 bg-muted/30 py-16 sm:py-20">
         <div className="container-page">
-          <div className="max-w-3xl mx-auto text-center space-y-4 sm:space-y-6">
-            <span className="eyebrow-text block text-primary">
-              About DocConnect
-            </span>
-            <h1 className="text-3xl sm:text-4xl font-semibold leading-tight tracking-tight text-foreground">
-              Bridging the gap between compassionate care &amp; modern medicine.
+          <div className="mx-auto max-w-3xl space-y-4 text-center sm:space-y-6">
+            <span className="eyebrow-text block text-primary">{hero.badge}</span>
+            <h1 className="text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl">
+              {hero.title}
             </h1>
-            <p className="text-base sm:text-lg text-secondary-text leading-relaxed">
-              We are on a mission to make certified clinical consultations instantly accessible to every individual, regardless of location, background, or mobility.
+            <p className="text-base leading-relaxed text-secondary-text sm:text-lg">
+              {hero.subtitle}
             </p>
           </div>
         </div>
       </section>
 
-      {/* 2. Key Impact Metrics */}
-      <section className="py-12 sm:py-16 border-b border-border bg-card">
-        <div className="container-page">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8">
-            {STATS.map((stat, idx) => (
-              <div key={idx} className="text-center space-y-1.5 p-4">
-                <p className="text-3xl font-semibold text-primary tracking-tight">
+      {/* Impact metrics */}
+      <section className="border-b border-border bg-card py-12 sm:py-16">
+        <div className="container-page space-y-8">
+          <h2 className="sr-only">{stats.title}</h2>
+          <dl className="grid grid-cols-2 gap-6 lg:grid-cols-4 lg:gap-8">
+            {stats.stats.map((stat, index) => (
+              <div key={`${stat.label}-${index}`} className="space-y-1.5 p-4 text-center">
+                <dd className="text-3xl font-semibold tracking-tight text-primary">
                   {stat.value}
-                </p>
-                <p className="text-sm sm:text-base font-semibold text-foreground">
+                </dd>
+                <dt className="text-sm font-semibold text-foreground sm:text-base">
                   {stat.label}
-                </p>
-                <p className="text-xs text-secondary-text hidden sm:block">
-                  {stat.subtext}
-                </p>
+                </dt>
+                {stat.subtext && (
+                  <p className="hidden text-xs text-secondary-text sm:block">
+                    {stat.subtext}
+                  </p>
+                )}
               </div>
             ))}
-          </div>
+          </dl>
         </div>
       </section>
 
-      {/* 3. Core Clinical Principles */}
-      <section className="py-16 sm:py-20 border-b border-border">
-        <div className="max-w-[1920px] mx-auto section-padding-x space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <h2 className="text-2xl sm:text-3xl font-semibold text-foreground tracking-tight">
-              Our Core Clinical Principles
+      {/* Principles */}
+      <section className="border-b border-border py-16 sm:py-20">
+        <div className="container-page space-y-12">
+          <div className="mx-auto max-w-2xl space-y-3 text-center">
+            <span className="eyebrow-text block text-primary">{principles.badge}</span>
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              {principles.title}
             </h2>
-            <p className="text-sm sm:text-base text-secondary-text">
-              We design every interaction to uphold the highest benchmarks of medical ethics and patient safety.
+            <p className="text-sm text-secondary-text sm:text-base">
+              {principles.subtitle}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-5xl mx-auto">
-            {PRINCIPLES.map((item, idx) => {
-              const Icon = item.icon;
+          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
+            {principles.items.map((item, index) => {
+              const Icon = resolveIcon(item.icon);
               return (
                 <div
-                  key={idx}
-                  className="rounded-xl border border-border bg-card p-6 space-y-3 transition-colors hover:border-primary/40"
+                  key={`${item.title}-${index}`}
+                  className="space-y-3 rounded-xl border border-border bg-card p-6 transition-colors hover:border-primary/40"
                 >
-                  <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <Icon className="h-5 w-5 stroke-[2.2]" />
                   </div>
-                  <h3 className="text-base font-semibold text-foreground">
-                    {item.title}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-secondary-text leading-relaxed">
+                  <h3 className="text-base font-semibold text-foreground">{item.title}</h3>
+                  <p className="text-xs leading-relaxed text-secondary-text sm:text-sm">
                     {item.description}
                   </p>
                 </div>
@@ -151,81 +103,90 @@ export function AboutContent() {
         </div>
       </section>
 
-      {/* 4. Medical Leadership */}
-      <section className="py-16 sm:py-20 border-b border-border/60 bg-muted/30">
-        <div className="max-w-[1920px] mx-auto section-padding-x space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <h2 className="text-2xl sm:text-3xl font-semibold text-foreground tracking-tight">
-              Clinical Leadership &amp; Governance
+      {/* Leadership */}
+      <section className="border-b border-border/60 bg-muted/30 py-16 sm:py-20">
+        <div className="container-page space-y-12">
+          <div className="mx-auto max-w-2xl space-y-3 text-center">
+            <span className="eyebrow-text block text-primary">{leadership.badge}</span>
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              {leadership.title}
             </h2>
-            <p className="text-sm sm:text-base text-secondary-text">
-              Guided by senior medical specialists and healthcare advocates.
+            <p className="text-sm text-secondary-text sm:text-base">
+              {leadership.subtitle}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
-            {LEADERSHIP.map((leader, idx) => (
+          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-3 lg:gap-8">
+            {leadership.items.map((leader, index) => (
               <div
-                key={idx}
-                className="rounded-xl border border-border bg-card p-6 flex flex-col items-center text-center space-y-4"
+                key={`${leader.name}-${index}`}
+                className="flex flex-col items-center space-y-4 rounded-xl border border-border bg-card p-6 text-center"
               >
                 <Avatar className="h-24 w-24 rounded-xl border border-border">
-                  <AvatarImage src={leader.avatar} alt={leader.name} />
+                  {leader.avatar && (
+                    <AvatarImage src={leader.avatar} alt={leader.name} />
+                  )}
                   <AvatarFallback>{leader.name.charAt(0)}</AvatarFallback>
                 </Avatar>
 
-                <div className="space-y-1 w-full">
-                  <h3 className="text-base sm:text-lg font-bold text-foreground leading-snug">
+                <div className="w-full space-y-1">
+                  <h3 className="text-base font-bold leading-snug text-foreground sm:text-lg">
                     {leader.name}
                   </h3>
-                  <p className="text-xs font-semibold text-primary">
-                    {leader.role}
-                  </p>
-                  <p className="text-xs text-secondary-text font-medium">
+                  <p className="text-xs font-semibold text-primary">{leader.role}</p>
+                  <p className="text-xs font-medium text-secondary-text">
                     {leader.qualifications}
                   </p>
-                  <span className="inline-block text-[11px] font-mono px-2 py-0.5 rounded-md bg-muted text-muted-foreground mt-1">
-                    {leader.bmdc}
-                  </span>
+                  {leader.bmdc && (
+                    <span className="mt-1 inline-block rounded-md bg-muted px-2 py-0.5 font-mono text-[11px] text-muted-foreground">
+                      {leader.bmdc}
+                    </span>
+                  )}
                 </div>
 
-                <p className="text-xs sm:text-sm text-secondary-text leading-relaxed text-justify sm:text-center pt-2 border-t border-border/80">
-                  {leader.bio}
-                </p>
+                {leader.bio && (
+                  <p className="border-t border-border/80 pt-2 text-xs leading-relaxed text-secondary-text sm:text-sm">
+                    {leader.bio}
+                  </p>
+                )}
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* 5. Call to Action Banner */}
+      {/* CTA */}
       <section className="py-16 sm:py-20">
         <div className="container-page">
-          <div className="rounded-xl bg-primary text-primary-foreground p-8 sm:p-12 max-w-5xl mx-auto text-center space-y-6">
-            <div className="max-w-2xl mx-auto space-y-3">
-              <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">
+          <div className="mx-auto max-w-5xl space-y-6 rounded-xl bg-primary p-8 text-center text-primary-foreground sm:p-12">
+            <div className="mx-auto max-w-2xl space-y-3">
+              <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
                 Ready to experience accessible, verified healthcare?
               </h2>
-              <p className="text-sm text-primary-foreground/85 leading-relaxed">
-                Connect with a licensed specialist in under 10 minutes or book a scheduled consultation at your convenience.
+              <p className="text-sm leading-relaxed text-primary-foreground/85">
+                Connect with a licensed specialist in under 10 minutes, or book a scheduled
+                consultation at your convenience.
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-              <Link href="/doctors">
-                <Button className="w-full sm:w-auto h-11 px-6 rounded-lg bg-white text-primary hover:bg-white/90 font-semibold text-sm gap-2">
+            <div className="flex flex-col items-center justify-center gap-3 pt-2 sm:flex-row">
+              <Button
+                asChild
+                className="h-11 w-full gap-2 rounded-lg bg-white px-6 text-sm font-semibold text-primary hover:bg-white/90 sm:w-auto"
+              >
+                <Link href="/doctors">
                   <span>Find a doctor</span>
                   <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button
-                  variant="outline"
-                  className="w-full sm:w-auto h-11 px-6 rounded-lg border-white/40 text-white bg-white/10 hover:bg-white/20 font-semibold text-sm"
-                >
-                  Create patient account
-                </Button>
-              </Link>
+                </Link>
+              </Button>
+
+              <Button
+                asChild
+                variant="outline"
+                className="h-11 w-full rounded-lg border-white/40 bg-white/10 px-6 text-sm font-semibold text-white hover:bg-white/20 sm:w-auto"
+              >
+                <Link href="/register">Create patient account</Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -233,3 +194,5 @@ export function AboutContent() {
     </div>
   );
 }
+
+export default AboutContent;

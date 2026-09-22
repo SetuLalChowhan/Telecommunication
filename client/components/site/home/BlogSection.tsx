@@ -1,42 +1,59 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { BLOG_POSTS } from "@/lib/blog-data";
 import BlogCard from "@/components/site/blogs/BlogCard";
 import { Button } from "@/components/ui/button";
+import { resolveBlogSection } from "@/features/cms";
+import { getCmsSectionsServer } from "@/features/cms/api/server";
+import {
+  getBlogsServer,
+  getFeaturedBlogsServer,
+} from "@/features/blogs/api/server";
 
-export const BlogSection: React.FC = () => {
-  const homePosts = BLOG_POSTS.slice(0, 3);
+/**
+ * Home page "Latest healthcare articles".
+ *
+ * Reads the featured selection from the API first; if editors have not marked
+ * anything as featured, it falls back to the newest published posts, and only
+ * then to an empty state.
+ */
+const BlogSection = async () => {
+  const store = await getCmsSectionsServer();
+  const content = resolveBlogSection(store);
+
+  const featured = await getFeaturedBlogsServer();
+  const posts =
+    featured.length > 0
+      ? featured.slice(0, content.limit)
+      : (await getBlogsServer({ page: 1, limit: content.limit, sortBy: "newest" })).items;
+
+  if (posts.length === 0) return null;
 
   return (
-    <section className="w-full bg-muted/30 py-16 sm:py-20 border-b border-border/60">
+    <section className="w-full border-b border-border/60 bg-muted/30 py-16 sm:py-20">
       <div className="container-page">
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 sm:mb-12 gap-4">
+        <div className="mb-10 flex flex-col justify-between gap-4 sm:mb-12 md:flex-row md:items-end">
           <div className="max-w-2xl space-y-3">
-            <span className="eyebrow-text block text-primary">
-              Health insights & medical articles
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-semibold leading-tight tracking-tight text-foreground">
-              Latest healthcare articles & tips
+            <span className="eyebrow-text block text-primary">{content.badge}</span>
+            <h2 className="text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
+              {content.title}
             </h2>
-            <p className="text-sm text-secondary-text leading-relaxed">
-              Stay informed with verified medical advice, preventative care tips, and telehealth guidance written and reviewed by certified physicians.
+            <p className="text-sm leading-relaxed text-secondary-text">
+              {content.subtitle}
             </p>
           </div>
 
-          <Link href="/blogs" className="shrink-0">
-            <Button variant="outline" className="h-10 px-4 text-sm font-semibold gap-1.5">
-              <span>Explore all articles</span>
+          <Button asChild variant="outline" className="shrink-0 gap-1.5">
+            <Link href={content.ctaLink}>
+              <span>{content.ctaText}</span>
               <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
 
-        {/* 3 Blog Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {homePosts.map((blog) => (
-            <BlogCard key={blog.id} post={blog} />
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {posts.map((post) => (
+            <BlogCard key={post.id} post={post} />
           ))}
         </div>
       </div>
@@ -45,4 +62,3 @@ export const BlogSection: React.FC = () => {
 };
 
 export default BlogSection;
-
