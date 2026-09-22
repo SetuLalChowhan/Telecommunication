@@ -7,6 +7,11 @@ import {
 } from "@tanstack/react-query";
 import { getPatientBookingsServer } from "@/features/patients/api/server";
 import { patientKeys } from "@/features/patients/types";
+import {
+  appointmentKeys,
+  normalizeStatusFilter,
+} from "@/features/appointments/types";
+import { getBookingSummaryServer } from "@/features/appointments/api/server";
 import { PatientAppointmentsClient } from "./PatientAppointmentsClient";
 
 export const metadata: Metadata = {
@@ -27,16 +32,29 @@ export default async function PatientAppointmentsPage({
   const resolvedParams = await searchParams;
   const statusParam = resolvedParams?.status;
 
+  // Normalize once so the URL, prefetch and client hook all agree on the filter.
+  const activeStatus = normalizeStatusFilter(statusParam);
+  const listParams = {
+    ...(activeStatus !== "ALL" ? { status: activeStatus } : {}),
+    limit: 100,
+  };
+
   const queryClient = new QueryClient();
 
-  await queryClient.prefetchQuery({
-    queryKey: patientKeys.bookings({ limit: 100 }),
-    queryFn: () => getPatientBookingsServer({ limit: 100 }),
-  });
+  await Promise.all([
+    queryClient.prefetchQuery({
+      queryKey: patientKeys.bookings(listParams),
+      queryFn: () => getPatientBookingsServer(listParams),
+    }),
+    queryClient.prefetchQuery({
+      queryKey: appointmentKeys.summary(),
+      queryFn: () => getBookingSummaryServer(),
+    }),
+  ]);
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <PatientAppointmentsClient initialStatus={statusParam || "ALL"} />
+      <PatientAppointmentsClient initialStatus={activeStatus} />
     </HydrationBoundary>
   );
 }

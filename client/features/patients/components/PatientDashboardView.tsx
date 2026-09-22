@@ -46,7 +46,10 @@ export const PatientDashboardView: React.FC<PatientDashboardViewProps> = ({
   };
 
   const handleCancelAppointment = (id: string) => {
-    cancelMutation.mutate({ bookingId: id });
+    cancelMutation.mutate(
+      { bookingId: id },
+      { onSuccess: () => setDialogOpen(false) }
+    );
   };
 
   return (

@@ -24,7 +24,7 @@ const DAYS_MAP: Record<number, DayOfWeek> = {
   6: DayOfWeek.SATURDAY,
 };
 
-// -- Pure slot helpers (no I/O — easy to unit-test) -------------------------
+// -- Pure slot helpers (no I/O ï¿½ easy to unit-test) -------------------------
 
 function generateSlots(
   date: string,
@@ -265,8 +265,15 @@ export class AppointmentsService {
     return booking;
   }
 
-  async getMyBookings(userId: string, role: string, query: BookingQueryDto) {
-    const where: any = {};
+  /**
+   * Builds the Prisma `where` scope for the current user's bookings.
+   * Returns `null` when a PATIENT has no profile yet (no bookings to show).
+   */
+  private async resolveBookingScope(
+    userId: string,
+    role: string,
+  ): Promise<Record<string, any> | null> {
+    const where: Record<string, any> = {};
 
     if (role === 'DOCTOR') {
       const doctor = await this.repo.findDoctorProfileByUserId(userId);
@@ -274,13 +281,21 @@ export class AppointmentsService {
       where.doctorId = doctor.id;
     } else if (role === 'PATIENT') {
       const patient = await this.repo.findPatientByUserId(userId);
-      if (!patient) {
-        return {
-          data: [],
-          meta: createPaginationMeta(query.page || 1, query.limit || 10, 0),
-        };
-      }
+      if (!patient) return null;
       where.patientId = patient.id;
+    }
+
+    return where;
+  }
+
+  async getMyBookings(userId: string, role: string, query: BookingQueryDto) {
+    const where = await this.resolveBookingScope(userId, role);
+
+    if (where === null) {
+      return {
+        data: [],
+        meta: createPaginationMeta(query.page || 1, query.limit || 10, 0),
+      };
     }
 
     if (query.status) where.status = query.status;
@@ -291,6 +306,36 @@ export class AppointmentsService {
       data: rows,
       meta: createPaginationMeta(query.page || 1, query.limit || 10, total),
     };
+  }
+
+  /**
+   * Returns per-status booking counts for the current user, scoped by role.
+   * Drives the status tabs from the backend instead of counting on the client.
+   */
+  async getMyBookingSummary(userId: string, role: string) {
+    const summary = {
+      all: 0,
+      pending: 0,
+      confirmed: 0,
+      completed: 0,
+      cancelled: 0,
+    };
+
+    const where = await this.resolveBookingScope(userId, role);
+    if (where === null) return summary;
+
+    const grouped = await this.repo.countBookingsByStatus(where);
+
+    for (const group of grouped) {
+      const count = group._count._all;
+      summary.all += count;
+      const key = String(group.status).toLowerCase();
+      if (key in summary) {
+        summary[key as keyof typeof summary] += count;
+      }
+    }
+
+    return summary;
   }
 
   async getBookingById(bookingId: string, userId: string, role: string) {

@@ -6,6 +6,11 @@ import { Loader2, Calendar, Video, Plus, Stethoscope } from "lucide-react";
 import { DashboardAppointment } from "@/lib/dashboard-mock-data";
 import { AppointmentDetailsDialog } from "@/features/appointments/components";
 import {
+  useBookingSummary,
+  normalizeStatusFilter,
+  EMPTY_BOOKING_SUMMARY,
+} from "@/features/appointments";
+import {
   usePatientBookings,
   useCancelPatientBooking,
 } from "@/features/patients";
@@ -37,13 +42,20 @@ export function PatientAppointmentsClient({
   initialStatus = "ALL",
 }: PatientAppointmentsClientProps) {
   const [filter, setFilter] = useState<PatientBookingFilterStatus>(
-    (initialStatus?.toUpperCase() as any) || "ALL"
+    normalizeStatusFilter(initialStatus) as PatientBookingFilterStatus
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAppt, setSelectedAppt] = useState<DashboardAppointment | null>(null);
 
-  // Fetch complete patient bookings for instant tab switching
-  const { data: bookingsResponse, isLoading } = usePatientBookings({ limit: 100 });
+  // The active tab is sent to the backend — no client-side status filtering.
+  const bookingStatus = filter === "ALL" ? undefined : filter;
+
+  const {
+    data: bookingsResponse,
+    isLoading,
+    isFetching,
+  } = usePatientBookings({ status: bookingStatus, limit: 100 });
+  const { data: summary } = useBookingSummary();
   const cancelMutation = useCancelPatientBooking();
 
   const allAppointments: DashboardAppointment[] = useMemo(() => {
@@ -51,39 +63,36 @@ export function PatientAppointmentsClient({
     return (bookingsResponse.data as RawBooking[]).map(mapBookingToAppointment);
   }, [bookingsResponse?.data]);
 
-  const counts = useMemo(
-    () => ({
-      all: allAppointments.length,
-      confirmed: allAppointments.filter((a) => a.status === "CONFIRMED").length,
-      pending: allAppointments.filter((a) => a.status === "PENDING").length,
-      completed: allAppointments.filter((a) => a.status === "COMPLETED").length,
-      cancelled: allAppointments.filter((a) => a.status === "CANCELLED").length,
-    }),
-    [allAppointments]
-  );
+  // Counts come straight from the backend summary payload.
+  const counts = summary || EMPTY_BOOKING_SUMMARY;
 
+  // Search stays local (it is a text filter, not a status filter).
   const filteredAppointments = useMemo(() => {
-    return allAppointments.filter((appt) => {
-      if (filter !== "ALL" && appt.status !== filter) {
-        return false;
-      }
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        return (
-          appt.doctorName.toLowerCase().includes(q) ||
-          appt.doctorSpecialty.toLowerCase().includes(q)
-        );
-      }
-      return true;
-    });
-  }, [allAppointments, filter, searchQuery]);
+    if (!searchQuery.trim()) return allAppointments;
+
+    const q = searchQuery.toLowerCase().trim();
+    return allAppointments.filter(
+      (appt) =>
+        appt.doctorName.toLowerCase().includes(q) ||
+        appt.doctorSpecialty.toLowerCase().includes(q)
+    );
+  }, [allAppointments, searchQuery]);
+
+  const isBusy = isLoading || isFetching;
+
+  const handleCancel = (id: string) => {
+    cancelMutation.mutate(
+      { bookingId: id },
+      { onSuccess: () => setSelectedAppt(null) }
+    );
+  };
 
   return (
     <div className="w-full space-y-5">
       <PatientAppointmentsHeader
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        totalCount={allAppointments.length}
+        totalCount={counts.all}
       />
 
       <PatientAppointmentTabs
@@ -93,12 +102,14 @@ export function PatientAppointmentsClient({
       />
 
       {/* Main Content Table */}
-      <div className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-xs">
-        {isLoading && allAppointments.length === 0 ? (
-          <div className="flex items-center justify-center py-20">
+      <div className="relative rounded-2xl border border-border/70 bg-card overflow-hidden shadow-xs">
+        {isBusy && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/70 backdrop-blur-[1px]">
             <Loader2 className="h-7 w-7 animate-spin text-primary" />
           </div>
-        ) : filteredAppointments.length === 0 ? (
+        )}
+
+        {!isLoading && filteredAppointments.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
             <div className="h-11 w-11 rounded-2xl bg-muted/80 flex items-center justify-center text-muted-foreground mb-3">
               <Calendar className="h-5 w-5" />
@@ -324,7 +335,7 @@ export function PatientAppointmentsClient({
           open={Boolean(selectedAppt)}
           onOpenChange={(open) => !open && setSelectedAppt(null)}
           appointment={selectedAppt}
-          onCancelAppointment={(id) => cancelMutation.mutate({ bookingId: id })}
+          onCancelAppointment={handleCancel}
           isDoctorView={false}
           isCancelling={cancelMutation.isPending}
         />

@@ -82,6 +82,7 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
     setActionLoadingId(id);
     confirmMutation.mutate(id, {
       onSettled: () => setActionLoadingId(null),
+      onSuccess: () => setDetailsOpen(false),
     });
   };
 
@@ -89,6 +90,7 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
     setActionLoadingId(id);
     completeMutation.mutate(id, {
       onSettled: () => setActionLoadingId(null),
+      onSuccess: () => setDetailsOpen(false),
     });
   };
 

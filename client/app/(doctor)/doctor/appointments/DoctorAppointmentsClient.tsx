@@ -11,6 +11,11 @@ import {
 import { DoctorScheduleItem, DashboardAppointment } from "@/lib/dashboard-mock-data";
 import { DoctorDashboardBooking } from "@/features/doctors/types";
 import { AppointmentDetailsDialog } from "@/features/appointments/components";
+import {
+  useBookingSummary,
+  normalizeStatusFilter,
+  EMPTY_BOOKING_SUMMARY,
+} from "@/features/appointments";
 import { DoctorAppointmentsHeader } from "@/features/appointments/components/doctor/DoctorAppointmentsHeader";
 import {
   DoctorAppointmentTabs,
@@ -85,22 +90,33 @@ export function DoctorAppointmentsClient({
   initialStatus = "ALL",
 }: DoctorAppointmentsClientProps) {
   const [filter, setFilter] = useState<AppointmentStatusFilter>(
-    (initialStatus as AppointmentStatusFilter) || "ALL"
+    normalizeStatusFilter(initialStatus) as AppointmentStatusFilter
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAppointment, setSelectedAppointment] = useState<DashboardAppointment | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
-  const { data: bookingsData, isLoading } = useDoctorBookings();
+  // The active tab is sent to the backend — no client-side status filtering.
+  const bookingStatus = filter === "ALL" ? undefined : filter;
+
+  const {
+    data: bookingsData,
+    isLoading,
+    isFetching,
+  } = useDoctorBookings({ status: bookingStatus });
+  const { data: summary } = useBookingSummary();
 
   const confirmMutation = useConfirmDoctorBooking();
   const completeMutation = useCompleteDoctorBooking();
   const cancelMutation = useCancelDoctorBooking();
 
+  const closeDialog = () => setSelectedAppointment(null);
+
   const handleConfirm = (id: string) => {
     setActionLoadingId(id);
     confirmMutation.mutate(id, {
       onSettled: () => setActionLoadingId(null),
+      onSuccess: closeDialog,
     });
   };
 
@@ -108,45 +124,40 @@ export function DoctorAppointmentsClient({
     setActionLoadingId(id);
     completeMutation.mutate(id, {
       onSettled: () => setActionLoadingId(null),
+      onSuccess: closeDialog,
     });
+  };
+
+  const handleCancel = (id: string) => {
+    cancelMutation.mutate(id, { onSuccess: closeDialog });
   };
 
   const bookingsList = bookingsData?.data || [];
   const allScheduleItems = useMemo(() => bookingsList.map(adaptBookingToScheduleItem), [bookingsList]);
 
-  const counts = useMemo(
-    () => ({
-      all: allScheduleItems.length,
-      confirmed: allScheduleItems.filter((i) => i.status === "CONFIRMED").length,
-      pending: allScheduleItems.filter((i) => i.status === "PENDING").length,
-      completed: allScheduleItems.filter((i) => i.status === "COMPLETED").length,
-      cancelled: allScheduleItems.filter((i) => i.status === "CANCELLED").length,
-    }),
-    [allScheduleItems]
-  );
+  // Counts come straight from the backend summary payload.
+  const counts = summary || EMPTY_BOOKING_SUMMARY;
 
+  // Search stays local (it is a text filter, not a status filter).
   const filteredItems = useMemo(() => {
-    return allScheduleItems.filter((item) => {
-      if (filter !== "ALL" && item.status !== filter) {
-        return false;
-      }
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        return (
-          item.patientName.toLowerCase().includes(q) ||
-          item.symptoms?.toLowerCase().includes(q)
-        );
-      }
-      return true;
-    });
-  }, [allScheduleItems, filter, searchQuery]);
+    if (!searchQuery.trim()) return allScheduleItems;
+
+    const q = searchQuery.toLowerCase();
+    return allScheduleItems.filter(
+      (item) =>
+        item.patientName.toLowerCase().includes(q) ||
+        item.symptoms?.toLowerCase().includes(q)
+    );
+  }, [allScheduleItems, searchQuery]);
+
+  const isBusy = isLoading || isFetching;
 
   return (
     <div className="w-full space-y-5">
       <DoctorAppointmentsHeader
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        totalCount={allScheduleItems.length}
+        totalCount={counts.all}
       />
 
       <DoctorAppointmentTabs
@@ -156,12 +167,14 @@ export function DoctorAppointmentsClient({
       />
 
       {/* Main Clean Minimal Shadcn Table */}
-      <div className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-xs">
-        {isLoading && allScheduleItems.length === 0 ? (
-          <div className="flex items-center justify-center py-20">
+      <div className="relative rounded-2xl border border-border/70 bg-card overflow-hidden shadow-xs">
+        {isBusy && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/70 backdrop-blur-[1px]">
             <Loader2 className="h-7 w-7 animate-spin text-primary" />
           </div>
-        ) : filteredItems.length === 0 ? (
+        )}
+
+        {!isLoading && filteredItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
             <div className="h-11 w-11 rounded-2xl bg-muted/80 flex items-center justify-center text-muted-foreground mb-3">
               <Calendar className="h-5 w-5" />
@@ -438,11 +451,12 @@ export function DoctorAppointmentsClient({
           open={Boolean(selectedAppointment)}
           onOpenChange={(open) => !open && setSelectedAppointment(null)}
           appointment={selectedAppointment}
-          onCancelAppointment={(id: string) => cancelMutation.mutate(id)}
+          onCancelAppointment={handleCancel}
           onConfirmAppointment={handleConfirm}
           onCompleteAppointment={handleComplete}
           isDoctorView={true}
           isCancelling={cancelMutation.isPending}
+          isConfirming={actionLoadingId === selectedAppointment?.id && confirmMutation.isPending}
           isCompleting={actionLoadingId === selectedAppointment?.id && completeMutation.isPending}
         />
       )}

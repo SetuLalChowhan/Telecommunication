@@ -51,6 +51,16 @@ export class AppointmentsController {
     return this.appointmentsService.getMyBookings(userId, role, query);
   }
 
+  @Get('summary')
+  @UseGuards(RolesGuard)
+  @ResponseMessage('Booking summary fetched successfully')
+  getMyBookingSummary(
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: string,
+  ) {
+    return this.appointmentsService.getMyBookingSummary(userId, role);
+  }
+
   @Get(':id')
   @UseGuards(RolesGuard)
   @ResponseMessage('Booking details fetched successfully')

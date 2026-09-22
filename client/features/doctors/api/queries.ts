@@ -1,6 +1,8 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
+import { appointmentKeys } from "@/features/appointments/types";
 import {
   fetchDoctors,
   fetchDoctorByIdOrSlug,
@@ -46,6 +48,19 @@ import {
   GoogleConnectionStatus,
   doctorKeys,
 } from "../types";
+
+/**
+ * Extracts a human-readable message from a rejected mutation.
+ */
+function getMutationErrorMessage(error: unknown, fallback: string): string {
+  const err = error as {
+    response?: { data?: { message?: string | string[] } };
+    message?: string;
+  };
+  const raw = err?.response?.data?.message || err?.message;
+  if (Array.isArray(raw)) return raw.join(", ");
+  return raw || fallback;
+}
 
 /**
  * Hook to query verified doctors with filters & pagination
@@ -192,9 +207,14 @@ export function useConfirmDoctorBooking() {
   return useMutation({
     mutationFn: (bookingId: string) => confirmDoctorBooking(bookingId),
     onSuccess: () => {
+      toast.success("Appointment confirmed successfully");
       queryClient.invalidateQueries({ queryKey: doctorKeys.dashboard() });
       queryClient.invalidateQueries({ queryKey: doctorKeys.myBookings() });
+      queryClient.invalidateQueries({ queryKey: appointmentKeys.summary() });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+    onError: (error: unknown) => {
+      toast.error(getMutationErrorMessage(error, "Failed to confirm appointment"));
     },
   });
 }
@@ -208,8 +228,13 @@ export function useCompleteDoctorBooking() {
   return useMutation({
     mutationFn: (bookingId: string) => completeDoctorBooking(bookingId),
     onSuccess: () => {
+      toast.success("Consultation marked as completed");
       queryClient.invalidateQueries({ queryKey: doctorKeys.dashboard() });
       queryClient.invalidateQueries({ queryKey: doctorKeys.myBookings() });
+      queryClient.invalidateQueries({ queryKey: appointmentKeys.summary() });
+    },
+    onError: (error: unknown) => {
+      toast.error(getMutationErrorMessage(error, "Failed to complete consultation"));
     },
   });
 }
@@ -223,8 +248,13 @@ export function useCancelDoctorBooking() {
   return useMutation({
     mutationFn: (bookingId: string) => cancelDoctorBooking(bookingId),
     onSuccess: () => {
+      toast.success("Appointment cancelled successfully");
       queryClient.invalidateQueries({ queryKey: doctorKeys.dashboard() });
       queryClient.invalidateQueries({ queryKey: doctorKeys.myBookings() });
+      queryClient.invalidateQueries({ queryKey: appointmentKeys.summary() });
+    },
+    onError: (error: unknown) => {
+      toast.error(getMutationErrorMessage(error, "Failed to cancel appointment"));
     },
   });
 }

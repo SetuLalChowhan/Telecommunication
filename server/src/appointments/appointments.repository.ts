@@ -167,6 +167,14 @@ export class AppointmentsRepository {
     return { rows, total };
   }
 
+  async countBookingsByStatus(where: any) {
+    return this.prisma.booking.groupBy({
+      by: ['status'],
+      where,
+      _count: { _all: true },
+    });
+  }
+
   async findBookingById(id: string) {
     return this.prisma.booking.findUnique({
       where: { id },

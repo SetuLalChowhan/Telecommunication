@@ -20,6 +20,7 @@ import {
   RawBooking,
   patientKeys,
 } from "../types";
+import { appointmentKeys } from "@/features/appointments/types";
 
 /**
  * Query hook for patient dashboard overview data
@@ -61,6 +62,7 @@ export function useCancelPatientBooking() {
     onSuccess: () => {
       toast.success("Appointment cancelled successfully");
       queryClient.invalidateQueries({ queryKey: patientKeys.all });
+      queryClient.invalidateQueries({ queryKey: appointmentKeys.summary() });
     },
     onError: (error: unknown) => {
       const err = error as {
@@ -140,11 +142,12 @@ export function useCreateAppointmentBooking() {
       toast.success("Appointment request submitted successfully!");
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: patientKeys.all });
+      queryClient.invalidateQueries({ queryKey: appointmentKeys.summary() });
       queryClient.invalidateQueries({
         queryKey: ["appointments", "slots", booking.doctorId],
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       const err = error as {
         response?: { data?: { message?: string } };
         message?: string;
