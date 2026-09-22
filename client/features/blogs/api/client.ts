@@ -1,10 +1,12 @@
 import { apiClient } from "@/lib/api/axios";
 import {
+  AdminBlogPayload,
   BlogCategory,
   BlogDetailResult,
   BlogListMeta,
   BlogListResult,
   BlogPost,
+  BlogPostDto,
   BlogQueryParams,
   DEFAULT_BLOG_META,
 } from "../types";
@@ -46,9 +48,9 @@ function toMeta(raw: Record<string, unknown> | undefined): BlogListMeta {
   };
 }
 
-/**
- * Fetch published blog posts with search, category, sorting and pagination.
- */
+// ─── Public API ──────────────────────────────────────────────────────────────
+
+/** Fetch published blog posts with search, category, sorting and pagination. */
 export async function fetchBlogs(
   params?: BlogQueryParams,
   options?: BlogQueryOptions
@@ -59,16 +61,10 @@ export async function fetchBlogs(
   });
 
   const { items, meta } = normalizeBlogList(response.data);
-
-  return {
-    items: items.map(toBlogPost),
-    meta: toMeta(meta),
-  };
+  return { items: items.map(toBlogPost), meta: toMeta(meta) };
 }
 
-/**
- * Fetch a single published post plus related posts from the same category.
- */
+/** Fetch a single published post plus related posts from the same category. */
 export async function fetchBlogBySlug(
   slug: string,
   options?: BlogQueryOptions
@@ -78,29 +74,23 @@ export async function fetchBlogBySlug(
   });
 
   const { post, relatedPosts } = normalizeBlogDetail(response.data);
-
   return {
     post: post ? toBlogPost(post) : null,
     relatedPosts: relatedPosts.map(toBlogPost),
   };
 }
 
-/**
- * Fetch the featured (editor-picked) posts, used by the home page.
- */
+/** Fetch the featured (editor-picked) posts, used by the home page. */
 export async function fetchFeaturedBlogs(
   options?: BlogQueryOptions
 ): Promise<BlogPost[]> {
   const response = await apiClient.get("/blogs/featured", {
     signal: options?.signal,
   });
-
   return normalizeBlogArray(response.data).map(toBlogPost);
 }
 
-/**
- * Fetch category facets with published post counts.
- */
+/** Fetch category facets with published post counts. */
 export async function fetchBlogCategories(): Promise<BlogCategory[]> {
   const response = await apiClient.get("/blogs/categories");
 
@@ -114,4 +104,46 @@ export async function fetchBlogCategories(): Promise<BlogCategory[]> {
     if (!value.name) return [];
     return [{ name: value.name, count: Number(value.count ?? 0) }];
   });
+}
+
+// ─── Admin / Doctor Blog Management ─────────────────────────────────────────
+
+/** List all blogs (published + drafts) — for admin/doctor dashboard. */
+export async function adminFetchBlogs(
+  params?: BlogQueryParams,
+  options?: BlogQueryOptions
+): Promise<BlogListResult> {
+  const response = await apiClient.get("/blogs/admin/all", {
+    params: toRequestParams(params),
+    signal: options?.signal,
+  });
+
+  const { items, meta } = normalizeBlogList(response.data);
+  return { items: items.map(toBlogPost), meta: toMeta(meta) };
+}
+
+/** Create a new blog post. */
+export async function adminCreateBlog(payload: AdminBlogPayload): Promise<BlogPostDto> {
+  const response = await apiClient.post("/blogs/admin/create", payload);
+  return response.data?.data ?? response.data;
+}
+
+/** Update an existing blog post. */
+export async function adminUpdateBlog(
+  id: string,
+  payload: Partial<AdminBlogPayload>
+): Promise<BlogPostDto> {
+  const response = await apiClient.patch(`/blogs/admin/${id}`, payload);
+  return response.data?.data ?? response.data;
+}
+
+/** Delete a blog post. */
+export async function adminDeleteBlog(id: string): Promise<void> {
+  await apiClient.delete(`/blogs/admin/${id}`);
+}
+
+/** Toggle published/draft state of a blog post. */
+export async function adminTogglePublish(id: string): Promise<BlogPostDto> {
+  const response = await apiClient.patch(`/blogs/admin/${id}/toggle-publish`);
+  return response.data?.data ?? response.data;
 }

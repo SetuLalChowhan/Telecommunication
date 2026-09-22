@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "../node_modules/tw-animate-css/dist/tw-animate.css";
+@import "react-quill-new/dist/quill.snow.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -454,3 +455,78 @@
 .toolbar {
   @apply flex flex-col gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between;
 }
+
+/* ─── React Quill Editor ───────────────────────────────────────────────────── */
+
+/* The wrapper div owns the border/radius; strip Quill's internal borders */
+.quill-wrapper .ql-toolbar {
+  border: none;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--muted) / 0.4);
+  padding: 6px 8px;
+}
+
+.quill-wrapper .ql-container {
+  border: none;
+  min-height: 13rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+}
+
+.quill-wrapper .ql-editor {
+  min-height: 13rem;
+  line-height: 1.7;
+  padding: 10px 14px;
+}
+
+.quill-wrapper .ql-editor.ql-blank::before {
+  color: hsl(var(--muted-foreground));
+  font-style: normal;
+  left: 14px;
+}
+
+/* ─── Blog prose — rendered dangerouslySetInnerHTML content ─────────────────── */
+
+.blog-prose {
+  @apply text-sm leading-relaxed text-foreground sm:text-base;
+}
+
+.blog-prose h1,
+.blog-prose h2 {
+  @apply mt-6 mb-3 text-xl font-semibold text-foreground;
+}
+
+.blog-prose h3 {
+  @apply mt-5 mb-2 text-lg font-semibold text-foreground;
+}
+
+.blog-prose p {
+  @apply mb-4 leading-relaxed;
+}
+
+.blog-prose ul,
+.blog-prose ol {
+  @apply my-4 space-y-2 pl-6;
+}
+
+.blog-prose ul {
+  @apply list-disc;
+}
+
+.blog-prose ol {
+  @apply list-decimal;
+}
+
+.blog-prose blockquote {
+  @apply my-5 rounded-r-lg border-l-4 border-primary bg-muted/40 py-3 pl-4 italic text-foreground;
+}
+
+.blog-prose strong {
+  @apply font-semibold text-foreground;
+}
+
+.blog-prose a {
+  @apply text-primary underline underline-offset-2 hover:text-primary/80;
+}

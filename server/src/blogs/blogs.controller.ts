@@ -55,7 +55,7 @@ export class BlogsController {
   // --- Admin CMS Endpoints ---
 
   @Get('admin/all')
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'DOCTOR')
   @UseGuards(RolesGuard)
   @ResponseMessage('Admin blog posts fetched successfully')
   adminListBlogs(@Query() query: BlogQueryDto) {
@@ -63,7 +63,7 @@ export class BlogsController {
   }
 
   @Post('admin/create')
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'DOCTOR')
   @UseGuards(RolesGuard)
   @ResponseMessage('Blog post created successfully')
   adminCreateBlog(@Body() dto: CreateBlogDto) {
@@ -71,7 +71,7 @@ export class BlogsController {
   }
 
   @Patch('admin/:id')
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'DOCTOR')
   @UseGuards(RolesGuard)
   @ResponseMessage('Blog post updated successfully')
   adminUpdateBlog(@Param('id') id: string, @Body() dto: UpdateBlogDto) {
@@ -79,7 +79,7 @@ export class BlogsController {
   }
 
   @Delete('admin/:id')
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'DOCTOR')
   @UseGuards(RolesGuard)
   @ResponseMessage('Blog post deleted successfully')
   adminDeleteBlog(@Param('id') id: string) {
@@ -87,7 +87,7 @@ export class BlogsController {
   }
 
   @Patch('admin/:id/toggle-publish')
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'DOCTOR')
   @UseGuards(RolesGuard)
   @ResponseMessage('Blog post publish status toggled successfully')
   adminTogglePublish(@Param('id') id: string) {

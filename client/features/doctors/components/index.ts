@@ -5,6 +5,7 @@ export * from "./DoctorQuickActions";
 export * from "./DoctorAvailabilityTable";
 export * from "./DoctorDaysOffCalendar";
 export * from "./DoctorDashboardView";
+// DoctorBlogManager is client-only (React Quill + hooks) — import directly where needed
 export * from "./patients/DoctorPatientCard";
 export * from "./patients/DoctorPatientDetailDialog";
 export * from "./patients/DoctorPatientsHeader";

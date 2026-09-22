@@ -89,7 +89,8 @@ export interface BlogPost {
     reviewDate: string;
   } | null;
   keyTakeaways: string[];
-  content: BlogContentBlock[];
+  /** HTML string (React Quill output) or legacy structured block array. */
+  content: string | BlogContentBlock[];
   faqs: BlogFAQ[];
 }
 
@@ -144,3 +145,24 @@ export const blogKeys = {
   categories: () => [...blogKeys.all, "categories"] as const,
   detail: (slug: string) => [...blogKeys.all, "detail", slug] as const,
 };
+
+/** Payload for creating/updating a blog post from the doctor/admin dashboard. */
+export interface AdminBlogPayload {
+  title: string;
+  subtitle?: string;
+  excerpt?: string;
+  /** HTML string from React Quill */
+  content: string;
+  featuredImage: string;
+  imageCaption?: string;
+  category?: string;
+  tags?: string[];
+  readTime?: string;
+  published?: boolean;
+  featured?: boolean;
+  authorName: string;
+  authorRole: string;
+  authorAvatar?: string;
+  authorBio?: string;
+  slug?: string;
+}

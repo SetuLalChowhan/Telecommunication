@@ -4,7 +4,7 @@ import React, { useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarCheck, Loader2, Search, ShieldCheck, Stethoscope } from "lucide-react";
+import { Loader2, Search, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -19,10 +19,6 @@ import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
 
 interface SearchBarProps {
-  /**
-   * Specialties prefetched on the server. Passing them means the select renders
-   * populated on first paint and never refetches on mount.
-   */
   initialSpecialties?: Specialty[];
 }
 
@@ -37,7 +33,6 @@ const SearchBar = ({ initialSpecialties = [] }: SearchBarProps) => {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Typing stays instant; only the settled value is sent to the API.
   const debouncedQuery = useDebouncedValue(query, 300);
   const { data: suggestions = [], isFetching } = useDoctorSuggestions(debouncedQuery);
   const { data: specialties = initialSpecialties } = useSpecialties({
@@ -47,21 +42,19 @@ const SearchBar = ({ initialSpecialties = [] }: SearchBarProps) => {
   const showSuggestions =
     isOpen && debouncedQuery.trim().length >= 2 && query.trim().length >= 2;
 
-  // Close when the pointer lands outside the combobox.
+  // Close on outside click
   useEffect(() => {
     if (!isOpen) return;
-
     const handlePointerDown = (event: MouseEvent) => {
       if (!containerRef.current?.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, [isOpen]);
 
-  // Keep the highlighted row in range as results change.
+  // Clamp active index when results shrink
   useEffect(() => {
     setActiveIndex((current) =>
       current >= suggestions.length ? suggestions.length - 1 : current
@@ -79,13 +72,11 @@ const SearchBar = ({ initialSpecialties = [] }: SearchBarProps) => {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const active = suggestions[activeIndex];
-
     if (showSuggestions && active) {
       setIsOpen(false);
       router.push(`/doctors/${active.slug}`);
       return;
     }
-
     goToDoctors(query, specialty);
   };
 
@@ -95,9 +86,7 @@ const SearchBar = ({ initialSpecialties = [] }: SearchBarProps) => {
       setActiveIndex(-1);
       return;
     }
-
     if (!showSuggestions || suggestions.length === 0) return;
-
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setActiveIndex((i) => (i + 1) % suggestions.length);
@@ -111,9 +100,9 @@ const SearchBar = ({ initialSpecialties = [] }: SearchBarProps) => {
     <form role="search" onSubmit={handleSubmit} className="w-full">
       <div
         ref={containerRef}
-        className="relative flex items-center gap-1.5 rounded-xl border border-border bg-card p-1.5 shadow-subtle transition-colors focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15 sm:gap-2 sm:p-2"
+        className="relative flex items-center gap-1.5 rounded-xl border border-border bg-card p-1.5 shadow-sm transition-colors focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15 sm:gap-2 sm:p-2"
       >
-        {/* Specialty selection — visible on tablet & desktop */}
+        {/* Specialty select — visible on tablet + */}
         <div className="hidden shrink-0 sm:block">
           <Select
             value={specialty || "all"}
@@ -152,7 +141,7 @@ const SearchBar = ({ initialSpecialties = [] }: SearchBarProps) => {
             }}
             onFocus={() => setIsOpen(true)}
             onKeyDown={handleKeyDown}
-            placeholder="Search doctors, specialties..."
+            placeholder="Search by name or specialty..."
             autoComplete="off"
             enterKeyHint="search"
             role="combobox"
@@ -172,7 +161,7 @@ const SearchBar = ({ initialSpecialties = [] }: SearchBarProps) => {
           )}
         </div>
 
-        {/* Primary action */}
+        {/* Submit button */}
         <Button
           type="submit"
           className="h-10 shrink-0 rounded-lg px-4 text-sm font-semibold sm:h-11 sm:px-5"
@@ -187,10 +176,10 @@ const SearchBar = ({ initialSpecialties = [] }: SearchBarProps) => {
             id={listId}
             role="listbox"
             aria-label="Doctor suggestions"
-            className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-xl border border-border bg-popover shadow-lg"
+            className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 overflow-hidden rounded-lg border border-border bg-popover shadow-md"
           >
             {suggestions.length > 0 ? (
-              <ul className="max-h-80 overflow-y-auto p-1.5">
+              <ul className="max-h-72 overflow-y-auto py-1">
                 {suggestions.map((doctor, index) => (
                   <li key={doctor.id}>
                     <Link
@@ -201,45 +190,37 @@ const SearchBar = ({ initialSpecialties = [] }: SearchBarProps) => {
                       onClick={() => setIsOpen(false)}
                       onMouseEnter={() => setActiveIndex(index)}
                       className={cn(
-                        "flex items-center gap-3 rounded-lg px-2.5 py-2 transition-colors",
-                        index === activeIndex ? "bg-muted" : "hover:bg-muted/60"
+                        "flex items-center gap-3 px-3 py-2.5 transition-colors",
+                        index === activeIndex ? "bg-muted" : "hover:bg-muted/50"
                       )}
                     >
-                      <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
+                      <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
                         {doctor.image ? (
                           <Image
                             src={doctor.image}
                             alt=""
                             fill
-                            sizes="36px"
+                            sizes="32px"
                             className="object-cover"
                           />
                         ) : (
-                          <Stethoscope className="absolute inset-0 m-auto h-4 w-4 text-muted-foreground" />
+                          <Stethoscope className="absolute inset-0 m-auto h-3.5 w-3.5 text-muted-foreground" />
                         )}
                       </span>
 
                       <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-1.5">
-                          <span className="truncate text-sm font-semibold text-foreground">
-                            {doctor.name}
-                          </span>
-                          {doctor.verified && (
-                            <ShieldCheck
-                              className="h-3.5 w-3.5 shrink-0 text-primary"
-                              aria-label="Verified doctor"
-                            />
-                          )}
+                        <span className="block truncate text-sm font-medium text-foreground">
+                          {doctor.name}
                         </span>
                         <span className="block truncate text-xs text-muted-foreground">
                           {doctor.specialty}
                           {doctor.experienceYears
-                            ? ` · ${doctor.experienceYears} yrs exp`
+                            ? ` · ${doctor.experienceYears} yrs`
                             : ""}
                         </span>
                       </span>
 
-                      <span className="shrink-0 text-xs font-semibold text-foreground">
+                      <span className="shrink-0 text-xs text-muted-foreground">
                         ৳{doctor.fee}
                       </span>
                     </Link>
@@ -247,24 +228,12 @@ const SearchBar = ({ initialSpecialties = [] }: SearchBarProps) => {
                 ))}
               </ul>
             ) : (
-              <p className="px-3.5 py-3 text-xs text-muted-foreground">
+              <p className="px-3 py-3 text-xs text-muted-foreground">
                 {isFetching
-                  ? "Searching doctors…"
-                  : `No doctors found for “${debouncedQuery.trim()}”.`}
+                  ? "Searching…"
+                  : `No results for "${debouncedQuery.trim()}".`}
               </p>
             )}
-
-            <button
-              type="button"
-              onClick={() => {
-                setIsOpen(false);
-                goToDoctors(query, specialty);
-              }}
-              className="flex w-full cursor-pointer items-center gap-2 border-t border-border bg-muted/40 px-3.5 py-2.5 text-left text-xs font-semibold text-primary transition-colors hover:bg-muted"
-            >
-              <CalendarCheck className="h-3.5 w-3.5" />
-              <span>See all results for “{query.trim()}”</span>
-            </button>
           </div>
         )}
       </div>

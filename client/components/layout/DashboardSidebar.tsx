@@ -17,6 +17,7 @@ import {
   Loader2,
   Bell,
   MessagesSquare,
+  Lock,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ interface NavLink {
   label: string;
   path: string;
   icon: LucideIcon;
+  isLocked?: boolean;
 }
 
 interface NavGroup {
@@ -56,7 +58,7 @@ const patientGroups: NavGroup[] = [
   {
     label: "Messages",
     items: [
-      { label: "Inbox", path: "/patient/messages", icon: MessagesSquare },
+      { label: "Inbox", path: "/patient/messages", icon: MessagesSquare, isLocked: true },
       { label: "Notifications", path: "/patient/notifications", icon: Bell },
     ],
   },
@@ -82,7 +84,7 @@ const doctorGroups: NavGroup[] = [
   {
     label: "Messages",
     items: [
-      { label: "Inbox", path: "/doctor/messages", icon: MessagesSquare },
+      { label: "Inbox", path: "/doctor/messages", icon: MessagesSquare, isLocked: true },
       { label: "Notifications", path: "/doctor/notifications", icon: Bell },
     ],
   },
@@ -141,6 +143,27 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                 const Icon = item.icon;
                 const isActive = isPathActive(pathname, item.path);
 
+                if (item.isLocked) {
+                  return (
+                    <li key={item.path}>
+                      <span
+                        aria-disabled="true"
+                        title="Coming soon"
+                        className="nav-item flex cursor-not-allowed items-center justify-between opacity-50 select-none"
+                      >
+                        <span className="flex items-center gap-2.5 min-w-0">
+                          <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          <span className="truncate">{item.label}</span>
+                        </span>
+                        <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground uppercase tracking-wider shrink-0">
+                          <Lock className="h-2.5 w-2.5" />
+                          <span>Soon</span>
+                        </span>
+                      </span>
+                    </li>
+                  );
+                }
+
                 return (
                   <li key={item.path}>
                     <Link
@@ -148,17 +171,19 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                       onClick={onItemClick}
                       aria-current={isActive ? "page" : undefined}
                       className={cn(
-                        "nav-item",
+                        "nav-item flex items-center justify-between",
                         isActive && "nav-item-active"
                       )}
                     >
-                      <Icon
-                        className={cn(
-                          "h-4 w-4 shrink-0",
-                          isActive ? "text-primary" : "text-muted-foreground"
-                        )}
-                      />
-                      <span className="truncate">{item.label}</span>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Icon
+                          className={cn(
+                            "h-4 w-4 shrink-0",
+                            isActive ? "text-primary" : "text-muted-foreground"
+                          )}
+                        />
+                        <span className="truncate">{item.label}</span>
+                      </div>
                     </Link>
                   </li>
                 );

@@ -142,73 +142,82 @@ export function BlogDetailContent({
           )}
 
           {/* Body */}
-          <div className="space-y-5 pt-2 text-sm leading-relaxed text-secondary-text sm:text-base">
-            {post.content.map((block, index) => {
-              if (block.type === "heading") {
+          {typeof post.content === "string" ? (
+            // React Quill HTML output
+            <div
+              className="blog-prose pt-2"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
+          ) : (
+            // Legacy structured block renderer
+            <div className="space-y-5 pt-2 text-sm leading-relaxed text-secondary-text sm:text-base">
+              {post.content.map((block, index) => {
+                if (block.type === "heading") {
+                  return (
+                    <h2
+                      key={index}
+                      className="pt-4 text-xl font-semibold text-foreground"
+                    >
+                      {block.text}
+                    </h2>
+                  );
+                }
+
+                if (block.type === "subheading") {
+                  return (
+                    <h3 key={index} className="pt-2 text-lg font-semibold text-foreground">
+                      {block.text}
+                    </h3>
+                  );
+                }
+
+                if (block.type === "list" && block.items) {
+                  return (
+                    <ul key={index} className="my-3 list-disc space-y-2.5 pl-5">
+                      {block.items.map((item, itemIndex) => (
+                        <li key={itemIndex} className="leading-relaxed">
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  );
+                }
+
+                if (block.type === "quote") {
+                  return (
+                    <blockquote
+                      key={index}
+                      className="my-5 rounded-r-lg border-l-4 border-primary bg-muted/40 py-2 pl-4 italic text-foreground"
+                    >
+                      <p>&ldquo;{block.text}&rdquo;</p>
+                      {block.author && (
+                        <footer className="mt-1.5 text-xs not-italic text-muted-foreground">
+                          — {block.author}
+                        </footer>
+                      )}
+                    </blockquote>
+                  );
+                }
+
+                if (block.type === "callout") {
+                  return (
+                    <div
+                      key={index}
+                      className="my-4 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm leading-relaxed text-foreground"
+                    >
+                      {block.text}
+                    </div>
+                  );
+                }
+
                 return (
-                  <h2
-                    key={index}
-                    className="pt-4 text-xl font-semibold text-foreground"
-                  >
+                  <p key={index} className="leading-relaxed">
                     {block.text}
-                  </h2>
+                  </p>
                 );
-              }
-
-              if (block.type === "subheading") {
-                return (
-                  <h3 key={index} className="pt-2 text-lg font-semibold text-foreground">
-                    {block.text}
-                  </h3>
-                );
-              }
-
-              if (block.type === "list" && block.items) {
-                return (
-                  <ul key={index} className="my-3 list-disc space-y-2.5 pl-5">
-                    {block.items.map((item, itemIndex) => (
-                      <li key={itemIndex} className="leading-relaxed">
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                );
-              }
-
-              if (block.type === "quote") {
-                return (
-                  <blockquote
-                    key={index}
-                    className="my-5 rounded-r-lg border-l-4 border-primary bg-muted/40 py-2 pl-4 italic text-foreground"
-                  >
-                    <p>&ldquo;{block.text}&rdquo;</p>
-                    {block.author && (
-                      <footer className="mt-1.5 text-xs not-italic text-muted-foreground">
-                        — {block.author}
-                      </footer>
-                    )}
-                  </blockquote>
-                );
-              }
-
-              if (block.type === "callout") {
-                return (
-                  <div
-                    key={index}
-                    className="my-4 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm leading-relaxed text-foreground"
-                  >
-                    {block.text}
-                  </div>
-                );
-              }
-
-              return (
-                <p key={index} className="leading-relaxed">
-                  {block.text}
-                </p>
-              );
-            })}
-          </div>
+              })}
+            </div>
+          )}
 
           {/* Tags */}
           {post.tags.length > 0 && (

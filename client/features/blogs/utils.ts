@@ -73,6 +73,12 @@ function normalizeFaqs(faqs: unknown): BlogFAQ[] {
 
 /** Maps the API payload into the view model. Tolerates partial CMS rows. */
 export function toBlogPost(dto: BlogPostDto): BlogPost {
+  // content can be a raw HTML string (React Quill) or the legacy block array
+  const content: string | BlogContentBlock[] =
+    typeof dto.content === "string"
+      ? dto.content
+      : normalizeContent(dto.content);
+
   return {
     id: dto.id,
     slug: dto.slug,
@@ -103,7 +109,7 @@ export function toBlogPost(dto: BlogPostDto): BlogPost {
         }
       : null,
     keyTakeaways: Array.isArray(dto.keyTakeaways) ? dto.keyTakeaways : [],
-    content: normalizeContent(dto.content),
+    content,
     faqs: normalizeFaqs(dto.faqs),
   };
 }
