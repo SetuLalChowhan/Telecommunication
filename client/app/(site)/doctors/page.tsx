@@ -75,18 +75,7 @@ export default async function DoctorsPage({ searchParams }: DoctorsPageProps) {
         },
       ]}
     >
-      <Suspense
-        fallback={
-          <div className="w-full min-h-screen flex items-center justify-center bg-background">
-            <div className="flex items-center gap-3 text-sm font-semibold text-primary">
-              <span className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-              <span>Loading Doctors Directory...</span>
-            </div>
-          </div>
-        }
-      >
-        <DoctorList />
-      </Suspense>
+      <DoctorList />
     </HydrationProvider>
   );
 }

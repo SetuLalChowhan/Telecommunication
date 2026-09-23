@@ -87,18 +87,7 @@ export default async function DoctorDetailsPage({
         },
       ]}
     >
-      <Suspense
-        fallback={
-          <div className="w-full min-h-screen flex items-center justify-center bg-background">
-            <div className="flex items-center gap-3 text-sm font-semibold text-primary">
-              <span className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-              <span>Loading Doctor Profile...</span>
-            </div>
-          </div>
-        }
-      >
-        <DoctorDetailsContent idOrSlug={idOrSlug} bookingDays={bookingDays} />
-      </Suspense>
+      <DoctorDetailsContent idOrSlug={idOrSlug} bookingDays={bookingDays} />
     </HydrationProvider>
   );
 }
