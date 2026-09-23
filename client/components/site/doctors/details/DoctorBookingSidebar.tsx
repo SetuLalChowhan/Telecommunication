@@ -53,7 +53,14 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [selectedSlotItem, setSelectedSlotItem] = useState<AvailableSlotItem | null>(null);
   const [notes, setNotes] = useState("");
+  const [phone, setPhone] = useState(user?.phone || "");
   const [bookedDetails, setBookedDetails] = useState<RawBooking | null>(null);
+
+  React.useEffect(() => {
+    if (user?.phone && !phone) {
+      setPhone(user.phone);
+    }
+  }, [user?.phone, phone]);
 
   const selectedDateStr = toDateInputValue(selectedDate);
 
@@ -73,12 +80,18 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
       return;
     }
 
+    if (!phone.trim() || phone.trim().length < 6) {
+      toast.error("Please enter a valid contact phone number (min 6 digits)");
+      return;
+    }
+
     try {
       const booking = await bookingMutation.mutateAsync({
         doctorId: doctor.id,
         slotStart: selectedSlotItem.slotStart,
         slotEnd: selectedSlotItem.slotEnd,
         notes: notes.trim() || undefined,
+        phone: phone.trim(),
       });
 
       setBookedDetails(booking as unknown as RawBooking);
@@ -137,6 +150,8 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
         fee={doctor.fee}
         notes={notes}
         onNotesChange={setNotes}
+        phone={phone}
+        onPhoneChange={setPhone}
         selectedSlot={selectedSlotItem}
         isAuthenticated={isAuthenticated}
         isPatient={isPatient}

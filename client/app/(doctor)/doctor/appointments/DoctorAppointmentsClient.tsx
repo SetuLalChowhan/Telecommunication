@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Loader2, Calendar, Video, CheckCircle2, User } from "lucide-react";
+import { Loader2, Calendar, Video, CheckCircle2, User, Phone } from "lucide-react";
 import {
   useDoctorBookings,
   useConfirmDoctorBooking,
@@ -17,7 +17,7 @@ import {
   formatTime,
   toDateInputValue,
 } from "@/lib/time";
-import { AppointmentDetailsDialog } from "@/features/appointments/components";
+import { AppointmentDetailsDialog, TablePagination } from "@/features/appointments/components";
 import {
   useBookingSummary,
   normalizeStatusFilter,
@@ -68,6 +68,7 @@ function adaptBookingToScheduleItem(booking: DoctorDashboardBooking): DoctorSche
     patientAvatar: patientUser?.image || "",
     patientAge,
     patientGender,
+    patientPhone: patientUser?.phone || undefined,
     time: `${formattedDate} · ${formattedTime}`,
     consultationType: "Video Consultation",
     status: booking.status as any,
@@ -87,6 +88,7 @@ export function DoctorAppointmentsClient({
   const [filter, setFilter] = useState<AppointmentStatusFilter>(
     normalizeStatusFilter(initialStatus) as AppointmentStatusFilter
   );
+  const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAppointment, setSelectedAppointment] = useState<DashboardAppointment | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
@@ -98,8 +100,13 @@ export function DoctorAppointmentsClient({
     data: bookingsData,
     isLoading,
     isFetching,
-  } = useDoctorBookings({ status: bookingStatus, limit: MAX_PAGE_SIZE });
+  } = useDoctorBookings({ status: bookingStatus, page, limit: 10 });
   const { data: summary } = useBookingSummary();
+
+  const handleTabChange = (newTab: AppointmentStatusFilter) => {
+    setFilter(newTab);
+    setPage(1);
+  };
 
   const confirmMutation = useConfirmDoctorBooking();
   const completeMutation = useCompleteDoctorBooking();
@@ -157,7 +164,7 @@ export function DoctorAppointmentsClient({
 
       <DoctorAppointmentTabs
         activeTab={filter}
-        onTabChange={setFilter}
+        onTabChange={handleTabChange}
         counts={counts}
       />
 
@@ -227,9 +234,20 @@ export function DoctorAppointmentsClient({
                             <p className="font-semibold text-foreground text-xs sm:text-sm truncate">
                               {item.patientName}
                             </p>
-                            <p className="text-[11px] text-muted-foreground truncate">
-                              {item.consultationType}
-                            </p>
+                            {item.patientPhone ? (
+                              <a
+                                href={`tel:${item.patientPhone}`}
+                                className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline font-medium"
+                                title="Call patient"
+                              >
+                                <Phone className="h-3 w-3 shrink-0" />
+                                <span>{item.patientPhone}</span>
+                              </a>
+                            ) : (
+                              <p className="text-[11px] text-muted-foreground truncate">
+                                {item.consultationType}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </TableCell>
@@ -329,6 +347,7 @@ export function DoctorAppointmentsClient({
                                 patientAvatar: item.patientAvatar,
                                 patientAge: item.patientAge,
                                 patientGender: item.patientGender,
+                                patientPhone: item.patientPhone,
                                 dateFormatted: item.time.split(" · ")[0] || "Today",
                                 timeFormatted: item.time.split(" · ")[1] || item.time,
                                 status: item.status as any,
@@ -366,9 +385,20 @@ export function DoctorAppointmentsClient({
                         <p className="text-xs font-semibold text-foreground truncate">
                           {item.patientName}
                         </p>
-                        <p className="text-[11px] text-muted-foreground truncate">
-                          {item.patientAge} yrs &bull; {item.patientGender}
-                        </p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[11px] text-muted-foreground">
+                            {item.patientAge} yrs &bull; {item.patientGender}
+                          </span>
+                          {item.patientPhone && (
+                            <a
+                              href={`tel:${item.patientPhone}`}
+                              className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline font-medium"
+                            >
+                              <Phone className="h-2.5 w-2.5" />
+                              <span>{item.patientPhone}</span>
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -435,6 +465,15 @@ export function DoctorAppointmentsClient({
                 </div>
               ))}
             </div>
+
+            <TablePagination
+              page={bookingsData?.meta?.page || page}
+              totalPages={bookingsData?.meta?.totalPages || 1}
+              total={bookingsData?.meta?.total ?? filteredItems.length}
+              limit={bookingsData?.meta?.limit || 10}
+              onPageChange={setPage}
+              entityName="appointments"
+            />
           </>
         )}
       </div>

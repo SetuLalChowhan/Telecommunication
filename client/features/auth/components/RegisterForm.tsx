@@ -19,6 +19,10 @@ const registerSchema = z
     firstName: z.string().min(2, "First name must be at least 2 characters"),
     lastName: z.string().min(2, "Last name must be at least 2 characters"),
     email: z.string().email("Please enter a valid email address"),
+    phone: z
+      .string()
+      .min(6, "Please enter a valid phone number (min 6 digits)")
+      .max(20, "Phone number is too long"),
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
@@ -60,6 +64,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ role }) => {
       firstName: "",
       lastName: "",
       email: "",
+      phone: "",
       password: "",
       confirmPassword: "",
       agreeToTerms: false,
@@ -91,6 +96,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ role }) => {
       email: values.email,
       password: values.password,
       name: `${values.firstName} ${values.lastName}`,
+      phone: values.phone.trim(),
       role: values.role,
     });
   };
@@ -132,18 +138,34 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ role }) => {
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <Label className="text-xs font-semibold text-foreground">Email Address</Label>
-        <Input
-          type="email"
-          {...register("email")}
-          disabled={isLoading}
-          placeholder="john.doe@example.com"
-          className="h-10 rounded-xl text-sm"
-        />
-        {errors.email && (
-          <p className="text-[11px] text-destructive font-medium">{errors.email.message}</p>
-        )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label className="text-xs font-semibold text-foreground">Email Address</Label>
+          <Input
+            type="email"
+            {...register("email")}
+            disabled={isLoading}
+            placeholder="john.doe@example.com"
+            className="h-10 rounded-xl text-sm"
+          />
+          {errors.email && (
+            <p className="text-[11px] text-destructive font-medium">{errors.email.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs font-semibold text-foreground">Phone Number</Label>
+          <Input
+            type="tel"
+            {...register("phone")}
+            disabled={isLoading}
+            placeholder="+880 1712-345678"
+            className="h-10 rounded-xl text-sm"
+          />
+          {errors.phone && (
+            <p className="text-[11px] text-destructive font-medium">{errors.phone.message}</p>
+          )}
+        </div>
       </div>
 
       <div className="space-y-1.5">

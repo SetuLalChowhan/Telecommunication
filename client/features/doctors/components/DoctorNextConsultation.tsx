@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Calendar, Video, Check, Loader2 } from "lucide-react";
+import { Calendar, Video, Check, Loader2, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DoctorScheduleItem } from "@/lib/dashboard-mock-data";
@@ -97,6 +97,18 @@ export const DoctorNextConsultation: React.FC<DoctorNextConsultationProps> = ({
               </span>
               <span aria-hidden>·</span>
               <span>Fee ৳{appointment.fee}</span>
+              {appointment.patientPhone && (
+                <>
+                  <span aria-hidden>·</span>
+                  <a
+                    href={`tel:${appointment.patientPhone}`}
+                    className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                  >
+                    <Phone className="h-3 w-3" />
+                    <span>{appointment.patientPhone}</span>
+                  </a>
+                </>
+              )}
             </div>
 
             {appointment.symptoms && (

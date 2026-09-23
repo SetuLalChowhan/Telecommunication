@@ -87,6 +87,10 @@ export const auth = betterAuth({
         type: 'string',
         defaultValue: 'PATIENT',
       },
+      phone: {
+        type: 'string',
+        required: false,
+      },
     },
   },
 

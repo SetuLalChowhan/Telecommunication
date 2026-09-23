@@ -8,6 +8,7 @@ import {
   DoctorScheduleItem,
   DashboardAppointment,
 } from "@/lib/dashboard-mock-data";
+import { formatTime } from "@/lib/time";
 import { DoctorNextConsultation } from "./DoctorNextConsultation";
 import { DoctorTodayScheduleTable } from "./DoctorTodayScheduleTable";
 import { DoctorStatsCards } from "./DoctorStatsCards";
@@ -45,19 +46,13 @@ function adaptBookingToScheduleItem(booking: DoctorDashboardBooking): DoctorSche
     ? rawGender.charAt(0).toUpperCase() + rawGender.slice(1).toLowerCase()
     : "Patient";
 
-  const slotDate = new Date(booking.slotStart);
-  const timeFormatted = !isNaN(slotDate.getTime())
-    ? slotDate.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      })
-    : "10:00 AM";
+  const timeFormatted = formatTime(booking.slotStart, "10:00 AM");
 
   return {
     id: booking.id,
     time: timeFormatted,
     patientName,
+    patientPhone: patientUser?.phone || undefined,
     patientAge,
     patientGender,
     patientAvatar: patientUser?.image || "",

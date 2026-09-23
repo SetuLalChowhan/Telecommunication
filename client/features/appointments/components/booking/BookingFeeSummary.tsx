@@ -1,9 +1,8 @@
-"use client";
-
 import React from "react";
-import { Video, ShieldCheck, FileText, ArrowRight, Loader2, LogIn } from "lucide-react";
+import { Video, ShieldCheck, FileText, ArrowRight, Loader2, LogIn, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { AvailableSlotItem } from "@/features/patients";
 
@@ -11,6 +10,8 @@ interface BookingFeeSummaryProps {
   fee: number;
   notes: string;
   onNotesChange: (val: string) => void;
+  phone: string;
+  onPhoneChange: (val: string) => void;
   selectedSlot: AvailableSlotItem | null;
   isAuthenticated: boolean;
   isPatient: boolean;
@@ -23,6 +24,8 @@ export const BookingFeeSummary: React.FC<BookingFeeSummaryProps> = ({
   fee,
   notes,
   onNotesChange,
+  phone,
+  onPhoneChange,
   selectedSlot,
   isAuthenticated,
   isPatient,
@@ -32,6 +35,28 @@ export const BookingFeeSummary: React.FC<BookingFeeSummaryProps> = ({
 }) => {
   return (
     <div className="space-y-4 pt-3 border-t border-border/80">
+      {/* Required Phone Number */}
+      <div className="space-y-1.5">
+        <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+          <span className="flex items-center gap-1.5">
+            <Phone className="h-3.5 w-3.5 text-primary" />
+            <span>Contact Phone Number</span>
+          </span>
+          <span className="text-[10px] font-bold text-primary tracking-wide uppercase">Required</span>
+        </label>
+        <Input
+          type="tel"
+          placeholder="e.g. +880 1712-345678"
+          value={phone}
+          onChange={(e) => onPhoneChange(e.target.value)}
+          className="rounded-lg text-xs h-9"
+          required
+        />
+        <p className="text-[10px] text-muted-foreground">
+          Doctor may reach you directly at this number before or during consultation.
+        </p>
+      </div>
+
       <div className="space-y-1.5">
         <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
           <FileText className="h-3.5 w-3.5 text-primary" />

@@ -113,11 +113,12 @@ export const useAuth = () => {
 
   // Account Registration
   const registerMutation = useMutation({
-    mutationFn: async ({ name, email, password, role }: RegisterParams) => {
+    mutationFn: async ({ name, email, password, phone, role }: RegisterParams) => {
       const res = await signUp.email({
         email,
         password: password || "",
         name,
+        phone,
         role,
       } as unknown as Parameters<typeof signUp.email>[0]);
       if (res.error) {

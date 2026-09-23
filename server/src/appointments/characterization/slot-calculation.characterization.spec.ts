@@ -10,11 +10,9 @@ describe('AppointmentsService - Slot Calculation Characterization', () => {
   let mockNotifications: any;
 
   beforeEach(() => {
-    // Only `Date` is faked: slot generation marks times that have already
-    // passed as unavailable, so the clock has to be pinned for these fixed
-    // 2026-09-25 expectations to stay meaningful.
+    // Pin system time to 08:00 AM local time (02:00 UTC) on 2026-09-25
     vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(new Date('2026-09-25T08:00:00.000Z'));
+    vi.setSystemTime(new Date('2026-09-25T08:00:00+06:00'));
 
     mockRepo = {
       findVerifiedDoctor: vi.fn(),
@@ -99,8 +97,8 @@ describe('AppointmentsService - Slot Calculation Characterization', () => {
     // Existing booking from 09:30 to 10:00
     mockRepo.findActiveBookingsForDate.mockResolvedValue([
       {
-        slotStart: new Date('2026-09-25T09:30:00.000Z'),
-        slotEnd: new Date('2026-09-25T10:00:00.000Z'),
+        slotStart: new Date('2026-09-25T09:30:00+06:00'),
+        slotEnd: new Date('2026-09-25T10:00:00+06:00'),
       },
     ]);
 

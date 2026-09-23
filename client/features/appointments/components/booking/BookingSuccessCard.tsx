@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CheckCircle2, Calendar, Clock, Video, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RawBooking } from "@/features/patients";
+import { formatDate, formatTime } from "@/lib/time";
 
 interface BookingSuccessCardProps {
   booking: RawBooking;
@@ -15,17 +16,8 @@ export const BookingSuccessCard: React.FC<BookingSuccessCardProps> = ({
   booking,
   onBookAnother,
 }) => {
-  const slotDate = new Date(booking.slotStart);
-  const dateFormatted = slotDate.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-  const timeFormatted = slotDate.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
+  const dateFormatted = formatDate(booking.slotStart, "short", "Scheduled");
+  const timeFormatted = formatTime(booking.slotStart, "—");
 
   return (
     <div className="p-6 rounded-xl bg-card border border-border text-center space-y-5 animate-in fade-in duration-200">

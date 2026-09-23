@@ -76,6 +76,13 @@ export class AppointmentsRepository {
     return this.prisma.patientProfile.findUnique({ where: { userId } });
   }
 
+  async updateUserPhone(userId: string, phone: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { phone },
+    });
+  }
+
   async findDoctorProfileByUserId(userId: string) {
     return this.prisma.doctorProfile.findUnique({ where: { userId } });
   }

@@ -24,7 +24,29 @@ const DAYS_MAP: Record<number, DayOfWeek> = {
   6: DayOfWeek.SATURDAY,
 };
 
-// -- Pure slot helpers (no I/O � easy to unit-test) -------------------------
+// -- Pure slot helpers (no I/O — easy to unit-test) -------------------------
+
+/**
+ * Platform timezone offset (Asia/Dhaka is UTC+6 = +06:00).
+ * Doctors configure availability hours in local wall-clock time.
+ */
+export const APP_TIMEZONE_OFFSET = '+06:00';
+export const APP_TIMEZONE_OFFSET_HOURS = 6;
+
+export function parseLocalSlot(date: string, time: string): Date {
+  return new Date(`${date}T${time}:00${APP_TIMEZONE_OFFSET}`);
+}
+
+export function getLocalCalendarDate(instant: Date): { dateStr: string; dayOfWeek: DayOfWeek } {
+  const localMs = instant.getTime() + APP_TIMEZONE_OFFSET_HOURS * 60 * 60 * 1000;
+  const localDate = new Date(localMs);
+  const year = localDate.getUTCFullYear();
+  const month = String(localDate.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(localDate.getUTCDate()).padStart(2, '0');
+  const dateStr = `${year}-${month}-${day}`;
+  const dayOfWeek = DAYS_MAP[localDate.getUTCDay()];
+  return { dateStr, dayOfWeek };
+}
 
 /**
  * Why a generated slot cannot be booked. The client renders every slot of the
@@ -75,8 +97,8 @@ function generateSlots(
       const eH = String(Math.floor(next / 60)).padStart(2, '0');
       const eM = String(next % 60).padStart(2, '0');
 
-      const slotStart = new Date(`${date}T${sH}:${sM}:00.000Z`);
-      const slotEnd = new Date(`${date}T${eH}:${eM}:00.000Z`);
+      const slotStart = parseLocalSlot(date, `${sH}:${sM}`);
+      const slotEnd = parseLocalSlot(date, `${eH}:${eM}`);
 
       // `createBooking` refuses past slots, so mark them unavailable here too —
       // otherwise the UI offers a time the API will reject on submit.
@@ -128,8 +150,8 @@ function isValidSlotAgainstSchedules(
       const eH = String(Math.floor(next / 60)).padStart(2, '0');
       const eM = String(next % 60).padStart(2, '0');
 
-      const validStart = new Date(`${dateStr}T${sH}:${sM}:00.000Z`);
-      const validEnd = new Date(`${dateStr}T${eH}:${eM}:00.000Z`);
+      const validStart = parseLocalSlot(dateStr, `${sH}:${sM}`);
+      const validEnd = parseLocalSlot(dateStr, `${eH}:${eM}`);
 
       if (
         slotStart.getTime() === validStart.getTime() &&
@@ -160,12 +182,13 @@ export class AppointmentsService {
     const doctor = await this.repo.findVerifiedDoctor(doctorId);
     if (!doctor) throw new NotFoundException('Doctor not found or not verified');
 
-    const targetDate = new Date(`${date}T00:00:00.000Z`);
+    const targetDate = new Date(`${date}T12:00:00.000Z`);
     if (isNaN(targetDate.getTime())) {
       throw new BadRequestException('Invalid date format. Expected YYYY-MM-DD');
     }
 
-    const dayOff = await this.repo.findDayOff(doctor.id, targetDate);
+    const dayOffDate = new Date(`${date}T00:00:00.000Z`);
+    const dayOff = await this.repo.findDayOff(doctor.id, dayOffDate);
     if (dayOff) {
       return {
         date,
@@ -182,8 +205,8 @@ export class AppointmentsService {
       return { date, isDayOff: false, message: 'No active schedule for this day', slots: [] };
     }
 
-    const start = new Date(`${date}T00:00:00.000Z`);
-    const end = new Date(`${date}T23:59:59.999Z`);
+    const start = new Date(`${date}T00:00:00.000${APP_TIMEZONE_OFFSET}`);
+    const end = new Date(`${date}T23:59:59.999${APP_TIMEZONE_OFFSET}`);
     const existing = await this.repo.findActiveBookingsForDate(doctor.id, start, end);
 
     return {
@@ -195,6 +218,14 @@ export class AppointmentsService {
 
   async createBooking(userId: string, dto: CreateBookingDto) {
     const patient = await this.repo.findOrCreatePatient(userId);
+
+    if (dto.phone?.trim()) {
+      try {
+        await this.repo.updateUserPhone(userId, dto.phone.trim());
+      } catch (err) {
+        // Non-blocking if phone update fails
+      }
+    }
 
     const doctor = await this.repo.findDoctorById(dto.doctorId);
     if (!doctor || !doctor.verified) {
@@ -211,9 +242,9 @@ export class AppointmentsService {
       throw new BadRequestException('Cannot book a time slot in the past');
     }
 
-    const slotDateOnly = new Date(
-      slotStart.toISOString().split('T')[0] + 'T00:00:00.000Z',
-    );
+    const { dateStr, dayOfWeek } = getLocalCalendarDate(slotStart);
+
+    const slotDateOnly = new Date(`${dateStr}T00:00:00.000Z`);
     const dayOff = await this.repo.findDayOff(dto.doctorId, slotDateOnly);
     if (dayOff) {
       throw new ConflictException(
@@ -221,14 +252,12 @@ export class AppointmentsService {
       );
     }
 
-    const dayOfWeek = DAYS_MAP[slotStart.getUTCDay()];
     const schedules = await this.repo.findActiveSchedules(dto.doctorId, dayOfWeek);
 
     if (schedules.length === 0) {
       throw new BadRequestException('Doctor has no available schedule on this day');
     }
 
-    const dateStr = slotStart.toISOString().split('T')[0];
     if (!isValidSlotAgainstSchedules(slotStart, slotEnd, dateStr, schedules)) {
       throw new BadRequestException(
         "The requested slot does not match the doctor's predefined availability schedule",

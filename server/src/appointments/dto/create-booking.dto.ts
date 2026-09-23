@@ -17,4 +17,9 @@ export class CreateBookingDto {
   @IsString()
   @MaxLength(500, { message: 'Notes must be under 500 characters' })
   notes?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20, { message: 'Phone must be under 20 characters' })
+  phone?: string;
 }

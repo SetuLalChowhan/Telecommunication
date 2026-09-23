@@ -69,8 +69,8 @@ describe('AppointmentsService - Booking Transitions Characterization', () => {
       await expect(
         service.createBooking('user-pat-1', {
           doctorId: 'doc-1',
-          slotStart: '2026-09-25T10:00:00.000Z',
-          slotEnd: '2026-09-25T10:30:00.000Z',
+          slotStart: '2026-09-25T10:00:00+06:00',
+          slotEnd: '2026-09-25T10:30:00+06:00',
         }),
       ).rejects.toThrow(NotFoundException);
     });
@@ -83,8 +83,8 @@ describe('AppointmentsService - Booking Transitions Characterization', () => {
       await expect(
         service.createBooking('user-pat-1', {
           doctorId: 'doc-1',
-          slotStart: '2026-09-25T10:00:00.000Z',
-          slotEnd: '2026-09-25T10:30:00.000Z',
+          slotStart: '2026-09-25T10:00:00+06:00',
+          slotEnd: '2026-09-25T10:30:00+06:00',
         }),
       ).rejects.toThrow(ConflictException);
     });
@@ -107,16 +107,16 @@ describe('AppointmentsService - Booking Transitions Characterization', () => {
         id: 'booking-101',
         doctorId: 'doc-1',
         patientId: 'pat-1',
-        slotStart: new Date('2026-09-25T10:00:00.000Z'),
-        slotEnd: new Date('2026-09-25T10:30:00.000Z'),
+        slotStart: new Date('2026-09-25T10:00:00+06:00'),
+        slotEnd: new Date('2026-09-25T10:30:00+06:00'),
         status: BookingStatus.PENDING,
       };
       mockRepo.createBookingInTx.mockResolvedValue(createdBooking);
 
       const result = await service.createBooking('user-pat-1', {
         doctorId: 'doc-1',
-        slotStart: '2026-09-25T10:00:00.000Z',
-        slotEnd: '2026-09-25T10:30:00.000Z',
+        slotStart: '2026-09-25T10:00:00+06:00',
+        slotEnd: '2026-09-25T10:30:00+06:00',
       });
 
       expect(result.status).toBe(BookingStatus.PENDING);

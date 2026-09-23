@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Video, Check, CheckCircle2, ArrowRight, Loader2, Calendar } from "lucide-react";
+import { Video, Check, CheckCircle2, ArrowRight, Loader2, Calendar, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -125,6 +125,16 @@ export const DoctorTodayScheduleTable: React.FC<DoctorTodayScheduleTableProps> =
                             <p className="truncate text-[11px] text-muted-foreground">
                               {item.patientAge}y · {item.patientGender}
                             </p>
+                            {item.patientPhone && (
+                              <a
+                                href={`tel:${item.patientPhone}`}
+                                className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Phone className="h-2.5 w-2.5" />
+                                <span>{item.patientPhone}</span>
+                              </a>
+                            )}
                           </div>
                         </div>
                       </TableCell>
@@ -229,6 +239,16 @@ export const DoctorTodayScheduleTable: React.FC<DoctorTodayScheduleTableProps> =
                         <p className="truncate text-[11px] text-muted-foreground">
                           {item.time} · {item.patientAge}y · {item.patientGender}
                         </p>
+                        {item.patientPhone && (
+                          <a
+                            href={`tel:${item.patientPhone}`}
+                            className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Phone className="h-2.5 w-2.5" />
+                            <span>{item.patientPhone}</span>
+                          </a>
+                        )}
                       </div>
                     </div>
                     <span

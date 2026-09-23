@@ -1,4 +1,5 @@
 import { DashboardAppointment, RecommendedDoctor } from "@/lib/dashboard-mock-data";
+import { formatDate, formatTime, relativeDayLabel } from "@/lib/time";
 
 export interface PatientDashboardStats {
   totalConsultations: number;
@@ -168,6 +169,7 @@ export interface CreateBookingInput {
   slotStart: string;
   slotEnd: string;
   notes?: string;
+  phone?: string;
 }
 
 export const patientKeys = {
@@ -192,42 +194,10 @@ export const patientKeys = {
  * Maps a raw backend booking object into a DashboardAppointment for UI consumption
  */
 export function mapBookingToAppointment(b: RawBooking): DashboardAppointment {
-  const start = new Date(b.slotStart);
-  const isValidDate = !isNaN(start.getTime());
-
-  const now = new Date();
-  const isToday =
-    isValidDate &&
-    start.getFullYear() === now.getFullYear() &&
-    start.getMonth() === now.getMonth() &&
-    start.getDate() === now.getDate();
-
-  const tomorrow = new Date(now);
-  tomorrow.setDate(now.getDate() + 1);
-  const isTomorrow =
-    isValidDate &&
-    start.getFullYear() === tomorrow.getFullYear() &&
-    start.getMonth() === tomorrow.getMonth() &&
-    start.getDate() === tomorrow.getDate();
-
-  let dateFormatted = isValidDate
-    ? start.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-    : "Scheduled";
-
-  if (isToday) dateFormatted = "Today";
-  else if (isTomorrow) dateFormatted = "Tomorrow";
-
-  const timeFormatted = isValidDate
-    ? start.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      })
-    : "";
+  const rel = relativeDayLabel(b.slotStart);
+  const isToday = rel === "Today";
+  const dateFormatted = rel ?? formatDate(b.slotStart, "short", "Scheduled");
+  const timeFormatted = formatTime(b.slotStart, "");
 
   const doctor = b.doctor;
   const doctorName = doctor?.user?.name || "Dr. Specialist";
@@ -243,8 +213,10 @@ export function mapBookingToAppointment(b: RawBooking): DashboardAppointment {
     doctorAvatar:
       doctor?.user?.image ||
       "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=400&q=80",
+    doctorPhone: doctor?.user?.phone || undefined,
     patientName: b.patient?.user?.name || "You",
     patientAvatar: b.patient?.user?.image || undefined,
+    patientPhone: b.patient?.user?.phone || undefined,
     dateFormatted,
     timeFormatted,
     consultationType: "Video Consultation",

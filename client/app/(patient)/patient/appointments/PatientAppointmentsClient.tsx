@@ -2,9 +2,9 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { Loader2, Calendar, Video, Plus } from "lucide-react";
+import { Loader2, Calendar, Video, Plus, Phone } from "lucide-react";
 import { DashboardAppointment } from "@/lib/dashboard-mock-data";
-import { AppointmentDetailsDialog } from "@/features/appointments/components";
+import { AppointmentDetailsDialog, TablePagination } from "@/features/appointments/components";
 import {
   useBookingSummary,
   normalizeStatusFilter,
@@ -19,7 +19,6 @@ import {
   RawBooking,
 } from "@/features/patients/types";
 import { PatientAppointmentsHeader } from "@/features/appointments/components/patient/PatientAppointmentsHeader";
-import { MAX_PAGE_SIZE } from "@/lib/api/types";
 import {
   PatientAppointmentTabs,
   PatientBookingFilterStatus,
@@ -45,6 +44,7 @@ export function PatientAppointmentsClient({
   const [filter, setFilter] = useState<PatientBookingFilterStatus>(
     normalizeStatusFilter(initialStatus) as PatientBookingFilterStatus
   );
+  const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAppt, setSelectedAppt] = useState<DashboardAppointment | null>(null);
 
@@ -55,9 +55,14 @@ export function PatientAppointmentsClient({
     data: bookingsResponse,
     isLoading,
     isFetching,
-  } = usePatientBookings({ status: bookingStatus, limit: MAX_PAGE_SIZE });
+  } = usePatientBookings({ status: bookingStatus, page, limit: 10 });
   const { data: summary } = useBookingSummary();
   const cancelMutation = useCancelPatientBooking();
+
+  const handleTabChange = (newTab: PatientBookingFilterStatus) => {
+    setFilter(newTab);
+    setPage(1);
+  };
 
   const allAppointments: DashboardAppointment[] = useMemo(() => {
     if (!bookingsResponse?.data) return [];
@@ -98,7 +103,7 @@ export function PatientAppointmentsClient({
 
       <PatientAppointmentTabs
         activeTab={filter}
-        onTabChange={setFilter}
+        onTabChange={handleTabChange}
         counts={counts}
       />
 
@@ -179,6 +184,16 @@ export function PatientAppointmentsClient({
                             <p className="text-[11px] text-muted-foreground truncate">
                               {appt.consultationType}
                             </p>
+                            {appt.doctorPhone && (
+                              <a
+                                href={`tel:${appt.doctorPhone}`}
+                                className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Phone className="h-2.5 w-2.5" />
+                                <span>{appt.doctorPhone}</span>
+                              </a>
+                            )}
                           </div>
                         </div>
                       </TableCell>
@@ -271,6 +286,16 @@ export function PatientAppointmentsClient({
                         <p className="text-[11px] text-muted-foreground truncate">
                           {appt.doctorSpecialty}
                         </p>
+                        {appt.doctorPhone && (
+                          <a
+                            href={`tel:${appt.doctorPhone}`}
+                            className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Phone className="h-2.5 w-2.5" />
+                            <span>{appt.doctorPhone}</span>
+                          </a>
+                        )}
                       </div>
                     </div>
 
@@ -322,6 +347,15 @@ export function PatientAppointmentsClient({
                 </div>
               ))}
             </div>
+
+            <TablePagination
+              page={bookingsResponse?.meta?.page || page}
+              totalPages={bookingsResponse?.meta?.totalPages || 1}
+              total={bookingsResponse?.meta?.total ?? filteredAppointments.length}
+              limit={bookingsResponse?.meta?.limit || 10}
+              onPageChange={setPage}
+              entityName="consultations"
+            />
           </>
         )}
       </div>

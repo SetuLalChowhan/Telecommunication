@@ -20,6 +20,7 @@ import {
   AlertTriangle,
   Check,
   Loader2,
+  Phone,
 } from "lucide-react";
 import { DashboardAppointment } from "@/lib/dashboard-mock-data";
 import { cn } from "@/lib/utils";
@@ -124,6 +125,15 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
                     }`
                   : appointment.doctorSpecialty}
               </p>
+              {(isDoctorView ? appointment.patientPhone : appointment.doctorPhone) && (
+                <a
+                  href={`tel:${isDoctorView ? appointment.patientPhone : appointment.doctorPhone}`}
+                  className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                >
+                  <Phone className="h-3 w-3" />
+                  <span>{isDoctorView ? appointment.patientPhone : appointment.doctorPhone}</span>
+                </a>
+              )}
             </div>
           </div>
 

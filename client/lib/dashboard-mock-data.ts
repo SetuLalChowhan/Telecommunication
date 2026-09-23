@@ -5,10 +5,12 @@ export interface DashboardAppointment {
   doctorAvatar: string;
   doctorHospital?: string;
   doctorDegrees?: string[];
+  doctorPhone?: string;
   patientName: string;
   patientAge?: number;
   patientGender?: string;
   patientAvatar?: string;
+  patientPhone?: string;
   dateFormatted: string;
   timeFormatted: string;
   consultationType: "Video Consultation" | "In-Person Consultation" | "Audio Consultation";
@@ -48,6 +50,7 @@ export interface DoctorScheduleItem {
   patientAge: number;
   patientGender: string;
   patientAvatar: string;
+  patientPhone?: string;
   consultationType: string;
   status: "CONFIRMED" | "PENDING" | "COMPLETED" | "CANCELLED";
   symptoms: string;
