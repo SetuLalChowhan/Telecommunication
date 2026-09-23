@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useSyncExternalStore } from "react";
 import { DoctorProfile, DoctorAvailability } from "@/types/doctor";
 import { toDateInputValue } from "@/lib/time";
 import { useAuth } from "@/features/auth/api/queries";
@@ -39,6 +39,11 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
   isLoading = false,
   days,
 }) => {
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const { user, isAuthenticated } = useAuth();
   const isPatient = user?.role === "PATIENT";
 
@@ -136,6 +141,7 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
         isAuthenticated={isAuthenticated}
         isPatient={isPatient}
         isSubmitting={bookingMutation.isPending}
+        isMounted={mounted}
         onSubmit={handleBookingSubmit}
       />
     </div>

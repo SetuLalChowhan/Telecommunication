@@ -15,6 +15,7 @@ interface BookingFeeSummaryProps {
   isAuthenticated: boolean;
   isPatient: boolean;
   isSubmitting: boolean;
+  isMounted?: boolean;
   onSubmit: () => void;
 }
 
@@ -26,6 +27,7 @@ export const BookingFeeSummary: React.FC<BookingFeeSummaryProps> = ({
   isAuthenticated,
   isPatient,
   isSubmitting,
+  isMounted = true,
   onSubmit,
 }) => {
   return (
@@ -58,7 +60,7 @@ export const BookingFeeSummary: React.FC<BookingFeeSummaryProps> = ({
         </div>
       </div>
 
-      {!isAuthenticated ? (
+      {!isMounted || !isAuthenticated ? (
         <div className="space-y-2">
           <Link href="/login">
             <Button className="w-full h-11 rounded-lg font-semibold gap-2">
