@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { DoctorProfile, DoctorAvailability } from "@/types/doctor";
+import { toDateInputValue } from "@/lib/time";
 import { useAuth } from "@/features/auth/api/queries";
 import {
   useAvailableSlots,
@@ -22,55 +23,41 @@ interface DoctorBookingSidebarProps {
   doctor: DoctorProfile;
   availabilities?: DoctorAvailability[];
   isLoading?: boolean;
-}
-
-function formatToDateInput(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  /**
+   * Bookable-day strip, built on the server by `buildBookingDateStrip()`.
+   *
+   * It is a prop rather than local `new Date()` state because this widget is
+   * server-rendered too: deriving the strip from the clock during render made
+   * the server and client markup disagree and threw a hydration mismatch.
+   */
+  days: DayItem[];
 }
 
 export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
   doctor,
   availabilities = [],
   isLoading = false,
+  days,
 }) => {
   const { user, isAuthenticated } = useAuth();
   const isPatient = user?.role === "PATIENT";
 
-  const [selectedDate, setSelectedDate] = useState<Date>(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  });
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    () => days[0]?.date ?? new Date()
+  );
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [selectedSlotItem, setSelectedSlotItem] = useState<AvailableSlotItem | null>(null);
   const [notes, setNotes] = useState("");
   const [bookedDetails, setBookedDetails] = useState<RawBooking | null>(null);
 
-  const days: DayItem[] = useMemo(() => {
-    return Array.from({ length: 14 }, (_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() + i);
-      d.setHours(0, 0, 0, 0);
-      return {
-        date: d,
-        dayName: d.toLocaleDateString("en-US", { weekday: "short" }),
-        dayNum: d.getDate(),
-        monthName: d.toLocaleDateString("en-US", { month: "short" }),
-        isToday: i === 0,
-        dateString: formatToDateInput(d),
-      };
-    });
-  }, []);
-
-  const selectedDateStr = formatToDateInput(selectedDate);
+  const selectedDateStr = toDateInputValue(selectedDate);
 
   const { data: slotsData, isLoading: isSlotsLoading } = useAvailableSlots(
     doctor.id,
     selectedDateStr
   );
+  // The API returns the whole day (available + unavailable), so every slot is
+  // rendered and the unavailable ones are disabled rather than hidden.
   const slots: AvailableSlotItem[] = slotsData?.slots || [];
 
   const bookingMutation = useCreateAppointmentBooking();
@@ -137,6 +124,8 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
         selectedSlot={selectedSlotItem}
         onSelectSlot={setSelectedSlotItem}
         isLoading={isSlotsLoading}
+        dayOffReason={slotsData?.isDayOff ? slotsData.reason : undefined}
+        unavailableMessage={slotsData?.message}
       />
 
       <BookingFeeSummary

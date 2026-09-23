@@ -1,16 +1,13 @@
 import React, { Suspense } from "react";
 import type { Metadata } from "next";
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
+import { HydrationProvider } from "@/lib/query/hydrate";
 import {
   getDoctorByIdOrSlugServer,
   getDoctorAvailabilityServer,
 } from "@/features/doctors/api/server";
 import { doctorKeys } from "@/features/doctors/types";
 import { DoctorDetailsContent } from "@/components/site/doctors/details/DoctorDetailsContent";
+import { buildBookingDateStrip } from "@/lib/time";
 
 interface DoctorDetailsPageProps {
   params: Promise<{ idOrSlug: string }>;
@@ -73,21 +70,23 @@ export default async function DoctorDetailsPage({
   const resolvedParams = await params;
   const idOrSlug = resolvedParams.idOrSlug;
 
-  const queryClient = new QueryClient();
-
-  await Promise.all([
-    queryClient.prefetchQuery({
-      queryKey: doctorKeys.detail(idOrSlug),
-      queryFn: () => getDoctorByIdOrSlugServer(idOrSlug),
-    }),
-    queryClient.prefetchQuery({
-      queryKey: doctorKeys.availability(idOrSlug),
-      queryFn: () => getDoctorAvailabilityServer(idOrSlug),
-    }),
-  ]);
+  // Built once on the server so the booking widget's date strip is identical in
+  // the server HTML and on the client — see `buildBookingDateStrip`.
+  const bookingDays = buildBookingDateStrip();
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <HydrationProvider
+      prefetch={[
+        {
+          queryKey: doctorKeys.detail(idOrSlug),
+          queryFn: () => getDoctorByIdOrSlugServer(idOrSlug),
+        },
+        {
+          queryKey: doctorKeys.availability(idOrSlug),
+          queryFn: () => getDoctorAvailabilityServer(idOrSlug),
+        },
+      ]}
+    >
       <Suspense
         fallback={
           <div className="w-full min-h-screen flex items-center justify-center bg-background">
@@ -98,8 +97,8 @@ export default async function DoctorDetailsPage({
           </div>
         }
       >
-        <DoctorDetailsContent idOrSlug={idOrSlug} />
+        <DoctorDetailsContent idOrSlug={idOrSlug} bookingDays={bookingDays} />
       </Suspense>
-    </HydrationBoundary>
+    </HydrationProvider>
   );
 }

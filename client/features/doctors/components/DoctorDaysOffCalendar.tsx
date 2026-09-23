@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { CalendarOff, Plus, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { formatDate } from "@/lib/time";
 import { AddDayOffDialog } from "@/features/appointments/components/doctor/AddDayOffDialog";
 import { DeleteDayOffDialog } from "@/features/appointments/components/doctor/DeleteDayOffDialog";
 
@@ -64,11 +65,7 @@ export const DoctorDaysOffCalendar: React.FC<DoctorDaysOffCalendarProps> = ({
           <div className="w-full pt-4 mt-2 border-t border-border/60 flex items-center justify-between gap-2 flex-wrap">
             <span className="text-xs font-semibold text-foreground">
               Selected:{" "}
-              {selectedDate?.toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              }) || "None"}
+              {formatDate(selectedDate, "short", "None")}
             </span>
             <Button
               size="sm"

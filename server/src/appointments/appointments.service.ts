@@ -26,6 +26,13 @@ const DAYS_MAP: Record<number, DayOfWeek> = {
 
 // -- Pure slot helpers (no I/O � easy to unit-test) -------------------------
 
+/**
+ * Why a generated slot cannot be booked. The client renders every slot of the
+ * day and disables the unavailable ones, so it needs the reason, not just a
+ * boolean — "already booked" and "the time has passed" read very differently.
+ */
+export type SlotUnavailableReason = 'PAST' | 'BOOKED';
+
 function generateSlots(
   date: string,
   schedules: Array<{
@@ -34,6 +41,7 @@ function generateSlots(
     consultationDuration: number | null;
   }>,
   existingBookings: Array<{ slotStart: Date; slotEnd: Date }>,
+  now: Date,
 ) {
   const slots: Array<{
     slotStart: string;
@@ -41,6 +49,7 @@ function generateSlots(
     startTime: string;
     endTime: string;
     isAvailable: boolean;
+    reason: SlotUnavailableReason | null;
   }> = [];
 
   const isOccupied = (s: Date, e: Date) =>
@@ -69,12 +78,22 @@ function generateSlots(
       const slotStart = new Date(`${date}T${sH}:${sM}:00.000Z`);
       const slotEnd = new Date(`${date}T${eH}:${eM}:00.000Z`);
 
+      // `createBooking` refuses past slots, so mark them unavailable here too —
+      // otherwise the UI offers a time the API will reject on submit.
+      const reason: SlotUnavailableReason | null =
+        slotStart.getTime() <= now.getTime()
+          ? 'PAST'
+          : isOccupied(slotStart, slotEnd)
+            ? 'BOOKED'
+            : null;
+
       slots.push({
         slotStart: slotStart.toISOString(),
         slotEnd: slotEnd.toISOString(),
         startTime: `${sH}:${sM}`,
         endTime: `${eH}:${eM}`,
-        isAvailable: !isOccupied(slotStart, slotEnd),
+        isAvailable: reason === null,
+        reason,
       });
 
       cur = next;
@@ -170,7 +189,7 @@ export class AppointmentsService {
     return {
       date,
       isDayOff: false,
-      slots: generateSlots(date, schedules, existing),
+      slots: generateSlots(date, schedules, existing, new Date()),
     };
   }
 

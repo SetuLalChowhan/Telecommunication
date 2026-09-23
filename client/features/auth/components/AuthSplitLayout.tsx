@@ -3,6 +3,7 @@ import Image, { StaticImageData } from "next/image";
 import BrandLogo from "@/components/common/BrandLogo";
 import { ShieldCheck } from "lucide-react";
 import commonAuthImage from "@/assets/images/authImages.jpg";
+import { currentAppYear } from "@/lib/time";
 
 interface AuthSplitLayoutProps {
   imageSrc?: string | StaticImageData;
@@ -101,7 +102,7 @@ export function AuthSplitLayout({
         {/* Minimal Footer */}
         <footer className="w-full pt-3 text-center text-xs text-secondary-text/80">
           <p>
-            Secure, encrypted &amp; HIPAA compliant. © {new Date().getFullYear()} TeleHealth.
+            Secure, encrypted &amp; HIPAA compliant. © {currentAppYear()} TeleHealth.
           </p>
         </footer>
       </section>

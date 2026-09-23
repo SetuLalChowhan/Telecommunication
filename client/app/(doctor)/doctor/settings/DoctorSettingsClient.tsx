@@ -40,6 +40,7 @@ export function DoctorSettingsClient() {
 
   const [formData, setFormData] = useState<DoctorProfileFormData>({
     name: "",
+    slug: "",
     phone: "",
     email: "",
     bmdcNumber: "",
@@ -57,6 +58,7 @@ export function DoctorSettingsClient() {
     if (profile) {
       setFormData({
         name: profile.user?.name || "",
+        slug: profile.slug || "",
         phone: profile.user?.phone || "",
         email: profile.user?.email || "",
         bmdcNumber: profile.bmdcNumber || "",
@@ -97,6 +99,12 @@ export function DoctorSettingsClient() {
     if (formData.fee) data.append("fee", formData.fee);
     if (formData.experienceYears) data.append("experienceYears", formData.experienceYears);
     data.append("bio", formData.bio.trim());
+    // Only sent when the doctor actually edited it. An untouched field means
+    // "keep the URL derived from my name", and a blank one must not clear it.
+    const nextSlug = formData.slug.trim();
+    if (nextSlug && nextSlug !== (profile?.slug || "")) {
+      data.append("slug", nextSlug);
+    }
     if (formData.primarySpecialtyId) {
       data.append("primarySpecialtyId", formData.primarySpecialtyId);
       data.append("mainSpecialtyId", formData.primarySpecialtyId);

@@ -101,6 +101,19 @@ export interface DoctorQueryParams {
   limit?: number;
 }
 
+/**
+ * Result of the live public-URL check.
+ *
+ * `slug` is the canonicalised form the server would actually store, so the
+ * field can show the doctor exactly what their URL will be.
+ */
+export interface SlugAvailability {
+  slug: string;
+  available: boolean;
+  reason: "TAKEN" | "INVALID" | null;
+  suggestion: string;
+}
+
 export interface UpdateDoctorProfileInput {
   name?: string;
   phone?: string;
@@ -323,6 +336,8 @@ export const doctorKeys = {
     [...doctorKeys.all, "myPatients", search ? search.trim().toLowerCase() : ""] as const,
   suggestions: (term: string) =>
     [...doctorKeys.all, "suggestions", term.trim().toLowerCase()] as const,
+  slugAvailability: (slug: string) =>
+    [...doctorKeys.all, "slugAvailability", slug.trim().toLowerCase()] as const,
   googleStatus: () => [...doctorKeys.all, "googleStatus"] as const,
   specialties: () => [...doctorKeys.all, "specialties"] as const,
 };

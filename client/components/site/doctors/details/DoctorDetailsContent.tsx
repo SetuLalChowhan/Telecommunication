@@ -7,14 +7,21 @@ import { DoctorHeroCard } from "@/components/site/doctors/details/DoctorHeroCard
 import { DoctorAboutSection } from "@/components/site/doctors/details/DoctorAboutSection";
 import { DoctorReviewsSection } from "@/components/site/doctors/details/DoctorReviewsSection";
 import { DoctorBookingSidebar } from "@/components/site/doctors/details/DoctorBookingSidebar";
+import type { DayItem } from "@/features/appointments/components/booking/BookingDateStrip";
 import { ChevronRight, ArrowLeft, Stethoscope } from "lucide-react";
 
 interface DoctorDetailsContentProps {
   idOrSlug: string;
+  /**
+   * Server-built bookable-day strip. Generated inside `buildBookingDateStrip()`
+   * so the booking widget renders identically on both passes.
+   */
+  bookingDays: DayItem[];
 }
 
 export const DoctorDetailsContent: React.FC<DoctorDetailsContentProps> = ({
   idOrSlug,
+  bookingDays,
 }) => {
   const { data: doctor, isLoading } = useDoctorDetails(idOrSlug);
   const { data: apiAvailability, isLoading: isAvailLoading } = useDoctorAvailability(idOrSlug);
@@ -115,6 +122,7 @@ export const DoctorDetailsContent: React.FC<DoctorDetailsContentProps> = ({
               doctor={doctor}
               availabilities={availabilities}
               isLoading={isAvailLoading && availabilities.length === 0}
+              days={bookingDays}
             />
           </div>
         </div>

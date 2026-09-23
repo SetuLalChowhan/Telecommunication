@@ -1,7 +1,8 @@
 import { serverFetch, serverGet, ServerFetchOptions } from "@/lib/api/server";
 import { CACHE } from "@/lib/cache/policy";
 
-import { ServerSessionResponse, SessionUser, User } from "../types";
+import type { PrefetchSpec } from "@/lib/query/hydrate";
+import { authKeys, ServerSessionResponse, SessionUser, User } from "../types";
 export type { SessionUser, ServerSessionResponse };
 
 /**
@@ -46,3 +47,12 @@ export async function getProfileServer(
     return null;
   }
 }
+
+/**
+ * Prefetch spec for the signed-in profile. Every dashboard page needs this
+ * entry, so it is declared once here instead of being rebuilt per page.
+ */
+export const authProfilePrefetch: PrefetchSpec = {
+  queryKey: authKeys.profile(),
+  queryFn: () => getProfileServer(),
+};

@@ -1,10 +1,6 @@
 import React, { Suspense } from "react";
 import type { Metadata } from "next";
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
+import { HydrationProvider } from "@/lib/query/hydrate";
 import {
   getDoctorsServer,
   getSpecialtiesServer,
@@ -66,21 +62,19 @@ export default async function DoctorsPage({ searchParams }: DoctorsPageProps) {
     limit: 6,
   };
 
-  const queryClient = new QueryClient();
-
-  await Promise.all([
-    queryClient.prefetchQuery({
-      queryKey: doctorKeys.list(queryParams),
-      queryFn: () => getDoctorsServer(queryParams),
-    }),
-    queryClient.prefetchQuery({
-      queryKey: doctorKeys.specialties(),
-      queryFn: () => getSpecialtiesServer(),
-    }),
-  ]);
-
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <HydrationProvider
+      prefetch={[
+        {
+          queryKey: doctorKeys.list(queryParams),
+          queryFn: () => getDoctorsServer(queryParams),
+        },
+        {
+          queryKey: doctorKeys.specialties(),
+          queryFn: () => getSpecialtiesServer(),
+        },
+      ]}
+    >
       <Suspense
         fallback={
           <div className="w-full min-h-screen flex items-center justify-center bg-background">
@@ -93,6 +87,6 @@ export default async function DoctorsPage({ searchParams }: DoctorsPageProps) {
       >
         <DoctorList />
       </Suspense>
-    </HydrationBoundary>
+    </HydrationProvider>
   );
 }

@@ -212,6 +212,67 @@ export function relativeDayLabel(
   return null;
 }
 
+/**
+ * Current year in the app timezone.
+ *
+ * Use this instead of `new Date().getFullYear()` in anything server-rendered
+ * (copyright lines, date pickers): `getFullYear()` reads the host zone, so it
+ * can disagree with the browser for a few hours each New Year.
+ */
+export function currentAppYear(now: Date = new Date()): number {
+  return Number(toDateInputValue(now).slice(0, 4));
+}
+
+/**
+ * Clock-stable anchor for "today": the current calendar day at 12:00 UTC.
+ *
+ * Noon is far enough from both midnight boundaries that no timezone can roll it
+ * into a neighbouring day, so day arithmetic on top of it is deterministic.
+ */
+export function todayAnchor(now: Date = new Date()): Date {
+  return new Date(`${toDateInputValue(now)}T12:00:00Z`);
+}
+
+export interface BookingDayItem {
+  date: Date;
+  dayName: string;
+  dayNum: number;
+  monthName: string;
+  isToday: boolean;
+  dateString: string;
+}
+
+/**
+ * The bookable-day strip shown by the booking widget.
+ *
+ * Every field is derived with the pinned app timezone, so this produces
+ * identical output on the server and in the browser. Building it from plain
+ * `new Date()` during render is what previously made the doctor page throw a
+ * React hydration mismatch.
+ *
+ * Build it on the server and pass the result down as a prop.
+ */
+export function buildBookingDateStrip(
+  count = 14,
+  from: Date = new Date()
+): BookingDayItem[] {
+  const baseTime = todayAnchor(from).getTime();
+
+  return Array.from({ length: count }, (_, index) => {
+    const date = new Date(baseTime + index * 86_400_000);
+    const dateString = toDateInputValue(date);
+
+    return {
+      date,
+      dayName: formatWeekdayShort(date),
+      dayNum: Number(dateString.slice(-2)),
+      monthName: formatMonthShort(date),
+      isToday: index === 0,
+      dateString,
+    };
+  });
+}
+
 export interface TimeOption {
   value: string; // 24-hour HH:mm
   label: string; // 12-hour hh:mm AM/PM

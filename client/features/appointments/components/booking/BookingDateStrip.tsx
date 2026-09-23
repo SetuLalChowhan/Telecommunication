@@ -5,15 +5,15 @@ import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { toDateInputValue, type BookingDayItem } from "@/lib/time";
 
-export interface DayItem {
-  date: Date;
-  dayName: string;
-  dayNum: number;
-  monthName: string;
-  isToday: boolean;
-  dateString: string;
-}
+/**
+ * One day in the booking strip.
+ *
+ * Structurally identical to `BookingDayItem`, which the server builds with
+ * `buildBookingDateStrip()` so both render passes agree exactly.
+ */
+export type DayItem = BookingDayItem;
 
 interface BookingDateStripProps {
   days: DayItem[];
@@ -39,9 +39,13 @@ export const BookingDateStrip: React.FC<BookingDateStripProps> = ({
     }
   };
 
-  const selectedDateStr = `${selectedDate.getFullYear()}-${String(
-    selectedDate.getMonth() + 1
-  ).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`;
+  // App-timezone day key, so the comparison cannot drift between the server and
+  // client passes (`getFullYear()`/`getDate()` use the host zone).
+  const selectedDateStr = toDateInputValue(selectedDate);
+
+  // Earliest selectable day is the first day of the server-built strip, which
+  // keeps the calendar deterministic instead of re-reading the clock.
+  const minDate = days[0]?.date ?? selectedDate;
 
   return (
     <div className="space-y-2">
@@ -90,7 +94,7 @@ export const BookingDateStrip: React.FC<BookingDateStripProps> = ({
                     onCalendarOpenChange(false);
                   }
                 }}
-                minDate={new Date()}
+                minDate={minDate}
               />
             </PopoverContent>
           </Popover>

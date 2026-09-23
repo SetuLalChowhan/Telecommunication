@@ -11,6 +11,12 @@ import {
 import { DoctorScheduleItem, DashboardAppointment } from "@/lib/dashboard-mock-data";
 import { DoctorDashboardBooking } from "@/features/doctors/types";
 import { MAX_PAGE_SIZE } from "@/lib/api/types";
+import {
+  currentAppYear,
+  formatDate,
+  formatTime,
+  toDateInputValue,
+} from "@/lib/time";
 import { AppointmentDetailsDialog } from "@/features/appointments/components";
 import {
   useBookingSummary,
@@ -39,8 +45,8 @@ function adaptBookingToScheduleItem(booking: DoctorDashboardBooking): DoctorSche
 
   let patientAge = 30;
   if (patientUser?.dateOfBirth) {
-    const birthYear = new Date(patientUser.dateOfBirth).getFullYear();
-    const currentYear = new Date().getFullYear();
+    const birthYear = Number(toDateInputValue(patientUser.dateOfBirth).slice(0, 4));
+    const currentYear = currentAppYear();
     if (!isNaN(birthYear) && birthYear > 1900) {
       patientAge = Math.max(1, currentYear - birthYear);
     }
@@ -51,22 +57,10 @@ function adaptBookingToScheduleItem(booking: DoctorDashboardBooking): DoctorSche
     ? rawGender.charAt(0).toUpperCase() + rawGender.slice(1).toLowerCase()
     : "Patient";
 
-  const slotDate = new Date(booking.slotStart);
-  const formattedDate = !isNaN(slotDate.getTime())
-    ? slotDate.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-    : "Today";
-
-  const formattedTime = !isNaN(slotDate.getTime())
-    ? slotDate.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      })
-    : "09:00 AM";
+  // Pinned to the app timezone: these run during SSR too, so an unpinned host
+  // timezone would shift the date/time and break hydration.
+  const formattedDate = formatDate(booking.slotStart, "short", "Today");
+  const formattedTime = formatTime(booking.slotStart, "09:00 AM");
 
   return {
     id: booking.id,

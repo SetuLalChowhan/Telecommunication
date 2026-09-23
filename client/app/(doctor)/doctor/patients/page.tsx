@@ -1,14 +1,9 @@
 import React from "react";
 import type { Metadata } from "next";
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
+import { HydrationProvider } from "@/lib/query/hydrate";
 import { getMyDoctorPatientsServer } from "@/features/doctors/api/server";
 import { doctorKeys } from "@/features/doctors/types";
-import { getProfileServer } from "@/features/auth/api/server";
-import { authKeys } from "@/features/auth/types";
+import { authProfilePrefetch } from "@/features/auth/api/server";
 import { DoctorPatientsClient } from "./DoctorPatientsClient";
 
 export const metadata: Metadata = {
@@ -16,23 +11,18 @@ export const metadata: Metadata = {
   description: "View and manage your patient medical histories and consultations.",
 };
 
-export default async function DoctorPatientsPage() {
-  const queryClient = new QueryClient();
-
-  await Promise.all([
-    queryClient.prefetchQuery({
-      queryKey: doctorKeys.myPatients(),
-      queryFn: () => getMyDoctorPatientsServer(),
-    }),
-    queryClient.prefetchQuery({
-      queryKey: authKeys.profile(),
-      queryFn: () => getProfileServer(),
-    }),
-  ]);
-
+export default function DoctorPatientsPage() {
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <HydrationProvider
+      prefetch={[
+        {
+          queryKey: doctorKeys.myPatients(),
+          queryFn: () => getMyDoctorPatientsServer(),
+        },
+        authProfilePrefetch,
+      ]}
+    >
       <DoctorPatientsClient />
-    </HydrationBoundary>
+    </HydrationProvider>
   );
 }

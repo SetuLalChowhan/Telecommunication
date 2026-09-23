@@ -4,6 +4,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { appointmentKeys } from "@/features/appointments/types";
 import { CACHE } from "@/lib/cache/policy";
+import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
+
+const SLUG_CHECK_DEBOUNCE_MS = 450;
 import {
   fetchDoctors,
   fetchDoctorByIdOrSlug,
@@ -30,6 +33,7 @@ import {
   disconnectGoogle,
   uploadDoctorDocument,
   fetchDoctorSuggestions,
+  fetchSlugAvailability,
 } from "./client";
 import {
   Specialty,
@@ -45,6 +49,7 @@ import {
   DoctorPatientRegistryItem,
   GoogleConnectionStatus,
   DoctorSuggestion,
+  SlugAvailability,
   doctorKeys,
 } from "../types";
 
@@ -82,6 +87,26 @@ export function useDoctorDetails(idOrSlug: string) {
     queryFn: () => fetchDoctorByIdOrSlug(idOrSlug),
     enabled: Boolean(idOrSlug),
     staleTime: CACHE.doctorDetail(idOrSlug).client.staleTime,
+  });
+}
+
+/**
+ * Live availability of the doctor's public URL (slug).
+ *
+ * Debounced so typing does not fire a request per keystroke, and disabled below
+ * two characters because every short input canonicalises to the same fallback.
+ */
+export function useSlugAvailability(rawSlug: string) {
+  const slug = rawSlug.trim();
+  const debounced = useDebouncedValue(slug, SLUG_CHECK_DEBOUNCE_MS);
+
+  return useQuery<SlugAvailability>({
+    queryKey: doctorKeys.slugAvailability(debounced),
+    queryFn: () => fetchSlugAvailability(debounced),
+    enabled: debounced.length >= 2,
+    // Availability changes as other doctors sign up, so never serve it stale.
+    staleTime: 0,
+    retry: false,
   });
 }
 

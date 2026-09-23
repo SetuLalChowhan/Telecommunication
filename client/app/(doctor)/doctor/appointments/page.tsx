@@ -1,21 +1,16 @@
 import React from "react";
 import type { Metadata } from "next";
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
+import { HydrationProvider } from "@/lib/query/hydrate";
 import { getDoctorBookingsServer } from "@/features/doctors/api/server";
 import { doctorKeys } from "@/features/doctors/types";
 import type { DoctorBookingsQueryParams } from "@/features/doctors/types";
-import { MAX_PAGE_SIZE } from "@/lib/api/types";
 import {
   appointmentKeys,
   normalizeStatusFilter,
 } from "@/features/appointments/types";
 import { getBookingSummaryServer } from "@/features/appointments/api/server";
-import { getProfileServer } from "@/features/auth/api/server";
-import { authKeys } from "@/features/auth/types";
+import { authProfilePrefetch } from "@/features/auth/api/server";
+import { MAX_PAGE_SIZE } from "@/lib/api/types";
 import { DoctorAppointmentsClient } from "./DoctorAppointmentsClient";
 
 export const metadata: Metadata = {
@@ -46,26 +41,21 @@ export default async function DoctorAppointmentsPage({
     limit: MAX_PAGE_SIZE,
   };
 
-  const queryClient = new QueryClient();
-
-  await Promise.all([
-    queryClient.prefetchQuery({
-      queryKey: doctorKeys.myBookings(listParams),
-      queryFn: () => getDoctorBookingsServer(listParams),
-    }),
-    queryClient.prefetchQuery({
-      queryKey: appointmentKeys.summary(),
-      queryFn: () => getBookingSummaryServer(),
-    }),
-    queryClient.prefetchQuery({
-      queryKey: authKeys.profile(),
-      queryFn: () => getProfileServer(),
-    }),
-  ]);
-
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <HydrationProvider
+      prefetch={[
+        {
+          queryKey: doctorKeys.myBookings(listParams),
+          queryFn: () => getDoctorBookingsServer(listParams),
+        },
+        {
+          queryKey: appointmentKeys.summary(),
+          queryFn: () => getBookingSummaryServer(),
+        },
+        authProfilePrefetch,
+      ]}
+    >
       <DoctorAppointmentsClient initialStatus={activeStatus} />
-    </HydrationBoundary>
+    </HydrationProvider>
   );
 }

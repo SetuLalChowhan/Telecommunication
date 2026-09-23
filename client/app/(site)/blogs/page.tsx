@@ -1,6 +1,6 @@
 import React from "react";
 import type { Metadata } from "next";
-import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
+import { HydrationProvider } from "@/lib/query/hydrate";
 import { BlogsClient } from "@/components/site/blogs/BlogsClient";
 import { CACHE } from "@/lib/cache/policy";
 import { blogKeys } from "@/features/blogs";
@@ -81,23 +81,21 @@ export default async function BlogsPage({ searchParams }: BlogsPageProps) {
     page: Math.max(1, Number(resolved.page ?? "1") || 1),
   };
 
-  const queryClient = new QueryClient();
-
-  // `prefetchQuery` seeds the cache so `dehydrate` below carries exactly what
-  // the matching client hooks look for after hydration. There is no separate
-  // `initialData` path — a single source of truth for server-rendered data.
-  await Promise.all([
-    queryClient.prefetchQuery({
+  // The prefetch specs carry exactly the keys the matching client hooks look
+  // for after hydration. There is no separate `initialData` path — a single
+  // source of truth for server-rendered data.
+  const prefetch = [
+    {
       queryKey: blogKeys.list(params),
       queryFn: () => getBlogsServer(params),
       staleTime: CACHE.blogs.client.staleTime,
-    }),
-    queryClient.prefetchQuery({
+    },
+    {
       queryKey: blogKeys.categories(),
       queryFn: () => getBlogCategoriesServer(),
       staleTime: CACHE.blogCategories.client.staleTime,
-    }),
-  ]);
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -119,9 +117,9 @@ export default async function BlogsPage({ searchParams }: BlogsPageProps) {
         </div>
       </section>
 
-      <HydrationBoundary state={dehydrate(queryClient)}>
+      <HydrationProvider prefetch={prefetch}>
         <BlogsClient />
-      </HydrationBoundary>
+      </HydrationProvider>
     </div>
   );
 }

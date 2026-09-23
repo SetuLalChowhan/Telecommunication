@@ -142,12 +142,17 @@ export interface UpdatePatientProfilePayload {
   emergencyContactPhone?: string;
 }
 
+/** Mirrors the API's `SlotUnavailableReason`. */
+export type SlotUnavailableReason = "PAST" | "BOOKED";
+
 export interface AvailableSlotItem {
   slotStart: string;
   slotEnd: string;
   startTime: string;
   endTime: string;
   isAvailable: boolean;
+  /** Set when `isAvailable` is false, so the UI can explain why. */
+  reason?: SlotUnavailableReason | null;
 }
 
 export interface AvailableSlotsData {

@@ -17,16 +17,11 @@ import { DoctorDayOff } from "@/features/doctors/types";
 import { to24Hour } from "@/lib/time";
 import { toast } from "react-toastify";
 import { PageHeader } from "@/components/layout";
+import { formatDateOnly } from "@/lib/time";
 
 function adaptDayOff(d: DoctorDayOff): DayOffItem {
-  const dateObj = new Date(d.date);
-  const formatted = !isNaN(dateObj.getTime())
-    ? dateObj.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-    : d.date;
+  // App-timezone, because day-off rows are server-rendered from hydrated data.
+  const formatted = formatDateOnly(d.date, d.date);
 
   return {
     id: d.id,

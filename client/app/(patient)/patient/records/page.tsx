@@ -1,16 +1,12 @@
 import React from "react";
 import type { Metadata } from "next";
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
+import { HydrationProvider } from "@/lib/query/hydrate";
 import { getMyMedicalReportsServer } from "@/features/medical-reports/api/server";
 import { medicalReportKeys } from "@/features/medical-reports/types";
 import { getPatientBookingsServer } from "@/features/patients/api/server";
 import { patientKeys } from "@/features/patients/types";
-import { getProfileServer } from "@/features/auth/api/server";
-import { authKeys } from "@/features/auth/types";
+import { authProfilePrefetch } from "@/features/auth/api/server";
+import { MAX_PAGE_SIZE } from "@/lib/api/types";
 import { PatientRecordsClient } from "./PatientRecordsClient";
 
 export const metadata: Metadata = {
@@ -19,32 +15,28 @@ export const metadata: Metadata = {
 };
 
 /**
- * Kept in sync with the client hook: type and search are filtered on the client,
- * so one wide page is prefetched instead of the API default of 10.
+ * Kept in sync with the client hooks: type and search are filtered on the
+ * client, so one wide page is prefetched instead of the API default of 10.
+ * `UPLOAD_BOOKINGS_LIMIT` matches `UploadReportModal`'s booking picker.
  */
-const REPORTS_LIMIT = 100;
+const UPLOAD_BOOKINGS_LIMIT = 50;
 
-export default async function PatientRecordsPage() {
-  const queryClient = new QueryClient();
-
-  await Promise.all([
-    queryClient.prefetchQuery({
-      queryKey: medicalReportKeys.myReports({ limit: REPORTS_LIMIT }),
-      queryFn: () => getMyMedicalReportsServer({ limit: REPORTS_LIMIT }),
-    }),
-    queryClient.prefetchQuery({
-      queryKey: patientKeys.bookings({ limit: 50 }),
-      queryFn: () => getPatientBookingsServer({ limit: 50 }),
-    }),
-    queryClient.prefetchQuery({
-      queryKey: authKeys.profile(),
-      queryFn: () => getProfileServer(),
-    }),
-  ]);
-
+export default function PatientRecordsPage() {
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <HydrationProvider
+      prefetch={[
+        {
+          queryKey: medicalReportKeys.myReports({ limit: MAX_PAGE_SIZE }),
+          queryFn: () => getMyMedicalReportsServer({ limit: MAX_PAGE_SIZE }),
+        },
+        {
+          queryKey: patientKeys.bookings({ limit: UPLOAD_BOOKINGS_LIMIT }),
+          queryFn: () => getPatientBookingsServer({ limit: UPLOAD_BOOKINGS_LIMIT }),
+        },
+        authProfilePrefetch,
+      ]}
+    >
       <PatientRecordsClient />
-    </HydrationBoundary>
+    </HydrationProvider>
   );
 }

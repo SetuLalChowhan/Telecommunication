@@ -1,17 +1,12 @@
 import React, { Suspense } from "react";
 import type { Metadata } from "next";
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
+import { HydrationProvider } from "@/lib/query/hydrate";
 import {
   getMyDoctorProfileServer,
   getSpecialtiesServer,
 } from "@/features/doctors/api/server";
 import { doctorKeys } from "@/features/doctors/types";
-import { getProfileServer } from "@/features/auth/api/server";
-import { authKeys } from "@/features/auth/types";
+import { authProfilePrefetch } from "@/features/auth/api/server";
 import { DoctorSettingsClient } from "./DoctorSettingsClient";
 
 export const metadata: Metadata = {
@@ -19,26 +14,21 @@ export const metadata: Metadata = {
   description: "Manage your professional doctor profile, qualifications, and integrations.",
 };
 
-export default async function DoctorSettingsPage() {
-  const queryClient = new QueryClient();
-
-  await Promise.all([
-    queryClient.prefetchQuery({
-      queryKey: doctorKeys.me(),
-      queryFn: () => getMyDoctorProfileServer(),
-    }),
-    queryClient.prefetchQuery({
-      queryKey: doctorKeys.specialties(),
-      queryFn: () => getSpecialtiesServer(),
-    }),
-    queryClient.prefetchQuery({
-      queryKey: authKeys.profile(),
-      queryFn: () => getProfileServer(),
-    }),
-  ]);
-
+export default function DoctorSettingsPage() {
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <HydrationProvider
+      prefetch={[
+        {
+          queryKey: doctorKeys.me(),
+          queryFn: () => getMyDoctorProfileServer(),
+        },
+        {
+          queryKey: doctorKeys.specialties(),
+          queryFn: () => getSpecialtiesServer(),
+        },
+        authProfilePrefetch,
+      ]}
+    >
       <Suspense
         fallback={
           <div className="w-full py-20 flex items-center justify-center text-sm font-semibold text-primary">
@@ -48,6 +38,6 @@ export default async function DoctorSettingsPage() {
       >
         <DoctorSettingsClient />
       </Suspense>
-    </HydrationBoundary>
+    </HydrationProvider>
   );
 }

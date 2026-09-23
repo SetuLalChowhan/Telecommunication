@@ -3,6 +3,7 @@
 import React from "react";
 import { DoctorProfile } from "@/types/doctor";
 import { Star, MessageSquare, ShieldCheck } from "lucide-react";
+import { formatDate } from "@/lib/time";
 
 interface DoctorReviewsSectionProps {
   doctor: DoctorProfile;
@@ -85,13 +86,7 @@ export const DoctorReviewsSection: React.FC<DoctorReviewsSectionProps> = ({
                           </span>
                         </div>
                         <span className="text-[11px] text-muted-foreground">
-                          {rev.createdAt
-                            ? new Date(rev.createdAt).toLocaleDateString("en-US", {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                              })
-                            : "Recent review"}
+                          {formatDate(rev.createdAt, "short", "Recent review")}
                         </span>
                       </div>
                     </div>

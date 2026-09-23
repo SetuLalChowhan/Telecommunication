@@ -15,10 +15,12 @@ import {
 } from "@/components/ui/select";
 import { DoctorAvatarUploader } from "./DoctorAvatarUploader";
 import { DoctorQualificationsManager } from "./DoctorQualificationsManager";
+import { DoctorSlugField } from "./DoctorSlugField";
 import { DoctorQualification, Specialty } from "@/features/doctors/types";
 
 export interface DoctorProfileFormData {
   name: string;
+  slug: string;
   phone: string;
   email: string;
   bmdcNumber: string;
@@ -195,6 +197,12 @@ export const DoctorProfileTab: React.FC<DoctorProfileTabProps> = ({
             />
           </div>
         </div>
+
+        <DoctorSlugField
+          value={formData.slug}
+          disabled={isSaving}
+          onChange={(next) => onFieldChange("slug", next)}
+        />
 
         <div className="space-y-2 md:col-span-2">
           <Label className="text-xs font-semibold text-foreground">Professional Bio & Patient Introduction</Label>

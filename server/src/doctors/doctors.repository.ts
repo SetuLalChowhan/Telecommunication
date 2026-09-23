@@ -78,6 +78,23 @@ export class DoctorRepository {
     });
   }
 
+  /**
+   * Every slug already in use for this base (e.g. `dr-ithika`,
+   * `dr-ithika-2`), so uniqueness can be resolved with a single query instead
+   * of one `findSlugConflict` per candidate.
+   */
+  async findSlugsStartingWith(base: string, excludeId?: string): Promise<string[]> {
+    const rows = await this.prisma.doctorProfile.findMany({
+      where: {
+        slug: { startsWith: base },
+        ...(excludeId && { id: { not: excludeId } }),
+      },
+      select: { slug: true },
+    });
+
+    return rows.map((row) => row.slug).filter((slug): slug is string => Boolean(slug));
+  }
+
   async countActiveSpecialties(ids: string[]): Promise<number> {
     return this.prisma.specialty.count({
       where: { id: { in: ids }, isActive: true },

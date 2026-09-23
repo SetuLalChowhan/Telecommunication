@@ -16,6 +16,7 @@ import {
   DoctorSuggestion,
   DoctorsListResponse,
   GoogleConnectionStatus,
+  SlugAvailability,
   Specialty,
   UpdateAvailabilityInput,
   UpdateDoctorProfileInput,
@@ -86,6 +87,16 @@ export function updateMyDoctorProfile(
       ? { "Content-Type": "multipart/form-data" }
       : undefined;
   return http.patch<DoctorProfile>("/doctors/me", data, { headers });
+}
+
+/**
+ * Real-time check for the public-URL field: is this slug free, and if not what
+ * should the doctor use instead?
+ */
+export function fetchSlugAvailability(rawSlug: string): Promise<SlugAvailability> {
+  return http.get<SlugAvailability>("/doctors/me/slug-availability", {
+    params: { slug: rawSlug },
+  });
 }
 
 export function fetchDoctorDashboard(): Promise<DoctorDashboardData> {

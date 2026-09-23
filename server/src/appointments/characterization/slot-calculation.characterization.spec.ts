@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AppointmentsService } from '../appointments.service.js';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { DayOfWeek } from '@prisma/client';
@@ -10,6 +10,12 @@ describe('AppointmentsService - Slot Calculation Characterization', () => {
   let mockNotifications: any;
 
   beforeEach(() => {
+    // Only `Date` is faked: slot generation marks times that have already
+    // passed as unavailable, so the clock has to be pinned for these fixed
+    // 2026-09-25 expectations to stay meaningful.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-09-25T08:00:00.000Z'));
+
     mockRepo = {
       findVerifiedDoctor: vi.fn(),
       findDoctorById: vi.fn(),
@@ -32,6 +38,10 @@ describe('AppointmentsService - Slot Calculation Characterization', () => {
     mockNotifications = { createNotification: vi.fn() };
 
     service = new AppointmentsService(mockRepo, mockGoogle, mockNotifications);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('throws NotFoundException if doctor is not found or not verified', async () => {
@@ -125,6 +135,38 @@ describe('AppointmentsService - Slot Calculation Characterization', () => {
       endTime: '11:00',
       isAvailable: true,
     });
+  });
+
+  it('marks slots that already passed as unavailable with a PAST reason', async () => {
+    // The clock is pinned to 08:00 UTC and this schedule starts at 07:00.
+    mockRepo.findVerifiedDoctor.mockResolvedValue({ id: 'doc-123', verified: true });
+    mockRepo.findDayOff.mockResolvedValue(null);
+    mockRepo.findActiveSchedules.mockResolvedValue([
+      {
+        id: 'avail-1',
+        doctorId: 'doc-123',
+        dayOfWeek: DayOfWeek.FRIDAY,
+        startTime: '07:00',
+        endTime: '09:00',
+        consultationDuration: 30,
+        isActive: true,
+      },
+    ]);
+    mockRepo.findActiveBookingsForDate.mockResolvedValue([]);
+
+    const result = await service.getAvailableSlots({
+      doctorId: 'doc-123',
+      date: '2026-09-25',
+    });
+
+    // 07:00, 07:30 and 08:00 have passed; 08:30 has not started yet.
+    expect(result.slots.map((slot) => slot.reason)).toEqual([
+      'PAST',
+      'PAST',
+      'PAST',
+      null,
+    ]);
+    expect(result.slots[3].isAvailable).toBe(true);
   });
 
   it('returns empty slots when doctor has no active schedule for that day of week', async () => {

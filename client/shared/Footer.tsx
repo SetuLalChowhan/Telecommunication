@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import BrandLogo from "@/components/common/BrandLogo";
+import { currentAppYear } from "@/lib/time";
 
 export const Footer: React.FC = () => {
   return (
@@ -97,7 +98,7 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="mt-12 pt-6 border-t border-border/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-secondary-text">
-          <p>&copy; {new Date().getFullYear()} TeleHealth Inc. All rights reserved.</p>
+          <p>&copy; {currentAppYear()} TeleHealth Inc. All rights reserved.</p>
           <p className="flex items-center gap-1.5 font-medium text-foreground/80">
             <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />
             HIPAA Compliant &bull; 256-Bit Encrypted Telehealth

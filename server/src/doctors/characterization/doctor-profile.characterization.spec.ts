@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DoctorService } from '../doctors.service.js';
-import { generateDoctorSlug, slugify } from '../../common/utils/slug.utils.js';
+import {
+  firstFreeSlug,
+  generateDoctorSlug,
+  sanitizeDoctorSlug,
+  slugify,
+} from '../../common/utils/slug.utils.js';
 import { NotFoundException } from '@nestjs/common';
 
 describe('Doctor Profile & Slug Characterization', () => {
@@ -14,6 +19,7 @@ describe('Doctor Profile & Slug Characterization', () => {
       findProfileById: vi.fn(),
       findPublicDoctor: vi.fn(),
       findSlugConflict: vi.fn().mockResolvedValue(null),
+      findSlugsStartingWith: vi.fn().mockResolvedValue([]),
       countActiveSpecialties: vi.fn().mockResolvedValue(0),
       countCompletedBookings: vi.fn().mockResolvedValue(15),
       listPublicDoctors: vi.fn(),
@@ -54,9 +60,29 @@ describe('Doctor Profile & Slug Characterization', () => {
       expect(slugify('  Messy   Spacing   ')).toBe('messy-spacing');
     });
 
-    it('generates doctor slug appending short unique id suffix', () => {
-      const slug = generateDoctorSlug('Dr. Alice Smith', 'usr-12345678-abcd');
-      expect(slug).toMatch(/^dr-alice-smith-[a-z0-9\-]+$/);
+    it('generates a clean, name-based slug with no opaque suffix', () => {
+      expect(generateDoctorSlug('Ithika')).toBe('dr-ithika');
+      expect(generateDoctorSlug('Dr. Alice Smith')).toBe('dr-alice-smith');
+      expect(generateDoctorSlug('')).toBe('doctor');
+    });
+
+    it('de-duplicates with a readable counter instead of a random suffix', () => {
+      expect(firstFreeSlug('dr-ithika', [])).toBe('dr-ithika');
+      expect(firstFreeSlug('dr-ithika', ['dr-ithika'])).toBe('dr-ithika-2');
+      expect(firstFreeSlug('dr-ithika', ['dr-ithika', 'dr-ithika-2'])).toBe(
+        'dr-ithika-3',
+      );
+      // Gaps are reused so URLs stay short.
+      expect(firstFreeSlug('dr-ithika', ['dr-ithika', 'dr-ithika-3'])).toBe(
+        'dr-ithika-2',
+      );
+    });
+
+    it('canonicalises a doctor-supplied slug into one URL shape', () => {
+      expect(sanitizeDoctorSlug('Ithika')).toBe('dr-ithika');
+      expect(sanitizeDoctorSlug('ithika-pervez')).toBe('dr-ithika-pervez');
+      expect(sanitizeDoctorSlug('dr-ithika')).toBe('dr-ithika');
+      expect(sanitizeDoctorSlug('###')).toBe('');
     });
   });
 

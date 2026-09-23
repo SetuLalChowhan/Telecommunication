@@ -5,6 +5,8 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Matches,
+  MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -86,8 +88,17 @@ export class UpdateDoctorProfileDto {
   @Min(0)
   fee?: number;
 
+  /**
+   * Public URL segment. Accepted in any readable form (`Ithika Pervez`,
+   * `ithika-pervez`, `dr-ithika`) and canonicalised by `sanitizeDoctorSlug`.
+   */
   @IsOptional()
   @IsString()
+  @MaxLength(80)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Matches(/^[a-zA-Z0-9\s\-]+$/, {
+    message: 'Slug can only contain letters, numbers, spaces and hyphens',
+  })
   slug?: string;
 
   @IsOptional()

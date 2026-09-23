@@ -7,7 +7,7 @@ import { PrismaClient } from '@prisma/client';
 import pg from 'pg';
 
 import { sendEmail } from './email.js';
-import { generateDoctorSlug } from '../common/utils/slug.utils.js';
+import { firstFreeSlug, generateDoctorSlug } from '../common/utils/slug.utils.js';
 
 const authPool = new pg.Pool({
   connectionString: process.env.DATABASE_URL!,
@@ -50,9 +50,26 @@ export const auth = betterAuth({
       create: {
         after: async (user) => {
           if (user.role === 'DOCTOR') {
-            const initialSlug = generateDoctorSlug(user.name, user.id);
+            // Clean, name-based public URL (`dr-ithika`). Uniqueness is only
+            // resolved on an actual collision, so names never pick up an
+            // opaque suffix as their default URL.
+            const baseSlug = generateDoctorSlug(user.name);
+            const taken = await prisma.doctorProfile.findMany({
+              where: { slug: { startsWith: baseSlug } },
+              select: { slug: true },
+            });
+
             await prisma.doctorProfile.create({
-              data: { userId: user.id, fee: 0, slug: initialSlug },
+              data: {
+                userId: user.id,
+                fee: 0,
+                slug: firstFreeSlug(
+                  baseSlug,
+                  taken
+                    .map((row) => row.slug)
+                    .filter((slug): slug is string => Boolean(slug)),
+                ),
+              },
             });
           } else if (user.role === 'PATIENT') {
             await prisma.patientProfile.create({

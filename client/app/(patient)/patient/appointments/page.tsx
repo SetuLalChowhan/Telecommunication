@@ -1,10 +1,6 @@
 import React from "react";
 import type { Metadata } from "next";
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
+import { HydrationProvider } from "@/lib/query/hydrate";
 import { getPatientBookingsServer } from "@/features/patients/api/server";
 import { patientKeys } from "@/features/patients/types";
 import {
@@ -12,10 +8,9 @@ import {
   normalizeStatusFilter,
 } from "@/features/appointments/types";
 import { getBookingSummaryServer } from "@/features/appointments/api/server";
-import { getProfileServer } from "@/features/auth/api/server";
-import { authKeys } from "@/features/auth/types";
-import { PatientAppointmentsClient } from "./PatientAppointmentsClient";
+import { authProfilePrefetch } from "@/features/auth/api/server";
 import { MAX_PAGE_SIZE } from "@/lib/api/types";
+import { PatientAppointmentsClient } from "./PatientAppointmentsClient";
 
 export const metadata: Metadata = {
   title: "My Consultations & Appointments | DocConnect",
@@ -42,26 +37,21 @@ export default async function PatientAppointmentsPage({
     limit: MAX_PAGE_SIZE,
   };
 
-  const queryClient = new QueryClient();
-
-  await Promise.all([
-    queryClient.prefetchQuery({
-      queryKey: patientKeys.bookings(listParams),
-      queryFn: () => getPatientBookingsServer(listParams),
-    }),
-    queryClient.prefetchQuery({
-      queryKey: appointmentKeys.summary(),
-      queryFn: () => getBookingSummaryServer(),
-    }),
-    queryClient.prefetchQuery({
-      queryKey: authKeys.profile(),
-      queryFn: () => getProfileServer(),
-    }),
-  ]);
-
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <HydrationProvider
+      prefetch={[
+        {
+          queryKey: patientKeys.bookings(listParams),
+          queryFn: () => getPatientBookingsServer(listParams),
+        },
+        {
+          queryKey: appointmentKeys.summary(),
+          queryFn: () => getBookingSummaryServer(),
+        },
+        authProfilePrefetch,
+      ]}
+    >
       <PatientAppointmentsClient initialStatus={activeStatus} />
-    </HydrationBoundary>
+    </HydrationProvider>
   );
 }

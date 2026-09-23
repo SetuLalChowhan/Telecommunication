@@ -129,6 +129,21 @@ export class DoctorController {
     return this.doctorService.listPublicDoctors(query);
   }
 
+  /**
+   * Declared before `:idOrSlug` so the literal path is not swallowed by the
+   * wildcard doctor lookup.
+   */
+  @Get('me/slug-availability')
+  @Roles('DOCTOR')
+  @UseGuards(RolesGuard)
+  @ResponseMessage('Slug availability checked')
+  checkSlugAvailability(
+    @CurrentUser('id') userId: string,
+    @Query('slug') slug: string,
+  ) {
+    return this.doctorService.checkSlugAvailability(userId, slug ?? '');
+  }
+
   @Get('me/days-off')
   @Roles('DOCTOR')
   @UseGuards(RolesGuard)
