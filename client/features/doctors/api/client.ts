@@ -1,334 +1,206 @@
-import { apiClient } from "@/lib/api/axios";
+import { http } from "@/lib/api/client";
+import { buildDoctorQuery } from "../query";
 import {
-  Specialty,
-  DoctorProfile,
-  DoctorQueryParams,
+  CreateAvailabilityInput,
+  CreateDayOffInput,
   DoctorAvailability,
-  UpdateDoctorProfileInput,
-  DoctorsListResponse,
-  DoctorDashboardData,
-  DoctorDashboardStats,
   DoctorBookingsQueryParams,
   DoctorBookingsResponse,
   DoctorDashboardBooking,
+  DoctorDashboardData,
+  DoctorDashboardStats,
   DoctorDayOff,
-  CreateAvailabilityInput,
-  UpdateAvailabilityInput,
-  CreateDayOffInput,
   DoctorPatientRegistryItem,
+  DoctorProfile,
+  DoctorQueryParams,
+  DoctorSuggestion,
+  DoctorsListResponse,
   GoogleConnectionStatus,
+  Specialty,
+  UpdateAvailabilityInput,
+  UpdateDoctorProfileInput,
+  toDoctorSuggestion,
 } from "../types";
 
 export type { DoctorsListResponse };
 
-/**
- * Fetch verified doctors with optional search, specialty slug, fee, sorting, and pagination
- */
-export async function fetchDoctors(
+/* ------------------------------- Public read ------------------------------ */
+
+/** Verified doctors with search, specialty, fee, sort and pagination. */
+export function fetchDoctors(
   params?: DoctorQueryParams
 ): Promise<DoctorsListResponse> {
-  const queryParams = new URLSearchParams();
-
-  if (params?.search) queryParams.set("search", params.search);
-  if (params?.specialtySlug) queryParams.set("specialtySlug", params.specialtySlug);
-  if (params?.minFee !== undefined) queryParams.set("minFee", String(params.minFee));
-  if (params?.maxFee !== undefined) queryParams.set("maxFee", String(params.maxFee));
-  if (params?.minExperience !== undefined) queryParams.set("minExperience", String(params.minExperience));
-  else if (params?.experience !== undefined && params.experience !== "") queryParams.set("minExperience", String(params.experience));
-  if (params?.sortBy) queryParams.set("sortBy", params.sortBy);
-  if (params?.page) queryParams.set("page", String(params.page));
-  if (params?.limit) queryParams.set("limit", String(params.limit));
-
-  const queryStr = queryParams.toString();
-  const endpoint = queryStr ? `/doctors?${queryStr}` : "/doctors";
-
-  const response = await apiClient.get<DoctorsListResponse>(endpoint);
-  return response.data;
+  return http.getPage<DoctorProfile>("/doctors", {
+    params: buildDoctorQuery(params),
+  });
 }
 
-/**
- * Fetch a short list of doctors matching a search term, for autocomplete.
- * Capped at 6 results — this backs a dropdown, not a results page.
- */
+/** Compact doctor list for the hero/header autocomplete. */
 export async function fetchDoctorSuggestions(
   term: string
-): Promise<DoctorProfile[]> {
+): Promise<DoctorSuggestion[]> {
   const trimmed = term.trim();
-  if (!trimmed) return [];
+  if (trimmed.length < 2) return [];
 
-  const response = await fetchDoctors({
+  const { data } = await fetchDoctors({
     search: trimmed,
     limit: 6,
     page: 1,
     sortBy: "rating",
   });
-
-  return Array.isArray(response?.data) ? response.data : [];
+  return data.map(toDoctorSuggestion);
 }
 
-/**
- * Fetch a single verified doctor by CUID ID or SEO slug
- */
-export async function fetchDoctorById(idOrSlug: string): Promise<DoctorProfile> {
-  const response = await apiClient.get(`/doctors/${encodeURIComponent(idOrSlug)}`);
-  return response.data?.data || response.data;
+/** A single verified doctor by CUID id or SEO slug. */
+export function fetchDoctorByIdOrSlug(idOrSlug: string): Promise<DoctorProfile> {
+  return http.get<DoctorProfile>(`/doctors/${encodeURIComponent(idOrSlug)}`);
 }
 
-export const fetchDoctorByIdOrSlug = fetchDoctorById;
+export const fetchDoctorById = fetchDoctorByIdOrSlug;
 
-/**
- * Fetch active availability slots for a doctor by ID or slug
- */
-export async function fetchDoctorAvailability(
+/** A doctor's active weekly availability. */
+export function fetchDoctorAvailability(
   idOrSlug: string
 ): Promise<DoctorAvailability[]> {
-  const response = await apiClient.get(
+  return http.get<DoctorAvailability[]>(
     `/doctors/${encodeURIComponent(idOrSlug)}/availability`
   );
-  return response.data?.data || response.data;
 }
 
-/**
- * Fetch currently logged-in doctor profile
- */
-export async function fetchMyDoctorProfile(): Promise<DoctorProfile> {
-  const response = await apiClient.get("/doctors/me");
-  return response.data?.data || response.data;
+/** All medical specialties. */
+export function fetchSpecialties(): Promise<Specialty[]> {
+  return http.get<Specialty[]>("/specialties");
 }
 
-/**
- * Update currently logged-in doctor's profile, qualifications, clinic info, and specialties
- */
-export async function updateMyDoctorProfile(
+/* ------------------------------- Doctor self ------------------------------ */
+
+export function fetchMyDoctorProfile(): Promise<DoctorProfile> {
+  return http.get<DoctorProfile>("/doctors/me");
+}
+
+export function updateMyDoctorProfile(
   data: FormData | UpdateDoctorProfileInput
 ): Promise<DoctorProfile> {
-  const isFormData = typeof FormData !== "undefined" && data instanceof FormData;
-  const response = await apiClient.patch("/doctors/me", data, {
-    headers: isFormData ? { "Content-Type": "multipart/form-data" } : undefined,
-  });
-  return response.data?.data || response.data;
+  const headers =
+    data instanceof FormData
+      ? { "Content-Type": "multipart/form-data" }
+      : undefined;
+  return http.patch<DoctorProfile>("/doctors/me", data, { headers });
 }
 
-/**
- * Fetch all available medical specialties
- */
-export async function fetchSpecialties(): Promise<Specialty[]> {
-  const response = await apiClient.get("/specialties");
-  const data = response.data?.data || response.data;
-  return Array.isArray(data) ? data : data?.data || [];
+export function fetchDoctorDashboard(): Promise<DoctorDashboardData> {
+  return http.get<DoctorDashboardData>("/doctors/dashboard");
 }
 
-/**
- * Fetch aggregated doctor dashboard data (stats, next up visit, today's schedule, availability summary)
- */
-export async function fetchDoctorDashboard(): Promise<DoctorDashboardData> {
-  const response = await apiClient.get<{ data: DoctorDashboardData }>("/doctors/dashboard");
-  return response.data?.data || response.data;
-}
-
-/**
- * Fetch doctor dashboard summary metrics
- */
 export async function fetchDoctorDashboardStats(): Promise<DoctorDashboardStats> {
-  const response = await apiClient.get<{ data: { stats: DoctorDashboardStats } }>(
+  const dashboard = await http.get<DoctorDashboardData>(
     "/doctors/dashboard/stats"
   );
-  const body = response.data?.data || response.data;
-  return "stats" in body ? body.stats : body;
+  return dashboard.stats;
 }
 
-/**
- * Fetch doctor consultation bookings with status filtering and pagination
- */
-export async function fetchDoctorBookings(
+export function fetchDoctorBookings(
   params?: DoctorBookingsQueryParams
 ): Promise<DoctorBookingsResponse> {
-  const response = await apiClient.get<{ data: DoctorDashboardBooking[]; meta?: any }>(
-    "/appointments/my-bookings",
-    { params }
-  );
-  const body = response.data;
-  if (body && typeof body === "object" && "data" in body && Array.isArray(body.data)) {
-    return {
-      data: body.data,
-      meta: body.meta,
-    };
-  }
-  return {
-    data: Array.isArray(body) ? body : [],
-  };
+  return http.getPage<DoctorDashboardBooking>("/appointments/my-bookings", {
+    params,
+  });
 }
 
-/**
- * Confirm a pending consultation booking (generates Google Meet link & notifies patient)
- */
-export async function confirmDoctorBooking(
+export function confirmDoctorBooking(
   bookingId: string
 ): Promise<DoctorDashboardBooking> {
-  const response = await apiClient.patch<{ data: DoctorDashboardBooking }>(
+  return http.patch<DoctorDashboardBooking>(
     `/appointments/${bookingId}/confirm`
   );
-  return response.data?.data || response.data;
 }
 
-/**
- * Mark a consultation booking as completed
- */
-export async function completeDoctorBooking(
+export function completeDoctorBooking(
   bookingId: string
 ): Promise<DoctorDashboardBooking> {
-  const response = await apiClient.patch<{ data: DoctorDashboardBooking }>(
+  return http.patch<DoctorDashboardBooking>(
     `/appointments/${bookingId}/complete`
   );
-  return response.data?.data || response.data;
 }
 
-/**
- * Cancel a consultation booking
- */
-export async function cancelDoctorBooking(
+export function cancelDoctorBooking(
   bookingId: string
 ): Promise<DoctorDashboardBooking> {
-  const response = await apiClient.patch<{ data: DoctorDashboardBooking }>(
+  return http.patch<DoctorDashboardBooking>(
     `/appointments/${bookingId}/cancel`
   );
-  return response.data?.data || response.data;
 }
 
-/**
- * Fetch doctor's weekly recurring availability slots
- */
-export async function fetchDoctorScheduleSlots(): Promise<DoctorAvailability[]> {
-  const response = await apiClient.get<{ data: DoctorAvailability[] }>(
-    "/doctors/me/availability"
-  );
-  const body = response.data?.data || response.data;
-  return Array.isArray(body) ? body : [];
+export function fetchDoctorScheduleSlots(): Promise<DoctorAvailability[]> {
+  return http.get<DoctorAvailability[]>("/doctors/me/availability");
 }
 
-/**
- * Create a new weekly availability slot
- */
-export async function createDoctorScheduleSlot(
+export function createDoctorScheduleSlot(
   data: CreateAvailabilityInput
 ): Promise<DoctorAvailability> {
-  const response = await apiClient.post<{ data: DoctorAvailability }>(
-    "/doctors/me/availability",
-    data
-  );
-  return response.data?.data || response.data;
+  return http.post<DoctorAvailability>("/doctors/me/availability", data);
 }
 
-/**
- * Update an existing weekly availability slot (active toggle, hours, duration)
- */
-export async function updateDoctorScheduleSlot(
+export function updateDoctorScheduleSlot(
   slotId: string,
   data: UpdateAvailabilityInput
 ): Promise<DoctorAvailability> {
-  const response = await apiClient.patch<{ data: DoctorAvailability }>(
+  return http.patch<DoctorAvailability>(
     `/doctors/me/availability/${slotId}`,
     data
   );
-  return response.data?.data || response.data;
 }
 
-/**
- * Delete a weekly availability slot
- */
-export async function deleteDoctorScheduleSlot(
-  slotId: string
-): Promise<{ success: boolean; message?: string }> {
-  const response = await apiClient.delete<{ success: boolean; message?: string }>(
-    `/doctors/me/availability/${slotId}`
-  );
-  return response.data;
+export function deleteDoctorScheduleSlot(slotId: string): Promise<void> {
+  return http.delete<void>(`/doctors/me/availability/${slotId}`);
 }
 
-/**
- * Fetch doctor's scheduled days off & vacation leaves
- */
-export async function fetchDoctorDaysOff(): Promise<DoctorDayOff[]> {
-  const response = await apiClient.get<{ data: DoctorDayOff[] }>(
-    "/doctors/me/days-off"
-  );
-  const body = response.data?.data || response.data;
-  return Array.isArray(body) ? body : [];
+export function fetchDoctorDaysOff(): Promise<DoctorDayOff[]> {
+  return http.get<DoctorDayOff[]>("/doctors/me/days-off");
 }
 
-/**
- * Schedule a new day off / vacation
- */
-export async function createDoctorDayOff(
+export function createDoctorDayOff(
   data: CreateDayOffInput
 ): Promise<DoctorDayOff> {
-  const response = await apiClient.post<{ data: DoctorDayOff }>(
-    "/doctors/me/days-off",
-    data
-  );
-  return response.data?.data || response.data;
+  return http.post<DoctorDayOff>("/doctors/me/days-off", data);
 }
 
-/**
- * Remove a scheduled day off / vacation
- */
-export async function deleteDoctorDayOff(
-  dayOffId: string
-): Promise<{ success: boolean; message?: string }> {
-  const response = await apiClient.delete<{ success: boolean; message?: string }>(
-    `/doctors/me/days-off/${dayOffId}`
-  );
-  return response.data;
+export function deleteDoctorDayOff(dayOffId: string): Promise<void> {
+  return http.delete<void>(`/doctors/me/days-off/${dayOffId}`);
 }
 
-/**
- * Fetch doctor's patient registry list with optional search query
- */
-export async function fetchMyDoctorPatients(
+export function fetchMyDoctorPatients(
   search?: string
 ): Promise<DoctorPatientRegistryItem[]> {
-  const params = search && search.trim() ? { search: search.trim() } : undefined;
-  const response = await apiClient.get<{ data: DoctorPatientRegistryItem[] }>(
-    "/doctors/me/patients",
-    { params }
-  );
-  const body = response.data?.data || response.data;
-  return Array.isArray(body) ? body : [];
+  return http.get<DoctorPatientRegistryItem[]>("/doctors/me/patients", {
+    params: search?.trim() ? { search: search.trim() } : undefined,
+  });
 }
 
-/**
- * Fetch Google Calendar & Meet connection status
- */
-export async function fetchGoogleConnectionStatus(): Promise<GoogleConnectionStatus> {
-  const response = await apiClient.get<{ data: GoogleConnectionStatus }>("/google/status");
-  return response.data?.data || response.data;
+export function fetchGoogleConnectionStatus(): Promise<GoogleConnectionStatus> {
+  return http.get<GoogleConnectionStatus>("/google/status");
 }
 
-/**
- * Fetch Google OAuth consent authorization URL
- */
-export async function fetchGoogleAuthUrl(): Promise<{ url: string }> {
-  const response = await apiClient.get<{ data: { url: string } }>("/google/auth-url");
-  return response.data?.data || response.data;
+export function fetchGoogleAuthUrl(): Promise<{ url: string }> {
+  return http.get<{ url: string }>("/google/auth-url");
 }
 
-/**
- * Disconnect linked Google account
- */
-export async function disconnectGoogle(): Promise<{ message: string }> {
-  const response = await apiClient.delete<{ data: { message: string } }>("/google/disconnect");
-  return response.data?.data || response.data;
+export function disconnectGoogle(): Promise<{ message: string }> {
+  return http.delete<{ message: string }>("/google/disconnect");
 }
 
-/**
- * Upload doctor verification document (BMDC License, Degree, NID, etc.)
- */
-export async function uploadDoctorDocument(
-  formData: FormData
-): Promise<{ success: boolean; message?: string; data?: any }> {
-  const response = await apiClient.post("/doctors/me/documents", formData, {
+export function connectGoogle(
+  code: string,
+  redirectUri = "postmessage"
+): Promise<{ message?: string }> {
+  return http.post<{ message?: string }>("/google/connect", {
+    code,
+    redirectUri,
+  });
+}
+
+export function uploadDoctorDocument(formData: FormData) {
+  return http.post<{ message?: string }>("/doctors/me/documents", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
-  return response.data;
 }
-

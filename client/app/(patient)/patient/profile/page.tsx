@@ -7,6 +7,8 @@ import {
 } from "@tanstack/react-query";
 import { getPatientProfileServer } from "@/features/patients/api/server";
 import { patientKeys } from "@/features/patients/types";
+import { getProfileServer } from "@/features/auth/api/server";
+import { authKeys } from "@/features/auth/types";
 import { PatientProfileClient } from "./PatientProfileClient";
 
 export const metadata: Metadata = {
@@ -17,10 +19,16 @@ export const metadata: Metadata = {
 export default async function PatientProfilePage() {
   const queryClient = new QueryClient();
 
-  await queryClient.prefetchQuery({
-    queryKey: patientKeys.profile(),
-    queryFn: () => getPatientProfileServer(),
-  });
+  await Promise.all([
+    queryClient.prefetchQuery({
+      queryKey: patientKeys.profile(),
+      queryFn: () => getPatientProfileServer(),
+    }),
+    queryClient.prefetchQuery({
+      queryKey: authKeys.profile(),
+      queryFn: () => getProfileServer(),
+    }),
+  ]);
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

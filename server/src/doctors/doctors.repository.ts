@@ -157,6 +157,22 @@ export class DoctorRepository {
     });
   }
 
+  /**
+   * Batched variant of `countCompletedBookings` for list endpoints: one grouped
+   * query instead of one COUNT per doctor.
+   */
+  async countCompletedBookingsByDoctor(doctorIds: string[]): Promise<Map<string, number>> {
+    if (doctorIds.length === 0) return new Map();
+
+    const grouped = await this.prisma.booking.groupBy({
+      by: ['doctorId'],
+      where: { doctorId: { in: doctorIds }, status: BookingStatus.COMPLETED },
+      _count: { _all: true },
+    });
+
+    return new Map(grouped.map((row) => [row.doctorId, row._count._all]));
+  }
+
   // -- Dashboard -------------------------------------------------------------
 
   async getDashboardStats(

@@ -13,7 +13,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/api";
+import { useAuth } from "@/features/auth/api/queries";
 
 export const VerifyEmailContent: React.FC = () => {
   const searchParams = useSearchParams();

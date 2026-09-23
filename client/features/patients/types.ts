@@ -175,6 +175,9 @@ export const patientKeys = {
       "bookings",
       params?.status || "ALL",
       params?.page || 1,
+      // `limit` is part of the identity: the records and appointments screens
+      // request different page sizes, so omitting it would collide them.
+      params?.limit || 10,
     ] as const,
   slots: (doctorId: string, date: string) =>
     ["appointments", "slots", doctorId, date] as const,

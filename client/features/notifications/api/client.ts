@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/api/axios";
+import { http } from "@/lib/api/client";
 import {
   AppNotification,
   NotificationsQueryParams,
@@ -6,79 +6,45 @@ import {
 } from "../types";
 
 /**
- * Fetch notifications with pagination and normalized response extraction
+ * Fetch notifications with pagination.
+ *
+ * The envelope is unwrapped once by the canonical `http` client, so this
+ * function only maps the API payload to the feature's domain shape.
  */
 export async function fetchNotifications(
   params?: NotificationsQueryParams
 ): Promise<NotificationsResponse> {
-  const response = await apiClient.get<any>("/notifications", { params });
-  const body = response.data;
-
-  const data: AppNotification[] = Array.isArray(body?.data)
-    ? body.data
-    : Array.isArray(body)
-    ? body
-    : [];
-
-  const unreadCount: number =
-    typeof body?.unreadCount === "number"
-      ? body.unreadCount
-      : typeof body?.data?.unreadCount === "number"
-      ? body.data.unreadCount
-      : data.filter((n) => !n.isRead).length;
+  const page = await http.getPage<AppNotification>("/notifications", { params });
 
   return {
-    data,
-    unreadCount,
-    meta: body?.meta || {
-      page: params?.page || 1,
-      limit: params?.limit || 10,
-      total: data.length,
-      totalPages: 1,
-    },
+    ...page,
+    unreadCount: page.data.filter((n) => !n.isRead).length,
   };
 }
 
 /**
- * Fetch unread notifications count
+ * Fetch the unread notification count for the header badge.
+ * A badge is optional decoration, so a failure degrades to 0.
  */
 export async function fetchUnreadCount(): Promise<number> {
   try {
-    const response = await apiClient.get<any>("/notifications/unread-count");
-    const body = response.data;
-    if (typeof body?.data?.unreadCount === "number") {
-      return body.data.unreadCount;
-    }
-    if (typeof body?.unreadCount === "number") {
-      return body.unreadCount;
-    }
-    if (typeof body?.data === "number") {
-      return body.data;
-    }
-    return 0;
-  } catch (err) {
+    const { unreadCount } = await http.get<{ unreadCount: number }>(
+      "/notifications/unread-count"
+    );
+    return unreadCount ?? 0;
+  } catch {
     return 0;
   }
 }
 
-/**
- * Mark a single notification as read
- */
+/** Mark a single notification as read. */
 export async function markNotificationAsRead(
   notificationId: string
 ): Promise<AppNotification> {
-  const response = await apiClient.patch<{ data: AppNotification }>(
-    `/notifications/${notificationId}/read`
-  );
-  return response.data.data;
+  return http.patch<AppNotification>(`/notifications/${notificationId}/read`);
 }
 
-/**
- * Mark all notifications as read
- */
+/** Mark all notifications as read. */
 export async function markAllNotificationsAsRead(): Promise<{ message: string }> {
-  const response = await apiClient.patch<{ message: string }>(
-    "/notifications/read-all"
-  );
-  return response.data;
+  return http.patch<{ message: string }>("/notifications/read-all");
 }

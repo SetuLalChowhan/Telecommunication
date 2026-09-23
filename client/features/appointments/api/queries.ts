@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchBookingSummary } from "./client";
 import { appointmentKeys, BookingSummaryCounts } from "../types";
+import { CACHE } from "@/lib/cache/policy";
 
 /**
  * Query hook for backend-computed booking status counts.
@@ -12,6 +13,6 @@ export function useBookingSummary() {
   return useQuery<BookingSummaryCounts>({
     queryKey: appointmentKeys.summary(),
     queryFn: fetchBookingSummary,
-    staleTime: 1000 * 60, // 1 minute
+    staleTime: CACHE.privateFast.client.staleTime,
   });
 }

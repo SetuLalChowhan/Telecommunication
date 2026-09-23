@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { DoctorProfile, DoctorAvailability } from "@/types/doctor";
-import { useAuth } from "@/lib/api";
+import { useAuth } from "@/features/auth/api/queries";
 import {
   useAvailableSlots,
   useCreateAppointmentBooking,

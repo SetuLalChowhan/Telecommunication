@@ -7,11 +7,15 @@ import {
 } from "@tanstack/react-query";
 import { getDoctorBookingsServer } from "@/features/doctors/api/server";
 import { doctorKeys } from "@/features/doctors/types";
+import type { DoctorBookingsQueryParams } from "@/features/doctors/types";
+import { MAX_PAGE_SIZE } from "@/lib/api/types";
 import {
   appointmentKeys,
   normalizeStatusFilter,
 } from "@/features/appointments/types";
 import { getBookingSummaryServer } from "@/features/appointments/api/server";
+import { getProfileServer } from "@/features/auth/api/server";
+import { authKeys } from "@/features/auth/types";
 import { DoctorAppointmentsClient } from "./DoctorAppointmentsClient";
 
 export const metadata: Metadata = {
@@ -34,10 +38,13 @@ export default async function DoctorAppointmentsPage({
 
   // Normalize once so the URL, prefetch and client hook all agree on the filter.
   const activeStatus = normalizeStatusFilter(statusParam);
-  const listParams =
-    activeStatus !== "ALL"
-      ? { status: activeStatus as "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED" }
-      : undefined;
+
+  // The queue is filtered client-side, so request the full page instead of the
+  // default 10 — otherwise a busy doctor silently loses appointments.
+  const listParams: DoctorBookingsQueryParams = {
+    ...(activeStatus !== "ALL" ? { status: activeStatus } : {}),
+    limit: MAX_PAGE_SIZE,
+  };
 
   const queryClient = new QueryClient();
 
@@ -49,6 +56,10 @@ export default async function DoctorAppointmentsPage({
     queryClient.prefetchQuery({
       queryKey: appointmentKeys.summary(),
       queryFn: () => getBookingSummaryServer(),
+    }),
+    queryClient.prefetchQuery({
+      queryKey: authKeys.profile(),
+      queryFn: () => getProfileServer(),
     }),
   ]);
 

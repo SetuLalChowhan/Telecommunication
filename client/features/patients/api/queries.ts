@@ -21,6 +21,7 @@ import {
   patientKeys,
 } from "../types";
 import { appointmentKeys } from "@/features/appointments/types";
+import { CACHE } from "@/lib/cache/policy";
 
 /**
  * Query hook for patient dashboard overview data
@@ -29,7 +30,7 @@ export function usePatientDashboard() {
   return useQuery<PatientDashboardData>({
     queryKey: patientKeys.dashboard(),
     queryFn: fetchPatientDashboard,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: CACHE.private.client.staleTime,
   });
 }
 
@@ -41,7 +42,7 @@ export function usePatientBookings(params?: PatientBookingsQueryParams) {
     queryKey: patientKeys.bookings(params),
     queryFn: () => fetchPatientBookings(params),
     placeholderData: (prev) => prev,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: CACHE.privateFast.client.staleTime,
   });
 }
 
@@ -85,7 +86,7 @@ export function usePatientProfile() {
   return useQuery<import("../types").PatientProfileData>({
     queryKey: patientKeys.profile(),
     queryFn: fetchPatientProfile,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: CACHE.profile.client.staleTime,
   });
 }
 
@@ -126,7 +127,7 @@ export function useAvailableSlots(doctorId?: string, date?: string) {
     queryKey: patientKeys.slots(doctorId || "", date || ""),
     queryFn: () => fetchAvailableSlots(doctorId!, date!),
     enabled: Boolean(doctorId && date),
-    staleTime: 1000 * 30, // 30 seconds
+    staleTime: CACHE.slots.client.staleTime,
   });
 }
 

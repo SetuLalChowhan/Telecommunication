@@ -7,29 +7,30 @@ import { Button } from "@/components/ui/button";
 import BlogCard from "@/components/site/blogs/BlogCard";
 import BlogSearchFilters from "@/components/site/blogs/BlogSearchFilters";
 import { useBlogCategories, useBlogs } from "@/features/blogs";
-import type { BlogCategory, BlogListResult, BlogSortBy } from "@/features/blogs";
+import { DEFAULT_BLOG_META } from "@/features/blogs";
+import type { BlogSortBy } from "@/features/blogs";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 
 const SEARCH_DEBOUNCE_MS = 400;
 const SORT_OPTIONS: BlogSortBy[] = ["newest", "oldest", "popular"];
 
-interface BlogsClientProps {
-  /**
-   * Prefetched on the server for the current URL, then handed to React Query as
-   * `initialData`. The first paint is fully server-rendered — the client does
-   * not refetch on mount.
-   */
-  initialData: BlogListResult;
-  initialCategories: BlogCategory[];
-}
-
-export function BlogsClient({ initialData, initialCategories }: BlogsClientProps) {
+/**
+ * Data is prefetched on the server and arrives through `HydrationBoundary`, so
+ * the hooks read it straight from the hydrated cache — no `initialData` seeding.
+ */
+export function BlogsClient() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   // --- URL is the single source of truth for every filter -------------------
-  const urlSearch = searchParams.get("q") ?? "";
+  // Must mirror the server prefetch derivation exactly so the hydrated cache
+  // entry is reused rather than thrown away as a key mismatch.
+  const urlSearch = (
+    searchParams.get("q") ??
+    searchParams.get("search") ??
+    ""
+  ).trim();
   const category = searchParams.get("category") ?? "all";
   const sortParam = searchParams.get("sort");
   const sortBy: BlogSortBy = SORT_OPTIONS.includes(sortParam as BlogSortBy)
@@ -85,17 +86,17 @@ export function BlogsClient({ initialData, initialCategories }: BlogsClientProps
     applyParams({ q: trimmed || null, page: null });
   }, [debouncedSearch, applyParams]);
 
-  const { data, isFetching, isPlaceholderData } = useBlogs(
-    { search: urlSearch, category, sortBy, page },
-    { initialData }
-  );
-
-  const { data: categories = initialCategories } = useBlogCategories({
-    initialData: initialCategories,
+  const { data, isFetching, isPlaceholderData } = useBlogs({
+    search: urlSearch,
+    category,
+    sortBy,
+    page,
   });
 
+  const { data: categories = [] } = useBlogCategories();
+
   const posts = data?.items ?? [];
-  const meta = data?.meta ?? initialData.meta;
+  const meta = data?.meta ?? DEFAULT_BLOG_META;
   const totalPages = Math.max(1, meta.totalPages);
   const showSpinner = isFetching && isPlaceholderData;
 

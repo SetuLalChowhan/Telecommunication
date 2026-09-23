@@ -24,7 +24,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DashboardSidebar, type DashboardRole } from "./DashboardSidebar";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
-import { useAuth } from "@/lib/api";
+import { useAuth } from "@/features/auth/api/queries";
 import { useUnreadNotificationCount } from "@/features/notifications/api/queries";
 
 interface DashboardHeaderProps {

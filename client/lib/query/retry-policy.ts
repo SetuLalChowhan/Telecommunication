@@ -1,4 +1,4 @@
-import { ApiError } from '../http/api-error';
+import { ApiError } from '../api/error';
 
 export function shouldRetry(failureCount: number, error: unknown): boolean {
   if (failureCount >= 3) {

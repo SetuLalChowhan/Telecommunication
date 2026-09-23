@@ -149,12 +149,27 @@ export class MedicalReportsService {
   async streamReportFile(
     reportId: string,
     action: 'view' | 'download',
+    userId: string,
+    role: string,
     res: any,
   ) {
     const report = await this.repo.findReportById(reportId);
 
     if (!report || !report.fileUrl) {
       throw new NotFoundException('Medical report file not found');
+    }
+
+    // Medical documents are protected health information: only the owning
+    // patient, the doctor on the related booking, or an admin may read them.
+    // The report id is never sufficient on its own to authorize access.
+    const isAdmin = role === 'ADMIN';
+    const isOwner = report.patient?.userId === userId;
+    const isTreatingDoctor = report.booking?.doctor?.userId === userId;
+
+    if (!isAdmin && !isOwner && !isTreatingDoctor) {
+      throw new ForbiddenException(
+        'You are not authorized to access this medical report',
+      );
     }
 
     const isPdf =

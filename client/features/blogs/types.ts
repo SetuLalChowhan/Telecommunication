@@ -137,6 +137,13 @@ export const DEFAULT_BLOG_META: BlogListMeta = {
   hasPreviousPage: false,
 };
 
+/** Query keys for the doctor/admin blog console (published + drafts). */
+export const adminBlogKeys = {
+  all: ["admin-blogs"] as const,
+  list: (params?: BlogQueryParams) =>
+    [...adminBlogKeys.all, "list", params ?? {}] as const,
+};
+
 /** Query keys. Shared by server prefetch and client hooks so they match exactly. */
 export const blogKeys = {
   all: ["blogs"] as const,

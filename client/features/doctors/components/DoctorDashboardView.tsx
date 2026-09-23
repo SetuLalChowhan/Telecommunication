@@ -12,7 +12,6 @@ import { DoctorNextConsultation } from "./DoctorNextConsultation";
 import { DoctorTodayScheduleTable } from "./DoctorTodayScheduleTable";
 import { DoctorStatsCards } from "./DoctorStatsCards";
 import { DoctorQuickActions } from "./DoctorQuickActions";
-import { DoctorBlogManager } from "./DoctorBlogManager";
 import { AppointmentDetailsDialog } from "@/features/appointments/components/AppointmentDetailsDialog";
 import { PageHeader } from "@/components/layout";
 import {
@@ -203,7 +202,6 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
           </section>
 
           <DoctorQuickActions />
-          <DoctorBlogManager />
         </div>
       </div>
 

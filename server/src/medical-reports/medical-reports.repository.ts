@@ -99,7 +99,10 @@ export class MedicalReportsRepository {
   async findReportById(reportId: string) {
     return this.prisma.medicalReport.findUnique({
       where: { id: reportId },
-      include: { patient: true },
+      include: {
+        patient: true,
+        booking: { include: { doctor: true } },
+      },
     });
   }
 

@@ -1,19 +1,23 @@
+"use client";
+
 import {
   keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { toast } from "react-toastify";
+import { CACHE } from "@/lib/cache/policy";
 import {
-  fetchBlogCategories,
+  adminCreateBlog,
+  adminDeleteBlog,
+  adminFetchBlogs,
+  adminTogglePublish,
+  adminUpdateBlog,
   fetchBlogBySlug,
+  fetchBlogCategories,
   fetchBlogs,
   fetchFeaturedBlogs,
-  adminFetchBlogs,
-  adminCreateBlog,
-  adminUpdateBlog,
-  adminDeleteBlog,
-  adminTogglePublish,
 } from "./client";
 import {
   AdminBlogPayload,
@@ -22,82 +26,64 @@ import {
   BlogListResult,
   BlogPost,
   BlogQueryParams,
+  adminBlogKeys,
   blogKeys,
 } from "../types";
-import { toast } from "react-toastify";
 
-const FIVE_MINUTES = 1000 * 60 * 5;
+/* ------------------------------- Public hooks ------------------------------ */
 
-// ─── Public hooks ─────────────────────────────────────────────────────────────
-
-export function useBlogs(
-  params?: BlogQueryParams,
-  options?: { initialData?: BlogListResult }
-) {
+export function useBlogs(params?: BlogQueryParams) {
   return useQuery<BlogListResult>({
     queryKey: blogKeys.list(params ?? {}),
     queryFn: () => fetchBlogs(params),
-    initialData: options?.initialData,
     placeholderData: keepPreviousData,
-    staleTime: FIVE_MINUTES,
+    staleTime: CACHE.blogs.client.staleTime,
   });
 }
 
-export function useBlogDetail(
-  slug: string,
-  options?: { initialData?: BlogDetailResult }
-) {
+export function useBlogDetail(slug: string) {
   return useQuery<BlogDetailResult>({
     queryKey: blogKeys.detail(slug),
     queryFn: () => fetchBlogBySlug(slug),
-    initialData: options?.initialData,
     enabled: Boolean(slug),
-    staleTime: FIVE_MINUTES,
+    staleTime: CACHE.blogDetail(slug).client.staleTime,
   });
 }
 
-export function useFeaturedBlogs(options?: { initialData?: BlogPost[] }) {
+export function useFeaturedBlogs() {
   return useQuery<BlogPost[]>({
     queryKey: blogKeys.featured(),
     queryFn: () => fetchFeaturedBlogs(),
-    initialData: options?.initialData,
-    staleTime: FIVE_MINUTES,
+    staleTime: CACHE.blogs.client.staleTime,
   });
 }
 
-export function useBlogCategories(options?: { initialData?: BlogCategory[] }) {
+export function useBlogCategories() {
   return useQuery<BlogCategory[]>({
     queryKey: blogKeys.categories(),
     queryFn: fetchBlogCategories,
-    initialData: options?.initialData,
-    staleTime: 1000 * 60 * 10,
+    staleTime: CACHE.blogCategories.client.staleTime,
   });
 }
 
-// ─── Admin / Doctor hooks ─────────────────────────────────────────────────────
-
-const adminBlogKeys = {
-  all: ["admin-blogs"] as const,
-  list: (params?: BlogQueryParams) =>
-    [...adminBlogKeys.all, "list", params ?? {}] as const,
-};
+/* -------------------------- Admin / doctor hooks -------------------------- */
 
 export function useAdminBlogs(params?: BlogQueryParams) {
   return useQuery<BlogListResult>({
     queryKey: adminBlogKeys.list(params),
     queryFn: () => adminFetchBlogs(params),
     placeholderData: keepPreviousData,
-    staleTime: 30_000,
+    staleTime: CACHE.privateFast.client.staleTime,
   });
 }
 
 export function useAdminCreateBlog() {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload: AdminBlogPayload) => adminCreateBlog(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: adminBlogKeys.all });
-      qc.invalidateQueries({ queryKey: blogKeys.all });
+      queryClient.invalidateQueries({ queryKey: adminBlogKeys.all });
+      queryClient.invalidateQueries({ queryKey: blogKeys.all });
       toast.success("Blog post created successfully");
     },
     onError: () => toast.error("Failed to create blog post"),
@@ -105,13 +91,18 @@ export function useAdminCreateBlog() {
 }
 
 export function useAdminUpdateBlog() {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: Partial<AdminBlogPayload> }) =>
-      adminUpdateBlog(id, payload),
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: Partial<AdminBlogPayload>;
+    }) => adminUpdateBlog(id, payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: adminBlogKeys.all });
-      qc.invalidateQueries({ queryKey: blogKeys.all });
+      queryClient.invalidateQueries({ queryKey: adminBlogKeys.all });
+      queryClient.invalidateQueries({ queryKey: blogKeys.all });
       toast.success("Blog post updated");
     },
     onError: () => toast.error("Failed to update blog post"),
@@ -119,12 +110,12 @@ export function useAdminUpdateBlog() {
 }
 
 export function useAdminDeleteBlog() {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => adminDeleteBlog(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: adminBlogKeys.all });
-      qc.invalidateQueries({ queryKey: blogKeys.all });
+      queryClient.invalidateQueries({ queryKey: adminBlogKeys.all });
+      queryClient.invalidateQueries({ queryKey: blogKeys.all });
       toast.success("Blog post deleted");
     },
     onError: () => toast.error("Failed to delete blog post"),
@@ -132,12 +123,12 @@ export function useAdminDeleteBlog() {
 }
 
 export function useAdminTogglePublish() {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => adminTogglePublish(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: adminBlogKeys.all });
-      qc.invalidateQueries({ queryKey: blogKeys.all });
+      queryClient.invalidateQueries({ queryKey: adminBlogKeys.all });
+      queryClient.invalidateQueries({ queryKey: blogKeys.all });
       toast.success("Publish status updated");
     },
     onError: () => toast.error("Failed to update publish status"),

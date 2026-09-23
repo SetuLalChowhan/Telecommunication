@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Menu, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BrandLogo from "@/components/common/BrandLogo";
-import { useAuth, getRoleDashboardRoute } from "@/lib/api";
+import { useAuth, getRoleDashboardRoute } from "@/features/auth/api/queries";
 import { DesktopNavigation } from "./DesktopNavigation";
 import { UserDropdownMenu } from "./UserDropdownMenu";
 import { MobileNavigationDrawer } from "./MobileNavigationDrawer";

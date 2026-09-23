@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { appointmentKeys } from "@/features/appointments/types";
+import { CACHE } from "@/lib/cache/policy";
 import {
   fetchDoctors,
   fetchDoctorByIdOrSlug,
@@ -29,18 +30,14 @@ import {
   disconnectGoogle,
   uploadDoctorDocument,
   fetchDoctorSuggestions,
-  DoctorsListResponse,
 } from "./client";
 import {
   Specialty,
-  DoctorProfile,
   DoctorQueryParams,
   DoctorAvailability,
   UpdateDoctorProfileInput,
-  DoctorDashboardData,
   DoctorDashboardStats,
   DoctorBookingsQueryParams,
-  DoctorBookingsResponse,
   DoctorDayOff,
   CreateAvailabilityInput,
   UpdateAvailabilityInput,
@@ -48,7 +45,6 @@ import {
   DoctorPatientRegistryItem,
   GoogleConnectionStatus,
   DoctorSuggestion,
-  toDoctorSuggestion,
   doctorKeys,
 } from "../types";
 
@@ -68,32 +64,24 @@ function getMutationErrorMessage(error: unknown, fallback: string): string {
 /**
  * Hook to query verified doctors with filters & pagination
  */
-export function useDoctors(
-  params?: DoctorQueryParams,
-  options?: { initialData?: DoctorsListResponse }
-) {
+export function useDoctors(params?: DoctorQueryParams) {
   return useQuery({
     queryKey: doctorKeys.list(params),
     queryFn: () => fetchDoctors(params),
-    initialData: options?.initialData,
     placeholderData: (previousData) => previousData,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: CACHE.doctors.client.staleTime,
   });
 }
 
 /**
  * Hook to query a single doctor's details by ID or Slug
  */
-export function useDoctorDetails(
-  idOrSlug: string,
-  options?: { initialData?: DoctorProfile | null }
-) {
+export function useDoctorDetails(idOrSlug: string) {
   return useQuery({
     queryKey: doctorKeys.detail(idOrSlug),
     queryFn: () => fetchDoctorByIdOrSlug(idOrSlug),
-    initialData: options?.initialData ?? undefined,
     enabled: Boolean(idOrSlug),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: CACHE.doctorDetail(idOrSlug).client.staleTime,
   });
 }
 
@@ -105,7 +93,7 @@ export function useDoctorAvailability(idOrSlug: string) {
     queryKey: doctorKeys.availability(idOrSlug),
     queryFn: () => fetchDoctorAvailability(idOrSlug),
     enabled: Boolean(idOrSlug),
-    staleTime: 1000 * 60 * 2,
+    staleTime: CACHE.doctorAvailability(idOrSlug).client.staleTime,
   });
 }
 
@@ -116,7 +104,7 @@ export function useMyDoctorProfile() {
   return useQuery({
     queryKey: doctorKeys.me(),
     queryFn: fetchMyDoctorProfile,
-    staleTime: 1000 * 60 * 5,
+    staleTime: CACHE.profile.client.staleTime,
   });
 }
 
@@ -159,7 +147,7 @@ export function useSpecialties(options?: { initialData?: Specialty[] }) {
     queryKey: doctorKeys.specialties(),
     queryFn: fetchSpecialties,
     initialData: options?.initialData,
-    staleTime: 1000 * 60 * 10, // 10 minutes cache
+    staleTime: CACHE.specialties.client.staleTime,
   });
 }
 
@@ -174,10 +162,9 @@ export function useDoctorSuggestions(term: string) {
 
   return useQuery<DoctorSuggestion[]>({
     queryKey: doctorKeys.suggestions(trimmed),
-    queryFn: async () =>
-      (await fetchDoctorSuggestions(trimmed)).map(toDoctorSuggestion),
+    queryFn: () => fetchDoctorSuggestions(trimmed),
     enabled: trimmed.length >= 2,
-    staleTime: 1000 * 60 * 5,
+    staleTime: CACHE.doctors.client.staleTime,
     placeholderData: (previous) => previous,
   });
 }
@@ -185,14 +172,11 @@ export function useDoctorSuggestions(term: string) {
 /**
  * Hook to query aggregated doctor dashboard data
  */
-export function useDoctorDashboard(options?: {
-  initialData?: DoctorDashboardData;
-}) {
+export function useDoctorDashboard() {
   return useQuery({
     queryKey: doctorKeys.dashboard(),
     queryFn: fetchDoctorDashboard,
-    initialData: options?.initialData,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: CACHE.private.client.staleTime,
   });
 }
 
@@ -203,23 +187,19 @@ export function useDoctorDashboardStats() {
   return useQuery({
     queryKey: [...doctorKeys.dashboard(), "stats"],
     queryFn: fetchDoctorDashboardStats,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: CACHE.private.client.staleTime,
   });
 }
 
 /**
  * Hook to query doctor consultation queue
  */
-export function useDoctorBookings(
-  params?: DoctorBookingsQueryParams,
-  options?: { initialData?: DoctorBookingsResponse }
-) {
+export function useDoctorBookings(params?: DoctorBookingsQueryParams) {
   return useQuery({
     queryKey: doctorKeys.myBookings(params),
     queryFn: () => fetchDoctorBookings(params),
     placeholderData: (prev) => prev,
-    initialData: options?.initialData,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: CACHE.privateFast.client.staleTime,
   });
 }
 
@@ -291,7 +271,7 @@ export function useMyDoctorSchedule() {
   return useQuery<DoctorAvailability[]>({
     queryKey: doctorKeys.mySchedule(),
     queryFn: fetchDoctorScheduleSlots,
-    staleTime: 1000 * 60 * 5,
+    staleTime: CACHE.profile.client.staleTime,
   });
 }
 
@@ -354,7 +334,7 @@ export function useMyDoctorDaysOff() {
   return useQuery<DoctorDayOff[]>({
     queryKey: doctorKeys.myDaysOff(),
     queryFn: fetchDoctorDaysOff,
-    staleTime: 1000 * 60 * 5,
+    staleTime: CACHE.profile.client.staleTime,
   });
 }
 
@@ -395,7 +375,7 @@ export function useMyDoctorPatients(search?: string) {
   return useQuery<DoctorPatientRegistryItem[]>({
     queryKey: doctorKeys.myPatients(search),
     queryFn: () => fetchMyDoctorPatients(search),
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: CACHE.privateFast.client.staleTime,
   });
 }
 
@@ -406,7 +386,7 @@ export function useGoogleConnectionStatus() {
   return useQuery<GoogleConnectionStatus>({
     queryKey: doctorKeys.googleStatus(),
     queryFn: fetchGoogleConnectionStatus,
-    staleTime: 1000 * 60 * 2,
+    staleTime: CACHE.privateFast.client.staleTime,
   });
 }
 

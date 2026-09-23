@@ -2,7 +2,7 @@
 
 import React from "react";
 import { DoctorDashboardView } from "@/features/doctors";
-import { useAuth } from "@/lib/api";
+import { useAuth } from "@/features/auth/api/queries";
 
 export function DoctorDashboardClient() {
   const { user, isSessionLoading } = useAuth();

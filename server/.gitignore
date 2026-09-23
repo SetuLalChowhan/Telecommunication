@@ -46,6 +46,9 @@ lerna-debug.log*
 .temp
 .tmp
 
+# Runtime uploads (user-submitted files must never be committed)
+/uploads
+
 # Runtime data
 pids
 *.pid

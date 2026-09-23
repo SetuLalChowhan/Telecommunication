@@ -7,6 +7,7 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
 } from "./client";
+import { CACHE } from "@/lib/cache/policy";
 import {
   NotificationsQueryParams,
   NotificationsResponse,
@@ -20,10 +21,10 @@ export function useNotifications(params?: NotificationsQueryParams) {
   return useQuery<NotificationsResponse>({
     queryKey: notificationKeys.list(params),
     queryFn: () => fetchNotifications(params),
-    refetchInterval: 1000 * 10, // Poll every 10 seconds in foreground
+    refetchInterval: CACHE.notifications.client.refetchInterval,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    staleTime: 0, // Always consider fresh data on page visit
+    staleTime: CACHE.notifications.client.staleTime,
   });
 }
 
@@ -34,10 +35,10 @@ export function useUnreadNotificationCount() {
   return useQuery<number>({
     queryKey: notificationKeys.unreadCount(),
     queryFn: fetchUnreadCount,
-    refetchInterval: 1000 * 10, // Refresh every 10 seconds
+    refetchInterval: CACHE.notifications.client.refetchInterval,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    staleTime: 0, // Always check immediately on page load / mount
+    staleTime: CACHE.notifications.client.staleTime,
   });
 }
 

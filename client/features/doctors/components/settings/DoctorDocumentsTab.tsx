@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "react-toastify";
-import { apiClient } from "@/lib/api/axios";
+import { uploadDoctorDocument } from "@/features/doctors/api/client";
 
 interface DoctorDocument {
   id: string;
@@ -45,16 +45,14 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
       data.append("file", docFile);
       data.append("type", docType);
 
-      await apiClient.post("/doctors/me/documents", data, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await uploadDoctorDocument(data);
 
       toast.success("Document uploaded successfully for review");
       setDocFile(null);
       if (fileRef.current) fileRef.current.value = "";
       onRefresh();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || "Failed to upload document");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload document");
     } finally {
       setIsUploading(false);
     }

@@ -10,6 +10,8 @@ import {
   getSpecialtiesServer,
 } from "@/features/doctors/api/server";
 import { doctorKeys } from "@/features/doctors/types";
+import { getProfileServer } from "@/features/auth/api/server";
+import { authKeys } from "@/features/auth/types";
 import { DoctorSettingsClient } from "./DoctorSettingsClient";
 
 export const metadata: Metadata = {
@@ -28,6 +30,10 @@ export default async function DoctorSettingsPage() {
     queryClient.prefetchQuery({
       queryKey: doctorKeys.specialties(),
       queryFn: () => getSpecialtiesServer(),
+    }),
+    queryClient.prefetchQuery({
+      queryKey: authKeys.profile(),
+      queryFn: () => getProfileServer(),
     }),
   ]);
 

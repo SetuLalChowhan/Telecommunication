@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AvailabilitySlot } from "@/lib/doctor-mock-data";
-import { to12Hour } from "@/lib/time-utils";
+import { to12Hour } from "@/lib/time";
 
 interface DoctorAvailabilityTableProps {
   slots: AvailabilitySlot[];

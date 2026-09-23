@@ -17,13 +17,14 @@ import {
   Loader2,
   Bell,
   MessagesSquare,
+  BookOpen,
   Lock,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import BrandLogo from "@/components/common/BrandLogo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/lib/api";
+import { useAuth } from "@/features/auth/api/queries";
 
 export type DashboardRole = "PATIENT" | "DOCTOR" | "ADMIN";
 
@@ -79,6 +80,7 @@ const doctorGroups: NavGroup[] = [
       { label: "Consultation queue", path: "/doctor/appointments", icon: CalendarDays },
       { label: "Patients", path: "/doctor/patients", icon: Users },
       { label: "Availability & leaves", path: "/doctor/schedule", icon: Clock },
+      { label: "Health articles", path: "/doctor/blogs", icon: BookOpen },
     ],
   },
   {

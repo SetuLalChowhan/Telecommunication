@@ -13,7 +13,7 @@ import { UpdateAvailabilityDto } from './dto/update-availability.dto.js';
 import { DoctorQueryDto } from './dto/doctor-query.dto.js';
 import { CreateDayOffDto } from './dto/create-day-off.dto.js';
 import { createPaginationMeta } from '../common/pagination/pagination.utils.js';
-import { slugify } from '../common/utils/slug.utils.js';
+import { generateDoctorSlug, slugify } from '../common/utils/slug.utils.js';
 import { CloudinaryService } from '../common/cloudinary/cloudinary.service.js';
 
 @Injectable()
@@ -33,10 +33,14 @@ export class DoctorService {
     return profile;
   }
 
-  private async enrichDoctorWithConsultationStats(doctor: any) {
+  private async enrichDoctorWithConsultationStats(
+    doctor: any,
+    completedBookings?: number,
+  ) {
     if (!doctor) return null;
 
-    const totalPatientsConsulted = await this.repo.countCompletedBookings(doctor.id);
+    const totalPatientsConsulted =
+      completedBookings ?? (await this.repo.countCompletedBookings(doctor.id));
 
     const mainSpecialtyItem =
       doctor.specialties?.find((s: any) => s.isPrimary) ||
@@ -175,7 +179,8 @@ export class DoctorService {
       }
     }
 
-    // Slug conflict check
+    // Slug handling: an explicit slug wins; otherwise the public URL is kept in
+    // sync with the doctor's display name whenever the name changes.
     let sanitizedSlug: string | undefined;
     if (dto.slug) {
       sanitizedSlug = slugify(dto.slug);
@@ -183,6 +188,17 @@ export class DoctorService {
         throw new ConflictException(
           'This doctor slug is already taken. Please choose another.',
         );
+      }
+    } else if (dto.name !== undefined) {
+      const generatedSlug = generateDoctorSlug(dto.name, userId);
+      if (generatedSlug !== profile.slug) {
+        const conflict = await this.repo.findSlugConflict(
+          generatedSlug,
+          profile.id,
+        );
+        sanitizedSlug = conflict
+          ? `${generatedSlug}-${Date.now().toString(36)}`
+          : generatedSlug;
       }
     }
 
@@ -241,8 +257,10 @@ export class DoctorService {
   async listPublicDoctors(query: DoctorQueryDto) {
     const { rows, total } = await this.repo.listPublicDoctors(query);
 
+    const counts = await this.repo.countCompletedBookingsByDoctor(rows.map((doc) => doc.id));
+
     const enriched = await Promise.all(
-      rows.map((doc) => this.enrichDoctorWithConsultationStats(doc)),
+      rows.map((doc) => this.enrichDoctorWithConsultationStats(doc, counts.get(doc.id) ?? 0)),
     );
 
     return {

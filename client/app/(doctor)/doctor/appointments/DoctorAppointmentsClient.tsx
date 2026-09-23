@@ -10,6 +10,7 @@ import {
 } from "@/features/doctors/api/queries";
 import { DoctorScheduleItem, DashboardAppointment } from "@/lib/dashboard-mock-data";
 import { DoctorDashboardBooking } from "@/features/doctors/types";
+import { MAX_PAGE_SIZE } from "@/lib/api/types";
 import { AppointmentDetailsDialog } from "@/features/appointments/components";
 import {
   useBookingSummary,
@@ -103,7 +104,7 @@ export function DoctorAppointmentsClient({
     data: bookingsData,
     isLoading,
     isFetching,
-  } = useDoctorBookings({ status: bookingStatus });
+  } = useDoctorBookings({ status: bookingStatus, limit: MAX_PAGE_SIZE });
   const { data: summary } = useBookingSummary();
 
   const confirmMutation = useConfirmDoctorBooking();

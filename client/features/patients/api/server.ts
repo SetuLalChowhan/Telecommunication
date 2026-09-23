@@ -1,4 +1,4 @@
-import { serverFetch, ServerFetchOptions } from "@/lib/api/server-fetch";
+import { serverFetch, ServerFetchOptions } from "@/lib/api/server";
 import {
   PatientDashboardData,
   PatientBookingsQueryParams,

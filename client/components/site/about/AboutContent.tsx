@@ -2,10 +2,8 @@ import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   resolveAboutHero,
-  resolveAboutLeadership,
   resolveAboutPrinciples,
   resolveAboutStats,
   resolveIcon,
@@ -15,7 +13,7 @@ import { getCmsSectionsServer } from "@/features/cms/api/server";
 /**
  * About page body.
  *
- * Every block (hero, stats, principles, leadership) is CMS-backed with a
+ * Every block (hero, stats, principles) is CMS-backed with a
  * hard-coded default, so the page renders complete content even when the CMS
  * row has never been created.
  */
@@ -25,7 +23,6 @@ export async function AboutContent() {
   const hero = resolveAboutHero(store);
   const stats = resolveAboutStats(store);
   const principles = resolveAboutPrinciples(store);
-  const leadership = resolveAboutLeadership(store);
 
   return (
     <div className="min-h-screen bg-background">
@@ -103,64 +100,12 @@ export async function AboutContent() {
         </div>
       </section>
 
-      {/* Leadership */}
-      <section className="border-b border-border/60 bg-muted/30 py-16 sm:py-20">
-        <div className="container-page space-y-12">
-          <div className="mx-auto max-w-2xl space-y-3 text-center">
-            <span className="eyebrow-text block text-primary">{leadership.badge}</span>
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-              {leadership.title}
-            </h2>
-            <p className="text-sm text-secondary-text sm:text-base">
-              {leadership.subtitle}
-            </p>
-          </div>
-
-          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-3 lg:gap-8">
-            {leadership.items.map((leader, index) => (
-              <div
-                key={`${leader.name}-${index}`}
-                className="flex flex-col items-center space-y-4 rounded-xl border border-border bg-card p-6 text-center"
-              >
-                <Avatar className="h-24 w-24 rounded-xl border border-border">
-                  {leader.avatar && (
-                    <AvatarImage src={leader.avatar} alt={leader.name} />
-                  )}
-                  <AvatarFallback>{leader.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-
-                <div className="w-full space-y-1">
-                  <h3 className="text-base font-bold leading-snug text-foreground sm:text-lg">
-                    {leader.name}
-                  </h3>
-                  <p className="text-xs font-semibold text-primary">{leader.role}</p>
-                  <p className="text-xs font-medium text-secondary-text">
-                    {leader.qualifications}
-                  </p>
-                  {leader.bmdc && (
-                    <span className="mt-1 inline-block rounded-md bg-muted px-2 py-0.5 font-mono text-[11px] text-muted-foreground">
-                      {leader.bmdc}
-                    </span>
-                  )}
-                </div>
-
-                {leader.bio && (
-                  <p className="border-t border-border/80 pt-2 text-xs leading-relaxed text-secondary-text sm:text-sm">
-                    {leader.bio}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA */}
       <section className="py-16 sm:py-20">
         <div className="container-page">
           <div className="mx-auto max-w-5xl space-y-6 rounded-xl bg-primary p-8 text-center text-primary-foreground sm:p-12">
             <div className="mx-auto max-w-2xl space-y-3">
-              <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
                 Ready to experience accessible, verified healthcare?
               </h2>
               <p className="text-sm leading-relaxed text-primary-foreground/85">

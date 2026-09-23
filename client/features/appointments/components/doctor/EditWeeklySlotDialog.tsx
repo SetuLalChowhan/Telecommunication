@@ -25,7 +25,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
 import { AvailabilitySlot } from "@/lib/doctor-mock-data";
-import { TIME_OPTIONS, to24Hour } from "@/lib/time-utils";
+import { TIME_OPTIONS, to24Hour } from "@/lib/time";
 
 const DAYS_OF_WEEK = [
   "MONDAY",

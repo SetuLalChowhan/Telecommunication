@@ -20,8 +20,6 @@ import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { CurrentUser } from '../common/decorator/current-user.decorator.js';
 import { ResponseMessage } from '../common/decorator/response-message.decorator.js';
 import { PaginationDto } from '../common/pagination/pagination.dto.js';
-import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
-
 @Controller('medical-reports')
 export class MedicalReportsController {
   constructor(
@@ -80,12 +78,21 @@ export class MedicalReportsController {
   }
 
   @Get(':id/file')
-  @AllowAnonymous()
+  @Roles('PATIENT', 'DOCTOR', 'ADMIN')
+  @UseGuards(RolesGuard)
   getReportFile(
     @Param('id') id: string,
     @Query('action') action: 'view' | 'download',
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: string,
     @Res() res: any,
   ) {
-    return this.medicalReportsService.streamReportFile(id, action || 'view', res);
+    return this.medicalReportsService.streamReportFile(
+      id,
+      action || 'view',
+      userId,
+      role,
+      res,
+    );
   }
 }

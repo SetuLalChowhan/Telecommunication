@@ -1,6 +1,6 @@
 import { QueryCache, QueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
-import { toApiError } from '../http/api-error';
+import { toApiError } from '../api/error';
 import { reportError } from '../observability/reportError';
 import { retryDelay, shouldRetry } from './retry-policy';
 

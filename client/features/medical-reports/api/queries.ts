@@ -13,6 +13,7 @@ import {
   medicalReportKeys,
 } from "../types";
 import { patientKeys } from "@/features/patients/types";
+import { CACHE } from "@/lib/cache/policy";
 
 /**
  * Query hook to fetch patient's medical reports
@@ -21,7 +22,7 @@ export function useMyMedicalReports(params?: MedicalReportsQueryParams) {
   return useQuery<MedicalReportsResponse>({
     queryKey: medicalReportKeys.myReports(params),
     queryFn: () => fetchMyMedicalReports(params),
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: CACHE.private.client.staleTime,
   });
 }
 

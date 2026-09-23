@@ -2,6 +2,7 @@ import React from "react";
 import type { Metadata } from "next";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { BlogsClient } from "@/components/site/blogs/BlogsClient";
+import { CACHE } from "@/lib/cache/policy";
 import { blogKeys } from "@/features/blogs";
 import type { BlogQueryParams, BlogSortBy } from "@/features/blogs";
 import {
@@ -82,18 +83,19 @@ export default async function BlogsPage({ searchParams }: BlogsPageProps) {
 
   const queryClient = new QueryClient();
 
-  // `fetchQuery` both resolves the data and seeds the cache, so `dehydrate`
-  // below carries exactly what the client will look for after hydration.
-  const [initialData, initialCategories] = await Promise.all([
-    queryClient.fetchQuery({
+  // `prefetchQuery` seeds the cache so `dehydrate` below carries exactly what
+  // the matching client hooks look for after hydration. There is no separate
+  // `initialData` path — a single source of truth for server-rendered data.
+  await Promise.all([
+    queryClient.prefetchQuery({
       queryKey: blogKeys.list(params),
       queryFn: () => getBlogsServer(params),
-      staleTime: 60_000,
+      staleTime: CACHE.blogs.client.staleTime,
     }),
-    queryClient.fetchQuery({
+    queryClient.prefetchQuery({
       queryKey: blogKeys.categories(),
       queryFn: () => getBlogCategoriesServer(),
-      staleTime: 600_000,
+      staleTime: CACHE.blogCategories.client.staleTime,
     }),
   ]);
 
@@ -118,10 +120,7 @@ export default async function BlogsPage({ searchParams }: BlogsPageProps) {
       </section>
 
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <BlogsClient
-          initialData={initialData}
-          initialCategories={initialCategories}
-        />
+        <BlogsClient />
       </HydrationBoundary>
     </div>
   );

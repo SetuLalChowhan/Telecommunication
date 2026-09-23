@@ -1,129 +1,65 @@
-import { apiClient } from "@/lib/api/axios";
+import { http } from "@/lib/api/client";
 import {
-  PatientDashboardData,
+  AvailableSlotsData,
+  CreateBookingInput,
   PatientBookingsQueryParams,
   PatientBookingsResponse,
+  PatientDashboardData,
+  PatientProfileData,
   RawBooking,
+  UpdatePatientProfilePayload,
 } from "../types";
 
-/**
- * Fetch patient dashboard aggregated data (stats, next consultation, recent visits, recommendations)
- */
+/** Fetch the patient dashboard aggregated data. */
 export async function fetchPatientDashboard(): Promise<PatientDashboardData> {
-  const response = await apiClient.get<{ data: PatientDashboardData }>(
-    "/patients/dashboard"
-  );
-  return response.data.data;
+  return http.get<PatientDashboardData>("/patients/dashboard");
 }
 
-/**
- * Fetch patient's bookings with optional status filtering and pagination
- */
-interface BackendPaginatedBookingsResponse {
-  success?: boolean;
-  data?: RawBooking[];
-  meta?: PatientBookingsResponse["meta"];
-}
-
+/** Fetch the patient's bookings with optional status filter and pagination. */
 export async function fetchPatientBookings(
   params?: PatientBookingsQueryParams
 ): Promise<PatientBookingsResponse> {
-  const response = await apiClient.get<BackendPaginatedBookingsResponse | RawBooking[]>(
-    "/appointments/my-bookings",
-    { params }
-  );
-  const body = response.data;
-  if (body && typeof body === "object" && "data" in body && Array.isArray(body.data)) {
-    return {
-      data: body.data,
-      meta: body.meta || {
-        page: params?.page || 1,
-        limit: params?.limit || 10,
-        total: body.data.length,
-        totalPages: 1,
-      },
-    };
-  }
-  return {
-    data: Array.isArray(body) ? body : [],
-    meta: {
-      page: params?.page || 1,
-      limit: params?.limit || 10,
-      total: Array.isArray(body) ? body.length : 0,
-      totalPages: 1,
-    },
-  };
+  return http.getPage<RawBooking>("/appointments/my-bookings", { params });
 }
 
-/**
- * Cancel a patient booking by ID
- */
+/** Cancel a patient booking by id. */
 export async function cancelPatientBooking(
   bookingId: string,
   reason?: string
 ): Promise<RawBooking> {
-  const response = await apiClient.patch<{ data: RawBooking }>(
-    `/appointments/${bookingId}/cancel`,
-    { reason }
-  );
-  return response.data.data;
+  return http.patch<RawBooking>(`/appointments/${bookingId}/cancel`, { reason });
 }
 
-/**
- * Fetch authenticated patient profile details
- */
-export async function fetchPatientProfile(): Promise<import("../types").PatientProfileData> {
-  const response = await apiClient.get<{ data: import("../types").PatientProfileData }>(
-    "/patients/me"
-  );
-  return response.data.data;
+/** Fetch the authenticated patient profile. */
+export async function fetchPatientProfile(): Promise<PatientProfileData> {
+  return http.get<PatientProfileData>("/patients/me");
 }
 
-/**
- * Update authenticated patient profile (handles both FormData for image upload and json)
- */
+/** Update the authenticated patient profile (FormData for image upload, or JSON). */
 export async function updatePatientProfile(
-  payload: FormData | import("../types").UpdatePatientProfilePayload
-): Promise<import("../types").PatientProfileData> {
+  payload: FormData | UpdatePatientProfilePayload
+): Promise<PatientProfileData> {
   const headers =
     payload instanceof FormData
       ? { "Content-Type": "multipart/form-data" }
       : undefined;
 
-  const response = await apiClient.patch<{ data: import("../types").PatientProfileData }>(
-    "/patients/me",
-    payload,
-    { headers }
-  );
-  return response.data.data;
+  return http.patch<PatientProfileData>("/patients/me", payload, { headers });
 }
 
-/**
- * Fetch concrete available slots for a doctor on a specific date (YYYY-MM-DD)
- */
+/** Fetch concrete available slots for a doctor on a specific date (YYYY-MM-DD). */
 export async function fetchAvailableSlots(
   doctorId: string,
   date: string
-): Promise<import("../types").AvailableSlotsData> {
-  const response = await apiClient.get<{
-    success: boolean;
-    data: import("../types").AvailableSlotsData;
-  }>("/appointments/slots", {
+): Promise<AvailableSlotsData> {
+  return http.get<AvailableSlotsData>("/appointments/slots", {
     params: { doctorId, date },
   });
-  return response.data.data;
 }
 
-/**
- * Patient books an appointment for an available slot
- */
+/** Book an appointment for an available slot. */
 export async function createAppointmentBooking(
-  input: import("../types").CreateBookingInput
+  input: CreateBookingInput
 ): Promise<RawBooking> {
-  const response = await apiClient.post<{
-    success: boolean;
-    message?: string;
-    data: RawBooking;
-  }>("/appointments", input);
-  return response.data.data;
+  return http.post<RawBooking>("/appointments", input);
 }

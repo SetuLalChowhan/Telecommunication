@@ -1,5 +1,12 @@
 import axios from 'axios';
 
+/**
+ * The single normalized error type for the whole client.
+ *
+ * Every failure — browser, server, network, timeout — becomes an `ApiError`,
+ * so React Query, error boundaries and toasts all share one contract.
+ */
+
 export type ErrorKind = 'http' | 'network' | 'timeout' | 'aborted' | 'unknown';
 
 export interface ApiErrorOptions {

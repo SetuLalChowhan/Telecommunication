@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/api/axios";
+import { http } from "@/lib/api/client";
 import { ContactMessage, ContactMessageInput } from "../types";
 
 /**
@@ -9,7 +9,5 @@ import { ContactMessage, ContactMessageInput } from "../types";
 export async function submitContactMessage(
   input: ContactMessageInput
 ): Promise<ContactMessage> {
-  const response = await apiClient.post("/contacts", input);
-  const body = response.data;
-  return (body?.data ?? body) as ContactMessage;
+  return http.post<ContactMessage>("/contacts", input);
 }

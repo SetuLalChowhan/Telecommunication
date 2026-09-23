@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ApiError } from '@/lib/http/api-error';
+import { ApiError } from '@/lib/api/error';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 

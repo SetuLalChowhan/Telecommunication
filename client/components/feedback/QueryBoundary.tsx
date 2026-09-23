@@ -2,7 +2,7 @@
 
 import React, { ReactNode } from 'react';
 import { UseQueryResult } from '@tanstack/react-query';
-import { toApiError } from '@/lib/http/api-error';
+import { toApiError } from '@/lib/api/error';
 import { ErrorState } from './ErrorState';
 import { PageSkeleton } from './PageSkeleton';
 import { EmptyState } from './EmptyState';

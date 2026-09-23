@@ -5,7 +5,7 @@ import { Calendar, Video, CheckCircle2, AlertCircle, Loader2, Unlink } from "luc
 import { Button } from "@/components/ui/button";
 import { useGoogleLogin } from "@react-oauth/google";
 import { toast } from "react-toastify";
-import { apiClient } from "@/lib/api/axios";
+import { connectGoogle } from "@/features/doctors/api/client";
 
 interface DoctorGoogleTabProps {
   isConnected: boolean;
@@ -32,14 +32,11 @@ export const DoctorGoogleTab: React.FC<DoctorGoogleTabProps> = ({
     onSuccess: async (codeResponse) => {
       setIsConnecting(true);
       try {
-        await apiClient.post("/google/connect", {
-          code: codeResponse.code,
-          redirectUri: "postmessage",
-        });
+        await connectGoogle(codeResponse.code);
         toast.success("Google Calendar & Meet successfully connected!");
         onRefresh();
-      } catch (err: any) {
-        toast.error(err?.response?.data?.message || err?.message || "Failed to connect Google account");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to connect Google account");
       } finally {
         setIsConnecting(false);
       }

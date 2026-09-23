@@ -96,7 +96,7 @@ export const DoctorList: React.FC = () => {
     total: totalResults,
     totalPages: Math.max(1, Math.ceil(totalResults / ITEMS_PER_PAGE)),
     hasNextPage: false,
-    hasPrevPage: false,
+    hasPreviousPage: false,
   };
 
   // Apply filters from sidebar / mobile

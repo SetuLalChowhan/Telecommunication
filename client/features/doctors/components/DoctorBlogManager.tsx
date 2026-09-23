@@ -29,7 +29,7 @@ import {
   useAdminUpdateBlog,
 } from "@/features/blogs/api/queries";
 import type { AdminBlogPayload, BlogPost } from "@/features/blogs";
-import { useAuth } from "@/lib/api";
+import { useAuth } from "@/features/auth/api/queries";
 
 // Dynamic import — Quill uses browser APIs, must be client-only
 const ReactQuill = dynamic(() => import("react-quill-new"), {

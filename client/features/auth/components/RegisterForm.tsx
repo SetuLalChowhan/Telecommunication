@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PasswordStrengthIndicator } from "./PasswordStrengthIndicator";
-import { useAuth } from "@/lib/api";
+import { useAuth } from "@/features/auth/api/queries";
 
 const registerSchema = z
   .object({

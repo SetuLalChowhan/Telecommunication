@@ -10,7 +10,7 @@ import { AuthSplitLayout } from "./AuthSplitLayout";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/api";
+import { useAuth } from "@/features/auth/api/queries";
 
 const forgotPasswordSchema = z.object({
   email: z

@@ -10,6 +10,8 @@ import {
   getMyDoctorDaysOffServer,
 } from "@/features/doctors/api/server";
 import { doctorKeys } from "@/features/doctors/types";
+import { getProfileServer } from "@/features/auth/api/server";
+import { authKeys } from "@/features/auth/types";
 import { DoctorScheduleClient } from "./DoctorScheduleClient";
 
 export const metadata: Metadata = {
@@ -28,6 +30,10 @@ export default async function DoctorSchedulePage() {
     queryClient.prefetchQuery({
       queryKey: doctorKeys.myDaysOff(),
       queryFn: () => getMyDoctorDaysOffServer(),
+    }),
+    queryClient.prefetchQuery({
+      queryKey: authKeys.profile(),
+      queryFn: () => getProfileServer(),
     }),
   ]);
 

@@ -19,6 +19,7 @@ import {
   RawBooking,
 } from "@/features/patients/types";
 import { PatientAppointmentsHeader } from "@/features/appointments/components/patient/PatientAppointmentsHeader";
+import { MAX_PAGE_SIZE } from "@/lib/api/types";
 import {
   PatientAppointmentTabs,
   PatientBookingFilterStatus,
@@ -54,7 +55,7 @@ export function PatientAppointmentsClient({
     data: bookingsResponse,
     isLoading,
     isFetching,
-  } = usePatientBookings({ status: bookingStatus, limit: 100 });
+  } = usePatientBookings({ status: bookingStatus, limit: MAX_PAGE_SIZE });
   const { data: summary } = useBookingSummary();
   const cancelMutation = useCancelPatientBooking();
 

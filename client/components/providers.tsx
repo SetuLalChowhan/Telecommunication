@@ -16,24 +16,32 @@ import { TopProgressBar } from '@/components/common/TopProgressBar';
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => makeQueryClient());
 
-  const googleClientId =
-    env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
-    '361815179987-ij66diq58l1u9h0b910mh4fl65d1v0t5.apps.googleusercontent.com';
+  // Configured entirely through environment variables. No credential is ever
+  // hardcoded in source — see the reorganization docs, section 7.
+  const googleClientId = env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  const app = (
+    <QueryClientProvider client={queryClient}>
+      <Provider store={store}>
+        <Suspense fallback={null}>
+          <TopProgressBar />
+        </Suspense>
+        {children}
+        <ToastContainer position="top-right" autoClose={3000} />
+        {process.env.NODE_ENV === 'development' && (
+          <ReactQueryDevtools initialIsOpen={false} />
+        )}
+      </Provider>
+    </QueryClientProvider>
+  );
+
+  // When no client ID is configured we still render the app; the Google
+  // sign-in button simply has no provider to attach to.
+  if (!googleClientId) {
+    return app;
+  }
 
   return (
-    <GoogleOAuthProvider clientId={googleClientId}>
-      <QueryClientProvider client={queryClient}>
-        <Provider store={store}>
-          <Suspense fallback={null}>
-            <TopProgressBar />
-          </Suspense>
-          {children}
-          <ToastContainer position="top-right" autoClose={3000} />
-          {process.env.NODE_ENV === 'development' && (
-            <ReactQueryDevtools initialIsOpen={false} />
-          )}
-        </Provider>
-      </QueryClientProvider>
-    </GoogleOAuthProvider>
+    <GoogleOAuthProvider clientId={googleClientId}>{app}</GoogleOAuthProvider>
   );
 }

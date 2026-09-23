@@ -12,7 +12,7 @@ import { AuthDivider } from "./AuthDivider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/api";
+import { useAuth } from "@/features/auth/api/queries";
 
 const loginSchema = z.object({
   email: z

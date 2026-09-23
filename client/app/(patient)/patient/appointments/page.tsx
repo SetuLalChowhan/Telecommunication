@@ -12,7 +12,10 @@ import {
   normalizeStatusFilter,
 } from "@/features/appointments/types";
 import { getBookingSummaryServer } from "@/features/appointments/api/server";
+import { getProfileServer } from "@/features/auth/api/server";
+import { authKeys } from "@/features/auth/types";
 import { PatientAppointmentsClient } from "./PatientAppointmentsClient";
+import { MAX_PAGE_SIZE } from "@/lib/api/types";
 
 export const metadata: Metadata = {
   title: "My Consultations & Appointments | DocConnect",
@@ -36,7 +39,7 @@ export default async function PatientAppointmentsPage({
   const activeStatus = normalizeStatusFilter(statusParam);
   const listParams = {
     ...(activeStatus !== "ALL" ? { status: activeStatus } : {}),
-    limit: 100,
+    limit: MAX_PAGE_SIZE,
   };
 
   const queryClient = new QueryClient();
@@ -49,6 +52,10 @@ export default async function PatientAppointmentsPage({
     queryClient.prefetchQuery({
       queryKey: appointmentKeys.summary(),
       queryFn: () => getBookingSummaryServer(),
+    }),
+    queryClient.prefetchQuery({
+      queryKey: authKeys.profile(),
+      queryFn: () => getProfileServer(),
     }),
   ]);
 

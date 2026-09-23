@@ -1,4 +1,6 @@
-import { apiClient } from "@/lib/api/axios";
+import { http } from "@/lib/api/client";
+import { buildBlogQuery } from "../query";
+import { toBlogPost } from "../mapper";
 import {
   AdminBlogPayload,
   BlogCategory,
@@ -8,142 +10,80 @@ import {
   BlogPost,
   BlogPostDto,
   BlogQueryParams,
-  DEFAULT_BLOG_META,
 } from "../types";
-import {
-  normalizeBlogArray,
-  normalizeBlogDetail,
-  normalizeBlogList,
-  toBlogPost,
-} from "../utils";
 
-export interface BlogQueryOptions {
-  signal?: AbortSignal;
+interface BlogListPayload {
+  items: BlogPostDto[];
+  meta: BlogListMeta;
 }
 
-function toRequestParams(params?: BlogQueryParams) {
-  if (!params) return undefined;
-
-  return {
-    ...(params.search?.trim() ? { search: params.search.trim() } : {}),
-    ...(params.category && params.category !== "all"
-      ? { category: params.category }
-      : {}),
-    ...(params.sortBy ? { sortBy: params.sortBy } : {}),
-    page: params.page ?? 1,
-    limit: params.limit ?? DEFAULT_BLOG_META.limit,
-  };
+interface BlogDetailPayload {
+  post: BlogPostDto | null;
+  relatedPosts: BlogPostDto[];
 }
 
-function toMeta(raw: Record<string, unknown> | undefined): BlogListMeta {
-  if (!raw) return DEFAULT_BLOG_META;
+/* ------------------------------- Public API ------------------------------- */
 
-  return {
-    page: Number(raw.page ?? DEFAULT_BLOG_META.page),
-    limit: Number(raw.limit ?? DEFAULT_BLOG_META.limit),
-    total: Number(raw.total ?? 0),
-    totalPages: Number(raw.totalPages ?? 1),
-    hasNextPage: Boolean(raw.hasNextPage),
-    hasPreviousPage: Boolean(raw.hasPreviousPage),
-  };
-}
-
-// ─── Public API ──────────────────────────────────────────────────────────────
-
-/** Fetch published blog posts with search, category, sorting and pagination. */
+/** Published posts with search, category, sorting and pagination. */
 export async function fetchBlogs(
-  params?: BlogQueryParams,
-  options?: BlogQueryOptions
+  params?: BlogQueryParams
 ): Promise<BlogListResult> {
-  const response = await apiClient.get("/blogs", {
-    params: toRequestParams(params),
-    signal: options?.signal,
+  const { items, meta } = await http.get<BlogListPayload>("/blogs", {
+    params: buildBlogQuery(params),
   });
-
-  const { items, meta } = normalizeBlogList(response.data);
-  return { items: items.map(toBlogPost), meta: toMeta(meta) };
+  return { items: items.map(toBlogPost), meta };
 }
 
-/** Fetch a single published post plus related posts from the same category. */
-export async function fetchBlogBySlug(
-  slug: string,
-  options?: BlogQueryOptions
-): Promise<BlogDetailResult> {
-  const response = await apiClient.get(`/blogs/${encodeURIComponent(slug)}`, {
-    signal: options?.signal,
-  });
-
-  const { post, relatedPosts } = normalizeBlogDetail(response.data);
+/** A single published post plus related posts. */
+export async function fetchBlogBySlug(slug: string): Promise<BlogDetailResult> {
+  const { post, relatedPosts } = await http.get<BlogDetailPayload>(
+    `/blogs/${encodeURIComponent(slug)}`
+  );
   return {
     post: post ? toBlogPost(post) : null,
-    relatedPosts: relatedPosts.map(toBlogPost),
+    relatedPosts: (relatedPosts ?? []).map(toBlogPost),
   };
 }
 
-/** Fetch the featured (editor-picked) posts, used by the home page. */
-export async function fetchFeaturedBlogs(
-  options?: BlogQueryOptions
-): Promise<BlogPost[]> {
-  const response = await apiClient.get("/blogs/featured", {
-    signal: options?.signal,
-  });
-  return normalizeBlogArray(response.data).map(toBlogPost);
+/** Editor-picked featured posts for the home page. */
+export async function fetchFeaturedBlogs(): Promise<BlogPost[]> {
+  const posts = await http.get<BlogPostDto[]>("/blogs/featured");
+  return (posts ?? []).map(toBlogPost);
 }
 
-/** Fetch category facets with published post counts. */
-export async function fetchBlogCategories(): Promise<BlogCategory[]> {
-  const response = await apiClient.get("/blogs/categories");
-
-  const raw = Array.isArray(response.data)
-    ? response.data
-    : (response.data?.data as unknown[] | undefined) ?? [];
-
-  return raw.flatMap((item): BlogCategory[] => {
-    if (!item || typeof item !== "object") return [];
-    const value = item as { name?: string; count?: number };
-    if (!value.name) return [];
-    return [{ name: value.name, count: Number(value.count ?? 0) }];
-  });
+/** Category facets with published post counts. */
+export function fetchBlogCategories(): Promise<BlogCategory[]> {
+  return http.get<BlogCategory[]>("/blogs/categories");
 }
 
-// ─── Admin / Doctor Blog Management ─────────────────────────────────────────
+/* ------------------------- Admin / doctor management ---------------------- */
 
-/** List all blogs (published + drafts) — for admin/doctor dashboard. */
 export async function adminFetchBlogs(
-  params?: BlogQueryParams,
-  options?: BlogQueryOptions
+  params?: BlogQueryParams
 ): Promise<BlogListResult> {
-  const response = await apiClient.get("/blogs/admin/all", {
-    params: toRequestParams(params),
-    signal: options?.signal,
+  const { items, meta } = await http.get<BlogListPayload>("/blogs/admin/all", {
+    params: buildBlogQuery(params),
   });
-
-  const { items, meta } = normalizeBlogList(response.data);
-  return { items: items.map(toBlogPost), meta: toMeta(meta) };
+  return { items: items.map(toBlogPost), meta };
 }
 
-/** Create a new blog post. */
-export async function adminCreateBlog(payload: AdminBlogPayload): Promise<BlogPostDto> {
-  const response = await apiClient.post("/blogs/admin/create", payload);
-  return response.data?.data ?? response.data;
+export function adminCreateBlog(
+  payload: AdminBlogPayload
+): Promise<BlogPostDto> {
+  return http.post<BlogPostDto>("/blogs/admin/create", payload);
 }
 
-/** Update an existing blog post. */
-export async function adminUpdateBlog(
+export function adminUpdateBlog(
   id: string,
   payload: Partial<AdminBlogPayload>
 ): Promise<BlogPostDto> {
-  const response = await apiClient.patch(`/blogs/admin/${id}`, payload);
-  return response.data?.data ?? response.data;
+  return http.patch<BlogPostDto>(`/blogs/admin/${id}`, payload);
 }
 
-/** Delete a blog post. */
 export async function adminDeleteBlog(id: string): Promise<void> {
-  await apiClient.delete(`/blogs/admin/${id}`);
+  await http.delete<void>(`/blogs/admin/${id}`);
 }
 
-/** Toggle published/draft state of a blog post. */
-export async function adminTogglePublish(id: string): Promise<BlogPostDto> {
-  const response = await apiClient.patch(`/blogs/admin/${id}/toggle-publish`);
-  return response.data?.data ?? response.data;
+export function adminTogglePublish(id: string): Promise<BlogPostDto> {
+  return http.patch<BlogPostDto>(`/blogs/admin/${id}/toggle-publish`);
 }

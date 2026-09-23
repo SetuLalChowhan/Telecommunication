@@ -21,7 +21,8 @@ import {
   verifyEmail,
   sendVerificationEmail,
 } from "./client";
-import { apiClient } from "@/lib/api/axios";
+import { apiClient } from "@/lib/api/client";
+import { CACHE } from "@/lib/cache/policy";
 import { toast } from "react-toastify";
 import { User, Role, LoginParams, RegisterParams, authKeys } from "../types";
 
@@ -66,7 +67,7 @@ export const useAuth = () => {
       return res.data?.data || res.data;
     },
     enabled: isAuthenticated,
-    staleTime: 1000 * 60 * 5,
+    staleTime: CACHE.profile.client.staleTime,
   });
 
   const user = profileUser || (session?.user as unknown as User) || reduxUser || null;

@@ -85,14 +85,9 @@ export interface DoctorProfile {
   documents?: any[];
 }
 
-export interface PaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-  hasNextPage: boolean;
-  hasPrevPage: boolean;
-}
+/** Re-use the canonical pagination contract instead of redeclaring it. */
+import type { PaginationMeta } from "@/lib/api/types";
+export type { PaginationMeta };
 
 export interface DoctorQueryParams {
   search?: string;
@@ -322,6 +317,7 @@ export const doctorKeys = {
       "myBookings",
       params?.status || "ALL",
       params?.page || 1,
+      params?.limit || 10,
     ] as const,
   myPatients: (search?: string) =>
     [...doctorKeys.all, "myPatients", search ? search.trim().toLowerCase() : ""] as const,

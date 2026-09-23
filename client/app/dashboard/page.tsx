@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth, getRoleDashboardRoute } from "@/lib/api";
+import { useAuth, getRoleDashboardRoute } from "@/features/auth/api/queries";
 
 export default function DashboardRedirectPage() {
   const router = useRouter();

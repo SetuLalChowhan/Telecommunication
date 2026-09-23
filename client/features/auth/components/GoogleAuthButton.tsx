@@ -3,7 +3,7 @@
 import React from "react";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { toast } from "react-toastify";
-import { useAuth } from "@/lib/api";
+import { useAuth } from "@/features/auth/api/queries";
 import { Loader2 } from "lucide-react";
 
 interface GoogleAuthButtonProps {

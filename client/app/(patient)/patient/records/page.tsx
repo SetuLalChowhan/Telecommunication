@@ -9,6 +9,8 @@ import { getMyMedicalReportsServer } from "@/features/medical-reports/api/server
 import { medicalReportKeys } from "@/features/medical-reports/types";
 import { getPatientBookingsServer } from "@/features/patients/api/server";
 import { patientKeys } from "@/features/patients/types";
+import { getProfileServer } from "@/features/auth/api/server";
+import { authKeys } from "@/features/auth/types";
 import { PatientRecordsClient } from "./PatientRecordsClient";
 
 export const metadata: Metadata = {
@@ -33,6 +35,10 @@ export default async function PatientRecordsPage() {
     queryClient.prefetchQuery({
       queryKey: patientKeys.bookings({ limit: 50 }),
       queryFn: () => getPatientBookingsServer({ limit: 50 }),
+    }),
+    queryClient.prefetchQuery({
+      queryKey: authKeys.profile(),
+      queryFn: () => getProfileServer(),
     }),
   ]);
 

@@ -14,7 +14,7 @@ import {
   useDeleteDoctorDayOff,
 } from "@/features/doctors/api/queries";
 import { DoctorDayOff } from "@/features/doctors/types";
-import { to24Hour } from "@/lib/time-utils";
+import { to24Hour } from "@/lib/time";
 import { toast } from "react-toastify";
 import { PageHeader } from "@/components/layout";
 

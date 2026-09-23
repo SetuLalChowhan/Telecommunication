@@ -29,7 +29,7 @@ const eslintConfig = defineConfig([
               message: "No raw HTTP in UI. Use a feature hook.",
             },
             {
-              group: ["@/lib/http/client", "@/lib/http/server"],
+              group: ["@/lib/api/client", "@/lib/api/server"],
               message: "UI imports feature hooks or prefetch helpers only.",
             },
           ],
