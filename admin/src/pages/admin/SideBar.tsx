@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react"
-import { Link, useLocation } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { LogOut, X, Box, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { useLogout } from "@/features/auth/api/auth.queries"
 
 export interface SidebarItem {
   id: number
@@ -21,6 +22,8 @@ interface SideBarProps {
 
 const SideBar: React.FC<SideBarProps> = ({ sidebar, open, setOpen }) => {
   const location = useLocation()
+  const navigate = useNavigate()
+  const logout = useLogout()
   const [openGroups, setOpenGroups] = useState<Record<number, boolean>>({})
 
   // Automatically expand dropdown groups containing the active sublink
@@ -35,7 +38,13 @@ const SideBar: React.FC<SideBarProps> = ({ sidebar, open, setOpen }) => {
   const isActive = (paths?: string[] | string) => {
     if (!paths) return false
     const pathArray = Array.isArray(paths) ? paths : [paths]
-    return pathArray.some((path) => location.pathname === path)
+    return pathArray.some((path) =>
+      // A trailing `/*` opts into prefix matching (used by detail routes).
+      path.endsWith("/*")
+        ? location.pathname === path.slice(0, -2) ||
+            location.pathname.startsWith(path.slice(0, -1))
+        : location.pathname === path,
+    )
   }
 
   const toggleGroup = (id: number) => {
@@ -181,12 +190,11 @@ const SideBar: React.FC<SideBarProps> = ({ sidebar, open, setOpen }) => {
           <Button
             variant="ghost"
             className="w-full justify-start gap-3.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
-            onClick={() => {
-              console.log("Logged out")
-            }}
+            disabled={logout.isPending}
+            onClick={() => logout.mutate(undefined, { onSuccess: () => navigate("/login") })}
           >
             <LogOut className="h-5 w-5" />
-            <span>Log Out</span>
+            <span>{logout.isPending ? "Signing out…" : "Log Out"}</span>
           </Button>
         </div>
       </aside>

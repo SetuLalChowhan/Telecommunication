@@ -2,13 +2,9 @@ import React, { useEffect, useState } from "react"
 import { Outlet, ScrollRestoration, useLocation } from "react-router-dom"
 import CommonNavbar from "../pages/admin/CommonNavbar"
 import SideBar, { type SidebarItem } from "../pages/admin/SideBar"
-import { LayoutDashboard, Settings, Layers } from "lucide-react"
-import useUserProfile from "@/hooks/fetchUserProfile"
+import { LayoutDashboard, Settings, Layers, Stethoscope } from "lucide-react"
 
 const AdminLayout: React.FC = () => {
-  // Sync profile data
-  useUserProfile()
-
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
 
@@ -24,6 +20,13 @@ const AdminLayout: React.FC = () => {
       text: "Dashboard",
       path: "/dashboard",
       activePaths: ["/dashboard"],
+    },
+    {
+      id: 4,
+      icon: <Stethoscope className="h-5 w-5" />,
+      text: "Doctors",
+      path: "/dashboard/doctors",
+      activePaths: ["/dashboard/doctors/*"],
     },
     {
       id: 2,

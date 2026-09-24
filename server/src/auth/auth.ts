@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
-import { oneTap } from 'better-auth/plugins';
+import { bearer, oneTap } from 'better-auth/plugins';
 
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
@@ -42,6 +42,11 @@ export const auth = betterAuth({
 
   plugins: [
     oneTap(),
+    // Allow first-party SPAs (admin/) to authenticate with
+    // `Authorization: Bearer <session token>` instead of cookies. This is still
+    // a Better Auth session resolved by the normal guard — not a second auth
+    // system. The token is exposed via the `set-auth-token` response header.
+    bearer(),
   ],
 
 

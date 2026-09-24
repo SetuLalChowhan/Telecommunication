@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { describeApiError } from "@/lib/api/error"
+import { useForgotPassword } from "@/features/auth/api/auth.queries"
 
 const schema = z.object({
   email: z.string().min(1, "Email is required").email("Please enter a valid email address"),
@@ -16,8 +18,9 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 const ForgotPassword: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(false)
   const [isSent, setIsSent] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+  const forgotPassword = useForgotPassword()
 
   const {
     register,
@@ -28,12 +31,14 @@ const ForgotPassword: React.FC = () => {
     defaultValues: { email: "" },
   })
 
-  const onSubmit = async (data: FormValues) => {
-    setIsLoading(true)
-    // Mock API delay
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    setIsLoading(false)
-    setIsSent(true)
+  const onSubmit = async (values: FormValues) => {
+    setFormError(null)
+    try {
+      await forgotPassword.mutateAsync({ email: values.email })
+      setIsSent(true)
+    } catch (error) {
+      setFormError(describeApiError(error))
+    }
   }
 
   if (isSent) {
@@ -56,11 +61,6 @@ const ForgotPassword: React.FC = () => {
           </p>
         </CardContent>
         <CardFooter className="flex flex-col gap-2 border-t pt-4">
-          <Button asChild className="w-full font-medium cursor-pointer">
-            <Link to="/reset-password">
-              Go to Reset Password (Demo)
-            </Link>
-          </Button>
           <Button asChild variant="outline" className="w-full font-medium cursor-pointer">
             <Link to="/login" className="flex items-center justify-center gap-2">
               <ArrowLeft className="h-4 w-4" /> Back to Login
@@ -87,6 +87,15 @@ const ForgotPassword: React.FC = () => {
 
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {formError && (
+            <div
+              role="alert"
+              className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs font-medium text-destructive"
+            >
+              {formError}
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <Label htmlFor="email">Email address</Label>
             <div className="relative">
@@ -104,8 +113,8 @@ const ForgotPassword: React.FC = () => {
             )}
           </div>
 
-          <Button type="submit" className="w-full font-medium cursor-pointer" disabled={isLoading}>
-            {isLoading ? (
+          <Button type="submit" className="w-full font-medium cursor-pointer" disabled={forgotPassword.isPending}>
+            {forgotPassword.isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 Sending link...

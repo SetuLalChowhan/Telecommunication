@@ -2,12 +2,14 @@ import React, { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Link, useNavigate } from "react-router-dom"
-import { KeyRound, Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-react"
+import { Link, useSearchParams } from "react-router-dom"
+import { KeyRound, Eye, EyeOff, Loader2, CheckCircle2, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { describeApiError } from "@/lib/api/error"
+import { useResetPassword } from "@/features/auth/api/auth.queries"
 
 const schema = z
   .object({
@@ -23,9 +25,12 @@ type FormValues = z.infer<typeof schema>
 
 const ResetPassword: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
-  const navigate = useNavigate()
+  const [formError, setFormError] = useState<string | null>(null)
+  const [searchParams] = useSearchParams()
+  const resetPassword = useResetPassword()
+
+  const token = searchParams.get("token")
 
   const {
     register,
@@ -39,12 +44,40 @@ const ResetPassword: React.FC = () => {
     },
   })
 
-  const onSubmit = async (data: FormValues) => {
-    setIsLoading(true)
-    // Mock API delay
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    setIsLoading(false)
-    setIsSuccess(true)
+  const onSubmit = async (values: FormValues) => {
+    if (!token) return
+    setFormError(null)
+    try {
+      await resetPassword.mutateAsync({ newPassword: values.password, token })
+      setIsSuccess(true)
+    } catch (error) {
+      setFormError(describeApiError(error))
+    }
+  }
+
+  // The token arrives in the emailed link (`?token=...`). Without it the page
+  // cannot do anything useful, so say so instead of failing silently.
+  if (!token) {
+    return (
+      <Card className="border border-border/80 shadow-lg text-center">
+        <CardHeader className="space-y-2">
+          <div className="flex justify-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <AlertTriangle className="h-6 w-6" />
+            </div>
+          </div>
+          <CardTitle className="text-2xl font-bold">Invalid reset link</CardTitle>
+          <CardDescription className="text-xs">
+            This password reset link is missing its token or has expired.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter className="pt-4">
+          <Button asChild className="w-full font-medium cursor-pointer">
+            <Link to="/forgot-password">Request a new link</Link>
+          </Button>
+        </CardFooter>
+      </Card>
+    )
   }
 
   if (isSuccess) {
@@ -86,6 +119,15 @@ const ResetPassword: React.FC = () => {
 
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {formError && (
+            <div
+              role="alert"
+              className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs font-medium text-destructive"
+            >
+              {formError}
+            </div>
+          )}
+
           {/* Password field */}
           <div className="space-y-1.5">
             <Label htmlFor="password">New Password</Label>
@@ -129,8 +171,8 @@ const ResetPassword: React.FC = () => {
             )}
           </div>
 
-          <Button type="submit" className="w-full font-medium cursor-pointer" disabled={isLoading}>
-            {isLoading ? (
+          <Button type="submit" className="w-full font-medium cursor-pointer" disabled={resetPassword.isPending}>
+            {resetPassword.isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 Updating password...

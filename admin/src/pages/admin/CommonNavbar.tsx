@@ -3,7 +3,6 @@ import { useLocation, Link, useNavigate } from "react-router-dom"
 import { Bell, Menu, User, Settings, LogOut, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -21,6 +20,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
+import { useLogout, useSession } from "@/features/auth/api/auth.queries"
 
 interface CommonNavbarProps {
   open: boolean
@@ -30,13 +30,21 @@ interface CommonNavbarProps {
 const CommonNavbar: React.FC<CommonNavbarProps> = ({ open, setOpen }) => {
   const location = useLocation()
   const navigate = useNavigate()
+  const { user } = useSession()
+  const logout = useLogout()
 
   // Generate dynamic breadcrumbs based on pathname
   const pathnames = location.pathname.split("/").filter((x) => x)
 
+  const initials = (user?.name ?? user?.email ?? "AD")
+    .split(" ")
+    .map((part) => part.charAt(0))
+    .slice(0, 2)
+    .join("")
+    .toUpperCase()
+
   const handleLogout = () => {
-    // Navigate back to login
-    navigate("/login")
+    logout.mutate(undefined, { onSuccess: () => navigate("/login") })
   }
 
   return (
@@ -111,9 +119,6 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({ open, setOpen }) => {
               className="relative h-9 w-9 text-muted-foreground hover:text-foreground rounded-full cursor-pointer"
             >
               <Bell className="h-5 w-5" />
-              <Badge className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center bg-destructive p-0 text-[10px] text-destructive-foreground hover:bg-destructive shadow-sm">
-                3
-              </Badge>
               <span className="sr-only">Notifications</span>
             </Button>
           </DropdownMenuTrigger>
@@ -121,33 +126,12 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({ open, setOpen }) => {
             <DropdownMenuLabel className="p-4 font-semibold text-sm">Notifications</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <div className="max-h-[300px] overflow-y-auto">
-              <DropdownMenuItem className="p-4 border-b border-border flex flex-col items-start gap-1 cursor-pointer">
-                <div className="flex justify-between w-full">
-                  <span className="font-medium text-xs text-foreground">New User Signup</span>
-                  <span className="text-[10px] text-muted-foreground">5m ago</span>
-                </div>
-                <p className="text-xs text-muted-foreground">User Setu Lal registered a new account.</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="p-4 border-b border-border flex flex-col items-start gap-1 cursor-pointer">
-                <div className="flex justify-between w-full">
-                  <span className="font-medium text-xs text-foreground">Server CPU Spike</span>
-                  <span className="text-[10px] text-muted-foreground">2h ago</span>
-                </div>
-                <p className="text-xs text-muted-foreground">CPU utilization exceeded 90% threshold.</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="p-4 flex flex-col items-start gap-1 cursor-pointer">
-                <div className="flex justify-between w-full">
-                  <span className="font-medium text-xs text-foreground">Backup Finished</span>
-                  <span className="text-[10px] text-muted-foreground">1d ago</span>
-                </div>
-                <p className="text-xs text-muted-foreground">Daily database backup successfully uploaded.</p>
-              </DropdownMenuItem>
-            </div>
-            <DropdownMenuSeparator />
-            <div className="p-2 text-center border-t">
-              <Link to="/dashboard" className="text-xs text-primary font-medium hover:underline block py-1">
-                View all notifications
-              </Link>
+              <div className="p-6 text-center">
+                <p className="text-xs text-muted-foreground">
+                  No admin notifications feed is connected yet. The previous
+                  placeholder items were fabricated and have been removed.
+                </p>
+              </div>
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -157,15 +141,17 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({ open, setOpen }) => {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0 cursor-pointer">
               <Avatar className="h-9 w-9 border border-border">
-                <AvatarImage src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop" alt="Avatar" />
-                <AvatarFallback>AD</AvatarFallback>
+                {user?.image && <AvatarImage src={user.image} alt={user.name ?? "Admin"} />}
+                <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel className="font-normal flex flex-col p-3">
-              <span className="font-semibold text-sm text-foreground">Setu Lal</span>
-              <span className="text-xs text-muted-foreground mt-0.5">setu@example.com</span>
+              <span className="font-semibold text-sm text-foreground">
+                {user?.name ?? "Administrator"}
+              </span>
+              <span className="text-xs text-muted-foreground mt-0.5">{user?.email ?? ""}</span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild className="cursor-pointer">

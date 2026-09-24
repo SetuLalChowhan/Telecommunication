@@ -24,7 +24,11 @@ const Dashboard: React.FC = () => {
 
         {/* Compact Tabs configuration */}
         <div className="flex items-center gap-2">
-          <Tabs value={range} onValueChange={(val: any) => setRange(val)} className="w-auto">
+          <Tabs
+            value={range}
+            onValueChange={(value) => setRange(value as "daily" | "weekly" | "monthly")}
+            className="w-auto"
+          >
             <TabsList className="bg-muted p-1 rounded-lg h-9">
               <TabsTrigger value="daily" className="text-xs h-7 px-3 py-1 font-medium cursor-pointer">Daily</TabsTrigger>
               <TabsTrigger value="weekly" className="text-xs h-7 px-3 py-1 font-medium cursor-pointer">Weekly</TabsTrigger>

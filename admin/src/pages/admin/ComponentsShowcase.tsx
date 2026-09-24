@@ -1,9 +1,8 @@
 import React, { useState } from "react"
-import { useLocation, Link } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import {
   Info,
-  Calendar,
   AlertTriangle,
   Play,
   CheckCircle,
@@ -17,25 +16,16 @@ import {
   Database,
   ArrowRight,
   HelpCircle,
-  Activity,
-  Terminal,
-  Server,
-  Layers,
-  Settings,
   AlertCircle,
   Eye,
   Trash2,
   FolderKanban,
   Flame,
-  Globe,
   Sliders,
-  DollarSign,
-  TrendingUp,
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -63,7 +53,6 @@ const COMPONENT_OPTIONS: OptionType[] = [
   { label: "Tailwind CSS", value: "tailwind" },
   { label: "shadcn/ui", value: "shadcn" },
   { label: "Recharts", value: "recharts" },
-  { label: "Redux Toolkit", value: "redux" },
 ]
 
 // --- Mock FAQ/Accordion Items ---
