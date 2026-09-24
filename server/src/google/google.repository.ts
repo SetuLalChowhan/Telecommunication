@@ -53,4 +53,29 @@ export class GoogleRepository {
       },
     });
   }
+
+  async createOAuthState(state: string, userId: string, expiresAt: Date) {
+    return this.prisma.verification.create({
+      data: {
+        identifier: `google_oauth_state:${state}`,
+        value: userId,
+        expiresAt,
+      },
+    });
+  }
+
+  async findAndConsumeOAuthState(state: string) {
+    const identifier = `google_oauth_state:${state}`;
+    const record = await this.prisma.verification.findFirst({
+      where: { identifier },
+    });
+
+    if (record) {
+      await this.prisma.verification.delete({
+        where: { id: record.id },
+      });
+    }
+
+    return record;
+  }
 }

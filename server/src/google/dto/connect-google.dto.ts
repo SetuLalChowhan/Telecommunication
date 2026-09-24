@@ -7,5 +7,9 @@ export class ConnectGoogleDto {
 
   @IsOptional()
   @IsString()
+  state?: string;
+
+  @IsOptional()
+  @IsString()
   redirectUri?: string;
 }

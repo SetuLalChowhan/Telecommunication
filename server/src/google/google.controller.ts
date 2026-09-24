@@ -29,6 +29,7 @@ export class GoogleController {
     return this.googleService.handleOAuthCallback(
       dto.code,
       userId,
+      dto.state,
       dto.redirectUri,
     );
   }

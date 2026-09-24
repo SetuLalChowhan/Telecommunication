@@ -437,15 +437,12 @@ export class AppointmentsService {
         bookingId: booking.id,
         notes: booking.notes,
       });
-      if (result.meetLink) {
+      if (result?.meetLink) {
         meetLink = result.meetLink;
         googleEventId = result.googleEventId || null;
       }
     } catch (err) {
       console.error('Failed to create Google Meet event during confirmation:', err);
-      if (!meetLink) {
-        meetLink = `https://meet.google.com/tele-${booking.id.slice(-8)}`;
-      }
     }
 
     const updated = await this.repo.updateBooking(bookingId, {

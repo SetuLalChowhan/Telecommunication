@@ -3,7 +3,9 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { google } from 'googleapis';
+import { randomBytes } from 'crypto';
 import { GoogleRepository } from './google.repository.js';
 
 const GOOGLE_CALENDAR_PROVIDER = 'google-calendar';
@@ -12,30 +14,53 @@ const GOOGLE_CALENDAR_PROVIDER = 'google-calendar';
 export class GoogleService {
   private readonly logger = new Logger(GoogleService.name);
 
-  private readonly clientId = process.env.GOOGLE_CLIENT_ID || '';
-  private readonly clientSecret = process.env.GOOGLE_CLIENT_SECRET || '';
-  private readonly redirectUri =
-    process.env.GOOGLE_CALENDAR_REDIRECT_URI ||
-    process.env.GOOGLE_REDIRECT_URI ||
-    'http://localhost:3000/api/google/callback';
+  constructor(
+    private readonly repo: GoogleRepository,
+    private readonly configService: ConfigService,
+  ) {}
 
-  constructor(private readonly repo: GoogleRepository) {}
+  private get clientId(): string {
+    return this.configService.get<string>('GOOGLE_CLIENT_ID') || '';
+  }
 
-  /**
-   * Creates an OAuth2 client instance
-   */
-  private getOAuth2Client() {
-    return new google.auth.OAuth2(
-      this.clientId,
-      this.clientSecret,
-      this.redirectUri,
+  private get clientSecret(): string {
+    return this.configService.get<string>('GOOGLE_CLIENT_SECRET') || '';
+  }
+
+  private get defaultRedirectUri(): string {
+    return (
+      this.configService.get<string>('GOOGLE_CALENDAR_REDIRECT_URI') ||
+      this.configService.get<string>('GOOGLE_REDIRECT_URI') ||
+      'http://localhost:3000/api/google/callback'
     );
   }
 
   /**
-   * Generates Google OAuth Consent URL with Google Calendar & Meet scopes
+   * Creates an OAuth2 client instance with specified or default redirect URI
    */
-  getAuthUrl(userId: string): { url: string } {
+  private getOAuth2Client(customRedirectUri?: string) {
+    return new google.auth.OAuth2(
+      this.clientId,
+      this.clientSecret,
+      customRedirectUri || this.defaultRedirectUri,
+    );
+  }
+
+  /**
+   * Generates Google OAuth Consent URL with secure random state and Google Calendar scopes
+   */
+  async getAuthUrl(userId: string): Promise<{ url: string; state: string }> {
+    if (!this.clientId || !this.clientSecret) {
+      throw new BadRequestException(
+        'Google OAuth client credentials are not configured on the server',
+      );
+    }
+
+    const state = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+
+    await this.repo.createOAuthState(state, userId, expiresAt);
+
     const oauth2Client = this.getOAuth2Client();
 
     const scopes = [
@@ -48,136 +73,128 @@ export class GoogleService {
       access_type: 'offline',
       prompt: 'consent',
       scope: scopes,
-      state: userId,
+      state,
     });
 
-    return { url };
+    return { url, state };
   }
 
   /**
-   * Exchanges authorization code for tokens and saves Google account
+   * Exchanges authorization code for tokens, verifies Google identity, and securely links account
    */
-  async handleOAuthCallback(code: string, userId: string, redirectUri?: string) {
+  async handleOAuthCallback(
+    code: string,
+    userId: string,
+    state?: string,
+    redirectUri?: string,
+  ) {
     if (!this.clientId || !this.clientSecret) {
       throw new BadRequestException(
         'Google OAuth client credentials are not configured on the server',
       );
     }
 
-    let tokens;
-    let oauth2Client: InstanceType<typeof google.auth.OAuth2> | null = null;
-
-    // Prioritize postmessage (GIS code flow) or explicitly passed redirectUri, with fallback
-    const candidateUris = Array.from(
-      new Set(
-        [redirectUri, 'postmessage', this.redirectUri].filter(
-          Boolean,
-        ) as string[],
-      ),
-    );
-
-    let lastError: any = null;
-    for (const uri of candidateUris) {
-      try {
-        const client = new google.auth.OAuth2(
-          this.clientId,
-          this.clientSecret,
-          uri,
-        );
-        const res = await client.getToken(code);
-        if (res.tokens) {
-          tokens = res.tokens;
-          oauth2Client = client;
-          break;
-        }
-      } catch (err) {
-        lastError = err;
+    // 1. Verify OAuth State for CSRF protection and account linking safety
+    if (state) {
+      const record = await this.repo.findAndConsumeOAuthState(state);
+      if (!record || record.value !== userId || record.expiresAt < new Date()) {
+        throw new BadRequestException('Invalid or expired OAuth state parameter');
       }
     }
 
-    if (!tokens || !oauth2Client) {
+    const oauth2Client = this.getOAuth2Client(redirectUri);
+
+    let tokens;
+    try {
+      const tokenResponse = await oauth2Client.getToken(code);
+      tokens = tokenResponse.tokens;
+    } catch (err: any) {
       this.logger.error(
-        'Failed to exchange Google authorization code with candidate redirect URIs:',
-        lastError,
+        'Failed to exchange authorization code with Google:',
+        err?.response?.data || err?.message || err,
       );
       throw new BadRequestException(
-        lastError?.response?.data?.error_description ||
-          lastError?.message ||
+        err?.response?.data?.error_description ||
           'Failed to exchange authorization code with Google',
       );
+    }
+
+    if (!tokens || !tokens.access_token) {
+      throw new BadRequestException('No access token received from Google');
     }
 
     try {
       oauth2Client.setCredentials(tokens);
 
-      let googleAccountId: string = userId;
+      let googleAccountId: string | null = null;
 
-      // Extract Google sub ID safely from id_token without external API dependency
+      // 2. Cryptographically verify Google ID token signature and extract permanent sub identifier
       if (tokens.id_token) {
         try {
-          const payloadBase64 = tokens.id_token.split('.')[1];
-          if (payloadBase64) {
-            const decoded = JSON.parse(
-              Buffer.from(payloadBase64, 'base64').toString('utf8'),
-            );
-            if (decoded?.sub) {
-              googleAccountId = String(decoded.sub);
-            }
+          const ticket = await oauth2Client.verifyIdToken({
+            idToken: tokens.id_token,
+            audience: this.clientId,
+          });
+          const payload = ticket.getPayload();
+          if (payload?.sub) {
+            googleAccountId = payload.sub;
           }
         } catch (err) {
-          this.logger.warn('Could not decode id_token sub, attempting userinfo API', err);
+          this.logger.warn(
+            'Failed to verify ID token signature, attempting userinfo API fallback:',
+            err,
+          );
         }
       }
 
-      if (googleAccountId === userId) {
-        try {
-          const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
-          const userInfo = await oauth2.userinfo.get();
-          if (userInfo?.data?.id) {
-            googleAccountId = userInfo.data.id;
-          }
-        } catch (err) {
-          this.logger.warn('Optional userInfo.get() call was skipped or failed:', err);
+      // Fallback to userinfo API if id_token verification was not possible
+      if (!googleAccountId) {
+        const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
+        const userInfo = await oauth2.userinfo.get();
+        if (!userInfo?.data?.id) {
+          throw new BadRequestException('Unable to verify Google account identity');
         }
+        googleAccountId = userInfo.data.id;
       }
 
-      const expiresAt = tokens.expiry_date
-        ? new Date(tokens.expiry_date)
-        : null;
-
-      // 1. Check if a google-calendar integration account already exists with this Google account ID
+      // 3. Prevent account hijacking: Check if this Google account is already linked to another user
       const existingByGoogleId = await this.repo.findAccountByGoogleId(
         GOOGLE_CALENDAR_PROVIDER,
         googleAccountId,
       );
 
-      // 2. Check if the current doctor user already has a google-calendar integration account linked
+      if (existingByGoogleId && existingByGoogleId.userId !== userId) {
+        throw new BadRequestException(
+          'This Google account is already connected to another user account',
+        );
+      }
+
+      // 4. Check if current user already has a linked google-calendar account
       const existingByUser = await this.repo.findAccountByUserIdAndProvider(
         userId,
         GOOGLE_CALENDAR_PROVIDER,
       );
 
-      if (
-        existingByGoogleId &&
-        existingByUser &&
-        existingByGoogleId.id !== existingByUser.id
-      ) {
-        // If there are two separate rows, delete the old user row to prevent unique constraint conflicts
-        await this.repo.deleteAccount(existingByUser.id);
-      }
+      const expiresAt = tokens.expiry_date
+        ? new Date(tokens.expiry_date)
+        : null;
 
-      const targetAccount = existingByGoogleId || existingByUser;
-
-      if (targetAccount) {
-        await this.repo.updateAccount(targetAccount.id, {
-          user: { connect: { id: userId } },
-          providerId: GOOGLE_CALENDAR_PROVIDER,
+      if (existingByUser) {
+        await this.repo.updateAccount(existingByUser.id, {
           accountId: googleAccountId,
-          accessToken: tokens.access_token || targetAccount.accessToken,
-          refreshToken: tokens.refresh_token || targetAccount.refreshToken,
-          idToken: tokens.id_token || targetAccount.idToken,
-          accessTokenExpiresAt: expiresAt || targetAccount.accessTokenExpiresAt,
-          scope: tokens.scope || targetAccount.scope,
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token || existingByUser.refreshToken,
+          idToken: tokens.id_token || existingByUser.idToken,
+          accessTokenExpiresAt: expiresAt || existingByUser.accessTokenExpiresAt,
+          scope: tokens.scope || existingByUser.scope,
+        });
+      } else if (existingByGoogleId) {
+        await this.repo.updateAccount(existingByGoogleId.id, {
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token || existingByGoogleId.refreshToken,
+          idToken: tokens.id_token || existingByGoogleId.idToken,
+          accessTokenExpiresAt: expiresAt || existingByGoogleId.accessTokenExpiresAt,
+          scope: tokens.scope || existingByGoogleId.scope,
         });
       } else {
         await this.repo.createAccount({
@@ -197,20 +214,21 @@ export class GoogleService {
         message: 'Google Calendar & Meet successfully connected',
       };
     } catch (error: any) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
       this.logger.error(
         'Failed to save Google account credentials:',
         error?.stack || error?.message || error,
       );
       throw new BadRequestException(
-        error?.message ||
-          error?.response?.data?.error_description ||
-          'Failed to process Google account information',
+        'Failed to process and link Google account',
       );
     }
   }
 
   /**
-   * Authenticates an OAuth2 client with doctor's saved tokens
+   * Authenticates an OAuth2 client with doctor's saved tokens and registers auto-refresh listener
    */
   private async getAuthenticatedClient(userId: string) {
     const account = await this.repo.findFirstAccountForUser(userId, [
@@ -231,18 +249,24 @@ export class GoogleService {
         : undefined,
     });
 
-    // Handle automatic token refresh events to keep DB in sync
-    oauth2Client.on('tokens', async (tokens) => {
+    // Handle automatic token refresh events safely and preserve existing refresh token
+    oauth2Client.on('tokens', async (newTokens) => {
       try {
-        await this.repo.updateAccount(account.id, {
-          accessToken: tokens.access_token || account.accessToken,
-          refreshToken: tokens.refresh_token || account.refreshToken,
-          accessTokenExpiresAt: tokens.expiry_date
-            ? new Date(tokens.expiry_date)
-            : account.accessTokenExpiresAt,
-        });
+        const currentAccount = await this.repo.findFirstAccountForUser(userId, [
+          GOOGLE_CALENDAR_PROVIDER,
+          'google',
+        ]);
+        if (currentAccount) {
+          await this.repo.updateAccount(currentAccount.id, {
+            accessToken: newTokens.access_token || currentAccount.accessToken,
+            refreshToken: newTokens.refresh_token || currentAccount.refreshToken,
+            accessTokenExpiresAt: newTokens.expiry_date
+              ? new Date(newTokens.expiry_date)
+              : currentAccount.accessTokenExpiresAt,
+          });
+        }
       } catch (err) {
-        this.logger.warn('Failed to update refreshed tokens in DB:', err);
+        this.logger.warn('Failed to update refreshed Google tokens in database:', err);
       }
     });
 
@@ -251,6 +275,7 @@ export class GoogleService {
 
   /**
    * Creates a Google Calendar event with Google Meet conference link
+   * Returns genuine meetLink if created, or null if Google is not connected/failed.
    */
   async createMeetingEvent(params: {
     doctorUserId: string;
@@ -261,7 +286,7 @@ export class GoogleService {
     slotEnd: Date;
     bookingId: string;
     notes?: string | null;
-  }): Promise<{ meetLink: string; googleEventId?: string }> {
+  }): Promise<{ meetLink: string | null; googleEventId?: string | null }> {
     const {
       doctorUserId,
       doctorName,
@@ -276,12 +301,10 @@ export class GoogleService {
     const oauth2Client = await this.getAuthenticatedClient(doctorUserId);
 
     if (!oauth2Client) {
-      // Graceful fallback: return standard meeting link
-      const fallbackMeetLink = `https://meet.google.com/tele-${bookingId.slice(-8)}`;
       this.logger.log(
-        `Doctor Google account not connected. Using standard meet link: ${fallbackMeetLink}`,
+        `Doctor (User: ${doctorUserId}) has not connected Google Calendar. Skipping Meet event creation.`,
       );
-      return { meetLink: fallbackMeetLink };
+      return { meetLink: null, googleEventId: null };
     }
 
     try {
@@ -304,7 +327,8 @@ export class GoogleService {
             : undefined,
           conferenceData: {
             createRequest: {
-              requestId: `tele-${bookingId}-${Date.now()}`,
+              // Stable conference request ID to ensure idempotency on retries
+              requestId: `tele-conf-${bookingId}`,
               conferenceSolutionKey: {
                 type: 'hangoutsMeet',
               },
@@ -318,7 +342,7 @@ export class GoogleService {
           (ep) => ep.entryPointType === 'video',
         )?.uri ||
         event.data.hangoutLink ||
-        `https://meet.google.com/tele-${bookingId.slice(-8)}`;
+        null;
 
       this.logger.log(
         `Google Calendar event created successfully. Meet Link: ${meetLink} (Event ID: ${event.data.id})`,
@@ -326,15 +350,14 @@ export class GoogleService {
 
       return {
         meetLink,
-        googleEventId: event.data.id || undefined,
+        googleEventId: event.data.id || null,
       };
     } catch (error: any) {
       this.logger.error(
-        'Error creating Google Calendar Meet event:',
+        `Error creating Google Calendar Meet event for booking ${bookingId}:`,
         error?.response?.data || error?.message || error,
       );
-      const fallbackMeetLink = `https://meet.google.com/tele-${bookingId.slice(-8)}`;
-      return { meetLink: fallbackMeetLink };
+      return { meetLink: null, googleEventId: null };
     }
   }
 
