@@ -1,15 +1,11 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class ConnectGoogleDto {
   @IsNotEmpty({ message: 'Authorization code is required' })
   @IsString()
   code: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: 'OAuth state parameter is required' })
   @IsString()
-  state?: string;
-
-  @IsOptional()
-  @IsString()
-  redirectUri?: string;
+  state: string;
 }

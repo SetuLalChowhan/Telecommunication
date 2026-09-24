@@ -6,6 +6,29 @@ import { PrismaService } from '../prisma/prisma.service.js';
 export class GoogleRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async createOAuthState(state: string, userId: string, expiresAt: Date) {
+    return this.prisma.verification.create({
+      data: {
+        identifier: `google_oauth_state:${state}`,
+        value: userId,
+        expiresAt,
+      },
+    });
+  }
+
+  async findOAuthState(state: string) {
+    const identifier = `google_oauth_state:${state}`;
+    return this.prisma.verification.findFirst({
+      where: { identifier },
+    });
+  }
+
+  async consumeOAuthState(id: string) {
+    return this.prisma.verification.delete({
+      where: { id },
+    });
+  }
+
   async findAccountByGoogleId(providerId: string, accountId: string) {
     return this.prisma.account.findFirst({
       where: { providerId, accountId },
@@ -52,30 +75,5 @@ export class GoogleRepository {
         providerId: { in: providerIds },
       },
     });
-  }
-
-  async createOAuthState(state: string, userId: string, expiresAt: Date) {
-    return this.prisma.verification.create({
-      data: {
-        identifier: `google_oauth_state:${state}`,
-        value: userId,
-        expiresAt,
-      },
-    });
-  }
-
-  async findAndConsumeOAuthState(state: string) {
-    const identifier = `google_oauth_state:${state}`;
-    const record = await this.prisma.verification.findFirst({
-      where: { identifier },
-    });
-
-    if (record) {
-      await this.prisma.verification.delete({
-        where: { id: record.id },
-      });
-    }
-
-    return record;
   }
 }

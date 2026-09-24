@@ -1,14 +1,23 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { google } from 'googleapis';
 import { randomBytes } from 'crypto';
+import { Prisma } from '@prisma/client';
 import { GoogleRepository } from './google.repository.js';
-
-const GOOGLE_CALENDAR_PROVIDER = 'google-calendar';
+import {
+  GOOGLE_CALENDAR_PROVIDER,
+  GOOGLE_OAUTH_SCOPES,
+  OAUTH_STATE_EXPIRY_MINUTES,
+} from './google.constants.js';
+import {
+  encryptToken,
+  decryptToken,
+} from '../common/utils/encryption.util.js';
 
 @Injectable()
 export class GoogleService {
@@ -27,7 +36,7 @@ export class GoogleService {
     return this.configService.get<string>('GOOGLE_CLIENT_SECRET') || '';
   }
 
-  private get defaultRedirectUri(): string {
+  private get redirectUri(): string {
     return (
       this.configService.get<string>('GOOGLE_CALENDAR_REDIRECT_URI') ||
       this.configService.get<string>('GOOGLE_REDIRECT_URI') ||
@@ -35,14 +44,22 @@ export class GoogleService {
     );
   }
 
+  private get encryptionSecret(): string {
+    return (
+      this.configService.get<string>('BETTER_AUTH_SECRET') ||
+      this.configService.get<string>('GOOGLE_CLIENT_SECRET') ||
+      'telemedicine-app-encryption-key-2026'
+    );
+  }
+
   /**
-   * Creates an OAuth2 client instance with specified or default redirect URI
+   * Creates an OAuth2 client instance using configured server credentials & redirect URI
    */
-  private getOAuth2Client(customRedirectUri?: string) {
+  private getOAuth2Client() {
     return new google.auth.OAuth2(
       this.clientId,
       this.clientSecret,
-      customRedirectUri || this.defaultRedirectUri,
+      this.redirectUri,
     );
   }
 
@@ -57,22 +74,18 @@ export class GoogleService {
     }
 
     const state = randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+    const expiresAt = new Date(
+      Date.now() + OAUTH_STATE_EXPIRY_MINUTES * 60 * 1000,
+    );
 
     await this.repo.createOAuthState(state, userId, expiresAt);
 
     const oauth2Client = this.getOAuth2Client();
 
-    const scopes = [
-      'https://www.googleapis.com/auth/calendar.events',
-      'https://www.googleapis.com/auth/userinfo.email',
-      'https://www.googleapis.com/auth/userinfo.profile',
-    ];
-
     const url = oauth2Client.generateAuthUrl({
       access_type: 'offline',
       prompt: 'consent',
-      scope: scopes,
+      scope: [...GOOGLE_OAUTH_SCOPES],
       state,
     });
 
@@ -85,8 +98,7 @@ export class GoogleService {
   async handleOAuthCallback(
     code: string,
     userId: string,
-    state?: string,
-    redirectUri?: string,
+    state: string,
   ) {
     if (!this.clientId || !this.clientSecret) {
       throw new BadRequestException(
@@ -94,15 +106,24 @@ export class GoogleService {
       );
     }
 
-    // 1. Verify OAuth State for CSRF protection and account linking safety
-    if (state) {
-      const record = await this.repo.findAndConsumeOAuthState(state);
-      if (!record || record.value !== userId || record.expiresAt < new Date()) {
-        throw new BadRequestException('Invalid or expired OAuth state parameter');
-      }
+    // 1. Mandatory State verification (check validity BEFORE consuming/deleting)
+    if (!state) {
+      throw new BadRequestException('Missing OAuth state parameter');
     }
 
-    const oauth2Client = this.getOAuth2Client(redirectUri);
+    const stateRecord = await this.repo.findOAuthState(state);
+    if (
+      !stateRecord ||
+      stateRecord.value !== userId ||
+      stateRecord.expiresAt <= new Date()
+    ) {
+      throw new BadRequestException('Invalid or expired OAuth state');
+    }
+
+    // Consume the one-time state
+    await this.repo.consumeOAuthState(stateRecord.id);
+
+    const oauth2Client = this.getOAuth2Client();
 
     let tokens;
     try {
@@ -169,21 +190,26 @@ export class GoogleService {
         );
       }
 
-      // 4. Check if current user already has a linked google-calendar account
-      const existingByUser = await this.repo.findAccountByUserIdAndProvider(
-        userId,
-        GOOGLE_CALENDAR_PROVIDER,
-      );
+      // 4. Encrypt sensitive tokens at rest before persisting
+      const encryptedRefreshToken = tokens.refresh_token
+        ? encryptToken(tokens.refresh_token, this.encryptionSecret)
+        : undefined;
 
       const expiresAt = tokens.expiry_date
         ? new Date(tokens.expiry_date)
         : null;
 
+      // 5. Check if current user already has a linked google-calendar account
+      const existingByUser = await this.repo.findAccountByUserIdAndProvider(
+        userId,
+        GOOGLE_CALENDAR_PROVIDER,
+      );
+
       if (existingByUser) {
         await this.repo.updateAccount(existingByUser.id, {
           accountId: googleAccountId,
           accessToken: tokens.access_token,
-          refreshToken: tokens.refresh_token || existingByUser.refreshToken,
+          refreshToken: encryptedRefreshToken || existingByUser.refreshToken,
           idToken: tokens.id_token || existingByUser.idToken,
           accessTokenExpiresAt: expiresAt || existingByUser.accessTokenExpiresAt,
           scope: tokens.scope || existingByUser.scope,
@@ -191,7 +217,7 @@ export class GoogleService {
       } else if (existingByGoogleId) {
         await this.repo.updateAccount(existingByGoogleId.id, {
           accessToken: tokens.access_token,
-          refreshToken: tokens.refresh_token || existingByGoogleId.refreshToken,
+          refreshToken: encryptedRefreshToken || existingByGoogleId.refreshToken,
           idToken: tokens.id_token || existingByGoogleId.idToken,
           accessTokenExpiresAt: expiresAt || existingByGoogleId.accessTokenExpiresAt,
           scope: tokens.scope || existingByGoogleId.scope,
@@ -202,7 +228,7 @@ export class GoogleService {
           providerId: GOOGLE_CALENDAR_PROVIDER,
           accountId: googleAccountId,
           accessToken: tokens.access_token,
-          refreshToken: tokens.refresh_token,
+          refreshToken: encryptedRefreshToken,
           idToken: tokens.id_token,
           accessTokenExpiresAt: expiresAt,
           scope: tokens.scope,
@@ -214,21 +240,30 @@ export class GoogleService {
         message: 'Google Calendar & Meet successfully connected',
       };
     } catch (error: any) {
-      if (error instanceof BadRequestException) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof ConflictException
+      ) {
         throw error;
+      }
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          'A Google Calendar account connection is already in progress or exists',
+        );
       }
       this.logger.error(
         'Failed to save Google account credentials:',
         error?.stack || error?.message || error,
       );
-      throw new BadRequestException(
-        'Failed to process and link Google account',
-      );
+      throw new BadRequestException('Failed to process and link Google account');
     }
   }
 
   /**
-   * Authenticates an OAuth2 client with doctor's saved tokens and registers auto-refresh listener
+   * Authenticates an OAuth2 client with doctor's saved decrypted tokens
    */
   private async getAuthenticatedClient(userId: string) {
     const account = await this.repo.findFirstAccountForUser(userId, [
@@ -240,16 +275,21 @@ export class GoogleService {
       return null;
     }
 
+    const decryptedRefreshToken = decryptToken(
+      account.refreshToken,
+      this.encryptionSecret,
+    );
+
     const oauth2Client = this.getOAuth2Client();
     oauth2Client.setCredentials({
       access_token: account.accessToken || undefined,
-      refresh_token: account.refreshToken || undefined,
+      refresh_token: decryptedRefreshToken || undefined,
       expiry_date: account.accessTokenExpiresAt
         ? account.accessTokenExpiresAt.getTime()
         : undefined,
     });
 
-    // Handle automatic token refresh events safely and preserve existing refresh token
+    // Handle automatic token refresh events safely and encrypt new refresh tokens at rest
     oauth2Client.on('tokens', async (newTokens) => {
       try {
         const currentAccount = await this.repo.findFirstAccountForUser(userId, [
@@ -257,9 +297,13 @@ export class GoogleService {
           'google',
         ]);
         if (currentAccount) {
+          const newEncryptedRefreshToken = newTokens.refresh_token
+            ? encryptToken(newTokens.refresh_token, this.encryptionSecret)
+            : currentAccount.refreshToken;
+
           await this.repo.updateAccount(currentAccount.id, {
             accessToken: newTokens.access_token || currentAccount.accessToken,
-            refreshToken: newTokens.refresh_token || currentAccount.refreshToken,
+            refreshToken: newEncryptedRefreshToken,
             accessTokenExpiresAt: newTokens.expiry_date
               ? new Date(newTokens.expiry_date)
               : currentAccount.accessTokenExpiresAt,
@@ -275,7 +319,7 @@ export class GoogleService {
 
   /**
    * Creates a Google Calendar event with Google Meet conference link
-   * Returns genuine meetLink if created, or null if Google is not connected/failed.
+   * Handles idempotency (checks existing Google event if provided).
    */
   async createMeetingEvent(params: {
     doctorUserId: string;
@@ -286,7 +330,9 @@ export class GoogleService {
     slotEnd: Date;
     bookingId: string;
     notes?: string | null;
-  }): Promise<{ meetLink: string | null; googleEventId?: string | null }> {
+    existingGoogleEventId?: string | null;
+    existingMeetLink?: string | null;
+  }): Promise<{ meetLink: string | null; googleEventId: string | null }> {
     const {
       doctorUserId,
       doctorName,
@@ -296,7 +342,17 @@ export class GoogleService {
       slotEnd,
       bookingId,
       notes,
+      existingGoogleEventId,
+      existingMeetLink,
     } = params;
+
+    // Idempotency check: if event and meet link were already created, return them
+    if (existingGoogleEventId && existingMeetLink) {
+      return {
+        meetLink: existingMeetLink,
+        googleEventId: existingGoogleEventId,
+      };
+    }
 
     const oauth2Client = await this.getAuthenticatedClient(doctorUserId);
 

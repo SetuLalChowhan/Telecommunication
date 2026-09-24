@@ -436,6 +436,8 @@ export class AppointmentsService {
         slotEnd: booking.slotEnd,
         bookingId: booking.id,
         notes: booking.notes,
+        existingGoogleEventId: booking.googleEventId,
+        existingMeetLink: booking.meetLink,
       });
       if (result?.meetLink) {
         meetLink = result.meetLink;
