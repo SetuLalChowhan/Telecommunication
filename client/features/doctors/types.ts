@@ -324,6 +324,7 @@ export const doctorKeys = {
   dashboard: () => [...doctorKeys.all, "dashboard"] as const,
   mySchedule: () => [...doctorKeys.all, "mySchedule"] as const,
   myDaysOff: () => [...doctorKeys.all, "myDaysOff"] as const,
+  myBookingsRoot: () => [...doctorKeys.all, "myBookings"] as const,
   myBookings: (params?: DoctorBookingsQueryParams) =>
     [
       ...doctorKeys.all,

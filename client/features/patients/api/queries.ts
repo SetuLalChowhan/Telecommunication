@@ -21,6 +21,7 @@ import {
   patientKeys,
 } from "../types";
 import { appointmentKeys } from "@/features/appointments/types";
+import { doctorKeys } from "@/features/doctors/types";
 import { CACHE } from "@/lib/cache/policy";
 
 /**
@@ -63,7 +64,10 @@ export function useCancelPatientBooking() {
     onSuccess: () => {
       toast.success("Appointment cancelled successfully");
       queryClient.invalidateQueries({ queryKey: patientKeys.all });
+      queryClient.invalidateQueries({ queryKey: doctorKeys.dashboard() });
+      queryClient.invalidateQueries({ queryKey: doctorKeys.myBookingsRoot() });
       queryClient.invalidateQueries({ queryKey: appointmentKeys.summary() });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
     onError: (error: unknown) => {
       const err = error as {
@@ -141,9 +145,12 @@ export function useCreateAppointmentBooking() {
     mutationFn: (input: CreateBookingInput) => createAppointmentBooking(input),
     onSuccess: (booking) => {
       toast.success("Appointment request submitted successfully!");
-      // Invalidate relevant queries
+      // Invalidate relevant queries across patient and doctor
       queryClient.invalidateQueries({ queryKey: patientKeys.all });
+      queryClient.invalidateQueries({ queryKey: doctorKeys.dashboard() });
+      queryClient.invalidateQueries({ queryKey: doctorKeys.myBookingsRoot() });
       queryClient.invalidateQueries({ queryKey: appointmentKeys.summary() });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
       queryClient.invalidateQueries({
         queryKey: ["appointments", "slots", booking.doctorId],
       });

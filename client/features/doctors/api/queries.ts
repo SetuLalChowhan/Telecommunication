@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { appointmentKeys } from "@/features/appointments/types";
+import { patientKeys } from "@/features/patients/types";
 import { CACHE } from "@/lib/cache/policy";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 
@@ -239,7 +240,8 @@ export function useConfirmDoctorBooking() {
     onSuccess: () => {
       toast.success("Appointment confirmed successfully");
       queryClient.invalidateQueries({ queryKey: doctorKeys.dashboard() });
-      queryClient.invalidateQueries({ queryKey: doctorKeys.myBookings() });
+      queryClient.invalidateQueries({ queryKey: doctorKeys.myBookingsRoot() });
+      queryClient.invalidateQueries({ queryKey: patientKeys.all });
       queryClient.invalidateQueries({ queryKey: appointmentKeys.summary() });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
@@ -260,8 +262,10 @@ export function useCompleteDoctorBooking() {
     onSuccess: () => {
       toast.success("Consultation marked as completed");
       queryClient.invalidateQueries({ queryKey: doctorKeys.dashboard() });
-      queryClient.invalidateQueries({ queryKey: doctorKeys.myBookings() });
+      queryClient.invalidateQueries({ queryKey: doctorKeys.myBookingsRoot() });
+      queryClient.invalidateQueries({ queryKey: patientKeys.all });
       queryClient.invalidateQueries({ queryKey: appointmentKeys.summary() });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
     onError: (error: unknown) => {
       toast.error(getMutationErrorMessage(error, "Failed to complete consultation"));
@@ -280,8 +284,10 @@ export function useCancelDoctorBooking() {
     onSuccess: () => {
       toast.success("Appointment cancelled successfully");
       queryClient.invalidateQueries({ queryKey: doctorKeys.dashboard() });
-      queryClient.invalidateQueries({ queryKey: doctorKeys.myBookings() });
+      queryClient.invalidateQueries({ queryKey: doctorKeys.myBookingsRoot() });
+      queryClient.invalidateQueries({ queryKey: patientKeys.all });
       queryClient.invalidateQueries({ queryKey: appointmentKeys.summary() });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
     onError: (error: unknown) => {
       toast.error(getMutationErrorMessage(error, "Failed to cancel appointment"));
