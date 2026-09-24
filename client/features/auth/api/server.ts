@@ -1,4 +1,5 @@
 import { serverFetch, serverGet, ServerFetchOptions } from "@/lib/api/server";
+import { ApiError } from "@/lib/api/error";
 import { CACHE } from "@/lib/cache/policy";
 
 import type { PrefetchSpec } from "@/lib/query/hydrate";
@@ -34,6 +35,9 @@ export async function getSessionServer(
  * dashboard page that prefetches this renders the real user — name, role and
  * doctor verification state — on the very first paint instead of flashing a
  * loading/default state while the client refetches `/users/me`.
+ *
+ * A 401 means "signed out" and resolves to `null`; any other failure (5xx,
+ * network) propagates so an outage is never rendered as an empty session.
  */
 export async function getProfileServer(
   options?: ServerFetchOptions
@@ -43,8 +47,9 @@ export async function getProfileServer(
       ...CACHE.private.server,
       ...options,
     });
-  } catch {
-    return null;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) return null;
+    throw error;
   }
 }
 

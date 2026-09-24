@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Specialty } from "@/types/doctor";
+import { Specialty } from "@/features/doctors/types";
 import { Filter, RotateCcw, ShieldCheck, Stethoscope, X } from "lucide-react";
 import {
   Select,

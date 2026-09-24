@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
-import PatientLayout from "@/layouts/PatientLayout";
+import { DashboardShell } from "@/components/layout";
 
 export default function PatientPortalLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <PatientLayout>{children}</PatientLayout>;
+  return <DashboardShell role="PATIENT">{children}</DashboardShell>;
 }

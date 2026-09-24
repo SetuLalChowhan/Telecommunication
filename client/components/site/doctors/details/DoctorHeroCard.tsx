@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { DoctorProfile } from "@/types/doctor";
+import { DoctorProfile } from "@/features/doctors/types";
 import {
   Star,
   Video,

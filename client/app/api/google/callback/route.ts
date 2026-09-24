@@ -47,8 +47,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(
       new URL("/doctor/settings?tab=integrations&google_connected=true", baseUrl)
     );
-  } catch (err: any) {
-    const reason = encodeURIComponent(err.message || "Unexpected network error");
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : "Unexpected network error";
+    const reason = encodeURIComponent(message);
     return NextResponse.redirect(
       new URL(`/doctor/settings?tab=integrations&google_error=${reason}`, baseUrl)
     );

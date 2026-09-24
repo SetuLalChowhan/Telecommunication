@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { DoctorProfile } from "@/types/doctor";
+import { DoctorProfile } from "@/features/doctors/types";
 import {
   GraduationCap,
   Stethoscope,

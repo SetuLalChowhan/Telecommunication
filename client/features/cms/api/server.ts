@@ -1,5 +1,6 @@
 import { serverGet, ServerFetchOptions } from "@/lib/api/server";
 import { CACHE } from "@/lib/cache/policy";
+import { reportError } from "@/lib/observability/reportError";
 import { CmsSectionStore, WebsiteSection } from "../types";
 
 /**
@@ -28,7 +29,7 @@ export async function getCmsSectionsServer(
     }
     return store;
   } catch (error) {
-    console.error("Failed to fetch CMS sections on server:", error);
+    reportError(error, { scope: "cms", detail: "getCmsSectionsServer" });
     return {};
   }
 }

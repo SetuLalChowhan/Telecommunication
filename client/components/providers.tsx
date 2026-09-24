@@ -3,8 +3,6 @@
 import React, { Suspense, useState } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { Provider } from 'react-redux';
-import { store } from '@/redux/store';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { GoogleOAuthProvider } from '@react-oauth/google';
@@ -22,16 +20,14 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   const app = (
     <QueryClientProvider client={queryClient}>
-      <Provider store={store}>
-        <Suspense fallback={null}>
-          <TopProgressBar />
-        </Suspense>
-        {children}
-        <ToastContainer position="top-right" autoClose={3000} />
-        {process.env.NODE_ENV === 'development' && (
-          <ReactQueryDevtools initialIsOpen={false} />
-        )}
-      </Provider>
+      <Suspense fallback={null}>
+        <TopProgressBar />
+      </Suspense>
+      {children}
+      <ToastContainer position="top-right" autoClose={3000} />
+      {process.env.NODE_ENV === 'development' && (
+        <ReactQueryDevtools initialIsOpen={false} />
+      )}
     </QueryClientProvider>
   );
 

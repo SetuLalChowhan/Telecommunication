@@ -48,6 +48,53 @@ export function normalizeStatusFilter(value?: string | null): BookingStatusFilte
 }
 
 /**
+ * Appointment view model rendered by the patient & doctor dashboard cards.
+ * Produced by `mapBookingToAppointment` (patients) and by the doctor booking
+ * endpoints, so both portals share one row contract.
+ */
+export interface DashboardAppointment {
+  id: string;
+  doctorName: string;
+  doctorSpecialty: string;
+  doctorAvatar: string;
+  doctorHospital?: string;
+  doctorDegrees?: string[];
+  doctorPhone?: string;
+  patientName: string;
+  patientAge?: number;
+  patientGender?: string;
+  patientAvatar?: string;
+  patientPhone?: string;
+  dateFormatted: string;
+  timeFormatted: string;
+  consultationType: "Video Consultation" | "In-Person Consultation" | "Audio Consultation";
+  status: "CONFIRMED" | "PENDING" | "COMPLETED" | "CANCELLED";
+  meetLink?: string;
+  symptoms?: string;
+  fee: number;
+  notes?: string;
+  isToday?: boolean;
+}
+
+/**
+ * A single entry in the doctor's "today's schedule" table.
+ */
+export interface DoctorScheduleItem {
+  id: string;
+  time: string;
+  patientName: string;
+  patientAge: number;
+  patientGender: string;
+  patientAvatar: string;
+  patientPhone?: string;
+  consultationType: string;
+  status: "CONFIRMED" | "PENDING" | "COMPLETED" | "CANCELLED";
+  symptoms: string;
+  meetLink?: string;
+  fee: number;
+}
+
+/**
  * Unified Appointment Query Keys (shared across doctor & patient views so server
  * prefetch and client hooks hydrate the exact same cache entry).
  */

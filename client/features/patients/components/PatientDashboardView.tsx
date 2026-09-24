@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { AlertCircle, ArrowRight, RefreshCw } from "lucide-react";
-import { DashboardAppointment } from "@/lib/dashboard-mock-data";
+import { DashboardAppointment } from "@/features/appointments/types";
 import {
   usePatientDashboard,
   useCancelPatientBooking,

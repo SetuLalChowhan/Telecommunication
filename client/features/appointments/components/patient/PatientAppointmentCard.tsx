@@ -4,7 +4,7 @@ import React from "react";
 import { Video, Calendar, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DashboardAppointment } from "@/lib/dashboard-mock-data";
+import { DashboardAppointment } from "@/features/appointments/types";
 
 interface PatientAppointmentCardProps {
   appointment: DashboardAppointment;

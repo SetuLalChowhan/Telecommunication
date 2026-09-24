@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   DoctorScheduleItem,
   DashboardAppointment,
-} from "@/lib/dashboard-mock-data";
+} from "@/features/appointments/types";
 import { formatTime } from "@/lib/time";
 import { DoctorNextConsultation } from "./DoctorNextConsultation";
 import { DoctorTodayScheduleTable } from "./DoctorTodayScheduleTable";

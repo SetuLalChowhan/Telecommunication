@@ -54,28 +54,30 @@ export function DoctorSettingsClient() {
     qualifications: [],
   });
 
-  useEffect(() => {
-    if (profile) {
-      setFormData({
-        name: profile.user?.name || "",
-        slug: profile.slug || "",
-        phone: profile.user?.phone || "",
-        email: profile.user?.email || "",
-        bmdcNumber: profile.bmdcNumber || "",
-        designation: profile.designation || "",
-        hospitalAffiliation: profile.hospitalAffiliation || "",
-        clinicAddress: profile.clinicAddress || "",
-        fee: profile.fee ? String(profile.fee) : "",
-        experienceYears: profile.experienceYears ? String(profile.experienceYears) : "",
-        bio: profile.bio || "",
-        primarySpecialtyId:
-          profile.specialties?.find((s: any) => s.isPrimary)?.specialtyId ||
-          profile.specialties?.[0]?.specialtyId ||
-          "",
-        qualifications: profile.qualifications || [],
-      });
-    }
-  }, [profile]);
+  // Sync the form with the loaded profile. Adjusting state while rendering is
+  // React's recommended alternative to a `setState`-inside-`useEffect`.
+  const [syncedProfile, setSyncedProfile] = useState<typeof profile>(undefined);
+  if (profile && profile !== syncedProfile) {
+    setSyncedProfile(profile);
+    setFormData({
+      name: profile.user?.name || "",
+      slug: profile.slug || "",
+      phone: profile.user?.phone || "",
+      email: profile.user?.email || "",
+      bmdcNumber: profile.bmdcNumber || "",
+      designation: profile.designation || "",
+      hospitalAffiliation: profile.hospitalAffiliation || "",
+      clinicAddress: profile.clinicAddress || "",
+      fee: profile.fee ? String(profile.fee) : "",
+      experienceYears: profile.experienceYears ? String(profile.experienceYears) : "",
+      bio: profile.bio || "",
+      primarySpecialtyId:
+        profile.specialties?.find((s) => s.isPrimary)?.specialtyId ||
+        profile.specialties?.[0]?.specialtyId ||
+        "",
+      qualifications: profile.qualifications || [],
+    });
+  }
 
   const handleFieldChange = (field: keyof DoctorProfileFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

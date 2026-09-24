@@ -42,6 +42,15 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * True when the request failed because the resource does not exist. Callers
+ * use this to turn a 404 into `notFound()` / an empty detail result while still
+ * letting every other failure (network, 5xx, auth) propagate.
+ */
+export function isNotFound(err: unknown): boolean {
+  return err instanceof ApiError && err.status === 404;
+}
+
 export function toApiError(err: unknown): ApiError {
   if (err instanceof ApiError) {
     return err;

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { AvailabilitySlot } from "@/lib/doctor-mock-data";
+import { AvailabilitySlot } from "@/features/doctors/types";
 import { DoctorAvailabilityTable, DoctorDaysOffCalendar, DayOffItem } from "@/features/doctors";
 import { AddWeeklySlotDialog, EditWeeklySlotDialog } from "@/features/appointments/components";
 import {

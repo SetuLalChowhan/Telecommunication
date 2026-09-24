@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { DoctorProfile } from "@/types/doctor";
+import { DoctorProfile } from "@/features/doctors/types";
 import { Star, ShieldCheck, Award, ArrowRight, Video } from "lucide-react";
 
 interface DoctorCardProps {

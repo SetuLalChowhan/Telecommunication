@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useDoctors, useSpecialties } from "@/features/doctors";
-import { DoctorProfile } from "@/types/doctor";
+import { DoctorProfile } from "@/features/doctors/types";
 import { DoctorCard } from "@/components/site/doctors/DoctorCard";
 import { DoctorCardSkeleton } from "@/components/site/doctors/DoctorCardSkeleton";
 import { DoctorFilters } from "@/components/site/doctors/DoctorFilters";

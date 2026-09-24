@@ -1,6 +1,9 @@
-import AuthLayout from "@/layouts/AuthLayout";
 import React from "react";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
-  return <AuthLayout>{children}</AuthLayout>;
+export default function AuthRouteLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen w-full bg-background text-foreground flex flex-col selection:bg-accent selection:text-primary">
+      {children}
+    </div>
+  );
 }

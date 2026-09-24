@@ -4,6 +4,7 @@ import {
   serverGetPage,
   ServerFetchOptions,
 } from "@/lib/api/server";
+import { isNotFound } from "@/lib/api/error";
 import { CACHE } from "@/lib/cache/policy";
 import { buildDoctorQuery } from "../query";
 import {
@@ -25,33 +26,23 @@ export interface DoctorsServerResponse {
   meta: PaginationMeta;
 }
 
-const emptyMeta = (limit: number): PaginationMeta => ({
-  page: 1,
-  limit,
-  total: 0,
-  totalPages: 1,
-  hasNextPage: false,
-  hasPreviousPage: false,
-});
-
 /* ------------------------------ Public reads ------------------------------ */
 
 export async function getDoctorsServer(
   params?: DoctorQueryParams,
   options?: ServerFetchOptions
 ): Promise<DoctorsServerResponse> {
-  try {
-    const page = await serverGetPage<DoctorProfile>(
-      `/doctors${buildQueryString(buildDoctorQuery(params))}`,
-      { ...CACHE.doctors.server, ...options }
-    );
-    return { data: page.data, meta: page.meta };
-  } catch (error) {
-    console.error("Failed to fetch doctors on server:", error);
-    return { data: [], meta: emptyMeta(params?.limit ?? 6) };
-  }
+  const page = await serverGetPage<DoctorProfile>(
+    `/doctors${buildQueryString(buildDoctorQuery(params))}`,
+    { ...CACHE.doctors.server, ...options }
+  );
+  return { data: page.data, meta: page.meta };
 }
 
+/**
+ * Returns `null` only for a genuine 404 (so the page can render its
+ * not-found state); every other failure propagates as an `ApiError`.
+ */
 export async function getDoctorByIdOrSlugServer(
   idOrSlug: string,
   options?: ServerFetchOptions
@@ -62,8 +53,8 @@ export async function getDoctorByIdOrSlugServer(
       { ...CACHE.doctorDetail(idOrSlug).server, ...options }
     );
   } catch (error) {
-    console.error(`Failed to fetch doctor (${idOrSlug}) on server:`, error);
-    return null;
+    if (isNotFound(error)) return null;
+    throw error;
   }
 }
 
@@ -71,103 +62,70 @@ export async function getDoctorAvailabilityServer(
   idOrSlug: string,
   options?: ServerFetchOptions
 ): Promise<DoctorAvailability[]> {
-  try {
-    return await serverGet<DoctorAvailability[]>(
-      `/doctors/${encodeURIComponent(idOrSlug)}/availability`,
-      { ...CACHE.doctorAvailability(idOrSlug).server, ...options }
-    );
-  } catch {
-    return [];
-  }
+  return serverGet<DoctorAvailability[]>(
+    `/doctors/${encodeURIComponent(idOrSlug)}/availability`,
+    { ...CACHE.doctorAvailability(idOrSlug).server, ...options }
+  );
 }
 
 export async function getSpecialtiesServer(
   options?: ServerFetchOptions
 ): Promise<Specialty[]> {
-  try {
-    return await serverGet<Specialty[]>("/specialties", {
-      ...CACHE.specialties.server,
-      ...options,
-    });
-  } catch {
-    return [];
-  }
+  return serverGet<Specialty[]>("/specialties", {
+    ...CACHE.specialties.server,
+    ...options,
+  });
 }
 
 /* ------------------------------ Doctor self ------------------------------- */
 
 export async function getDoctorDashboardServer(
   options?: ServerFetchOptions
-): Promise<DoctorDashboardData | null> {
-  try {
-    return await serverGet<DoctorDashboardData>("/doctors/dashboard", {
-      ...CACHE.private.server,
-      ...options,
-    });
-  } catch (error) {
-    console.error("Failed to fetch doctor dashboard on server:", error);
-    return null;
-  }
+): Promise<DoctorDashboardData> {
+  return serverGet<DoctorDashboardData>("/doctors/dashboard", {
+    ...CACHE.private.server,
+    ...options,
+  });
 }
 
 export async function getDoctorBookingsServer(
   params?: DoctorBookingsQueryParams,
   options?: ServerFetchOptions
 ): Promise<DoctorBookingsResponse> {
-  try {
-    return await serverGetPage<DoctorDashboardBooking>(
-      `/appointments/my-bookings${buildQueryString(params)}`,
-      { ...CACHE.private.server, ...options }
-    );
-  } catch (error) {
-    console.error("Failed to fetch doctor bookings on server:", error);
-    return { data: [] };
-  }
+  return serverGetPage<DoctorDashboardBooking>(
+    `/appointments/my-bookings${buildQueryString(params)}`,
+    { ...CACHE.private.server, ...options }
+  );
 }
 
 export async function getMyDoctorScheduleServer(
   options?: ServerFetchOptions
 ): Promise<DoctorAvailability[]> {
-  try {
-    return await serverGet<DoctorAvailability[]>("/doctors/me/availability", {
-      ...CACHE.private.server,
-      ...options,
-    });
-  } catch (error) {
-    console.error("Failed to fetch doctor schedule on server:", error);
-    return [];
-  }
+  return serverGet<DoctorAvailability[]>("/doctors/me/availability", {
+    ...CACHE.private.server,
+    ...options,
+  });
 }
 
 export async function getMyDoctorDaysOffServer(
   options?: ServerFetchOptions
 ): Promise<DoctorDayOff[]> {
-  try {
-    return await serverGet<DoctorDayOff[]>("/doctors/me/days-off", {
-      ...CACHE.private.server,
-      ...options,
-    });
-  } catch (error) {
-    console.error("Failed to fetch doctor days off on server:", error);
-    return [];
-  }
+  return serverGet<DoctorDayOff[]>("/doctors/me/days-off", {
+    ...CACHE.private.server,
+    ...options,
+  });
 }
 
 export async function getMyDoctorPatientsServer(
   search?: string,
   options?: ServerFetchOptions
 ): Promise<DoctorPatientRegistryItem[]> {
-  try {
-    return await serverGet<DoctorPatientRegistryItem[]>(
-      `/doctors/me/patients${buildQueryString(
-        search?.trim() ? { search: search.trim() } : undefined
-      )}`,
-      { ...CACHE.private.server, ...options }
-    );
-  } catch (error) {
-    console.error("Failed to fetch doctor patient registry on server:", error);
-    return [];
-  }
+  return serverGet<DoctorPatientRegistryItem[]>(
+    `/doctors/me/patients${buildQueryString(
+      search?.trim() ? { search: search.trim() } : undefined
+    )}`,
+    { ...CACHE.private.server, ...options }
+  );
 }
 
 export async function getMyDoctorProfileServer(
@@ -179,7 +137,8 @@ export async function getMyDoctorProfileServer(
       ...options,
     });
   } catch (error) {
-    console.error("Failed to fetch doctor profile on server:", error);
-    return null;
+    // An unverified/absent doctor profile is a normal state, not an outage.
+    if (isNotFound(error)) return null;
+    throw error;
   }
 }

@@ -7,14 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "react-toastify";
 import { uploadDoctorDocument } from "@/features/doctors/api/client";
-
-interface DoctorDocument {
-  id: string;
-  type: string;
-  fileUrl: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
-  uploadedAt: string;
-}
+import type { DoctorDocument } from "@/features/doctors/types";
 
 interface DoctorDocumentsTabProps {
   documents: DoctorDocument[];

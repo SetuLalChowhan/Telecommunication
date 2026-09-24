@@ -36,29 +36,31 @@ export function PatientProfileClient() {
     emergencyContactPhone: "",
   });
 
-  useEffect(() => {
-    if (profile) {
-      const u = profile.user;
-      let dobStr = "";
-      if (u?.dateOfBirth) {
-        try {
-          dobStr = new Date(u.dateOfBirth).toISOString().split("T")[0];
-        } catch {}
-      }
-
-      setFormData({
-        name: u?.name || "",
-        phone: u?.phone || "",
-        email: u?.email || "",
-        dateOfBirth: dobStr,
-        gender: profile.gender || "",
-        bloodGroup: normalizeBloodGroup(profile.bloodGroup) || "",
-        address: profile.address || "",
-        emergencyContactName: profile.emergencyContactName || "",
-        emergencyContactPhone: profile.emergencyContactPhone || "",
-      });
+  // Sync the form with the loaded profile. Adjusting state while rendering is
+  // React's recommended alternative to a `setState`-inside-`useEffect`.
+  const [syncedProfile, setSyncedProfile] = useState<typeof profile>(undefined);
+  if (profile && profile !== syncedProfile) {
+    setSyncedProfile(profile);
+    const u = profile.user;
+    let dobStr = "";
+    if (u?.dateOfBirth) {
+      try {
+        dobStr = new Date(u.dateOfBirth).toISOString().split("T")[0];
+      } catch {}
     }
-  }, [profile]);
+
+    setFormData({
+      name: u?.name || "",
+      phone: u?.phone || "",
+      email: u?.email || "",
+      dateOfBirth: dobStr,
+      gender: profile.gender || "",
+      bloodGroup: normalizeBloodGroup(profile.bloodGroup) || "",
+      address: profile.address || "",
+      emergencyContactName: profile.emergencyContactName || "",
+      emergencyContactPhone: profile.emergencyContactPhone || "",
+    });
+  }
 
   const handleFieldChange = (field: keyof PatientProfileFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

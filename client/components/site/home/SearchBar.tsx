@@ -54,12 +54,12 @@ const SearchBar = ({ initialSpecialties = [] }: SearchBarProps) => {
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, [isOpen]);
 
-  // Clamp active index when results shrink
-  useEffect(() => {
-    setActiveIndex((current) =>
-      current >= suggestions.length ? suggestions.length - 1 : current
-    );
-  }, [suggestions.length]);
+  // Clamp the active index when results shrink. Derived during render rather
+  // than stored in an effect, so it can never point past the last suggestion.
+  const activeIndexClamped =
+    suggestions.length === 0
+      ? -1
+      : Math.min(activeIndex, suggestions.length - 1);
 
   const goToDoctors = (term: string, specialtySlug: string) => {
     const params = new URLSearchParams();
@@ -71,7 +71,7 @@ const SearchBar = ({ initialSpecialties = [] }: SearchBarProps) => {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const active = suggestions[activeIndex];
+    const active = suggestions[activeIndexClamped];
     if (showSuggestions && active) {
       setIsOpen(false);
       router.push(`/doctors/${active.slug}`);
@@ -149,7 +149,7 @@ const SearchBar = ({ initialSpecialties = [] }: SearchBarProps) => {
             aria-controls={listId}
             aria-autocomplete="list"
             aria-activedescendant={
-              activeIndex >= 0 ? `${listId}-option-${activeIndex}` : undefined
+              activeIndexClamped >= 0 ? `${listId}-option-${activeIndexClamped}` : undefined
             }
             className="h-full w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:hidden"
           />
@@ -185,13 +185,13 @@ const SearchBar = ({ initialSpecialties = [] }: SearchBarProps) => {
                     <Link
                       id={`${listId}-option-${index}`}
                       role="option"
-                      aria-selected={index === activeIndex}
+                      aria-selected={index === activeIndexClamped}
                       href={`/doctors/${doctor.slug}`}
                       onClick={() => setIsOpen(false)}
                       onMouseEnter={() => setActiveIndex(index)}
                       className={cn(
                         "flex items-center gap-3 px-3 py-2.5 transition-colors",
-                        index === activeIndex ? "bg-muted" : "hover:bg-muted/50"
+                        index === activeIndexClamped ? "bg-muted" : "hover:bg-muted/50"
                       )}
                     >
                       <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-border bg-muted">

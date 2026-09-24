@@ -3,14 +3,6 @@
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import {
-  selectCurrentUser,
-  selectCurrentRole,
-  selectIsAuthenticated,
-  setSession,
-  clearAuth,
-} from "@/redux/slices/authSlice";
 import {
   signIn,
   signUp,
@@ -22,6 +14,7 @@ import {
   sendVerificationEmail,
 } from "./client";
 import { apiClient } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/error";
 import { CACHE } from "@/lib/cache/policy";
 import { toast } from "react-toastify";
 import { User, Role, LoginParams, RegisterParams, authKeys } from "../types";
@@ -44,36 +37,42 @@ export function getRoleDashboardRoute(role?: Role | string | null, isVerified?: 
 
 /**
  * useAuth Hook
- * Unified authentication hook coordinating Better-Auth, TanStack Query, and Redux.
+ *
+ * The single authentication hook for the app. Better-Auth's HTTP-only session
+ * is the sole source of truth — there is no second (localStorage) auth cache to
+ * drift out of sync.
  */
 export const useAuth = () => {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
 
-  // 1. Session & Global State Resolution
+  // 1. Session & current user resolution
   const { data: session, isPending: isSessionLoading } = useSession();
-  const reduxUser = useAppSelector(selectCurrentUser);
-  const reduxRole = useAppSelector(selectCurrentRole);
-  const reduxIsAuthenticated = useAppSelector(selectIsAuthenticated);
 
-  const isAuthenticated = !!(session?.user || reduxIsAuthenticated);
+  const isAuthenticated = Boolean(session?.user);
 
-  // Fetch full backend profile when authenticated
-  const { data: profileUser, isLoading: isProfileLoading } = useQuery<User>({
+  // Fetch the full backend profile when authenticated. The query key matches
+  // `authProfilePrefetch` in `../api/server`, so dashboard pages hydrate this
+  // entry on the server instead of flashing a default role.
+  const { data: profileUser, isLoading: isProfileLoading } = useQuery<User | null>({
     queryKey: authKeys.profile(),
     queryFn: async () => {
       const res = await apiClient.get("/users/me");
-      return res.data?.data || res.data;
+      return res.data?.data || res.data || null;
     },
-    enabled: isAuthenticated,
+    enabled: !isSessionLoading && isAuthenticated,
     staleTime: CACHE.profile.client.staleTime,
+    retry: (failureCount, error) => {
+      // A missing/expired session is a normal signed-out state, not a fault.
+      if (error instanceof ApiError && error.status === 401) return false;
+      return failureCount < 1;
+    },
   });
 
-  const user = profileUser || (session?.user as unknown as User) || reduxUser || null;
-  const role = (user?.role as Role) || profileUser?.role || reduxRole || "PATIENT";
+  const user = profileUser || (session?.user as unknown as User) || null;
+  const role = (user?.role as Role) || "PATIENT";
 
-  // 2. Auth Mutations
+  // 2. Auth mutations
 
   // Email & Password Login
   const loginMutation = useMutation({
@@ -86,22 +85,8 @@ export const useAuth = () => {
     },
     onSuccess: (data, variables) => {
       toast.success("Welcome back! Signed in successfully.");
-      const authPayload = data as unknown as {
-        user?: User;
-        session?: { token?: string };
-        token?: string;
-      };
-      const authUser = authPayload?.user;
-      const authSession = authPayload?.session;
-      if (authUser) {
-        dispatch(
-          setSession({
-            user: authUser as unknown as User,
-            token: authSession?.token || authPayload?.token || null,
-          })
-        );
-      }
       queryClient.invalidateQueries({ queryKey: authKeys.all });
+      const authUser = (data as unknown as { user?: User })?.user;
       const userRole = authUser?.role || role;
       const destination = variables.redirectTo || getRoleDashboardRoute(userRole);
       router.push(destination);
@@ -144,7 +129,8 @@ export const useAuth = () => {
     },
     onSuccess: () => {
       toast.success("Signed out successfully");
-      dispatch(clearAuth());
+      // Drop every cached server response so the next user never sees the
+      // previous session's private data.
       queryClient.clear();
       router.push("/login");
     },
@@ -215,7 +201,8 @@ export const useAuth = () => {
     mutationFn: async ({ email, callbackURL }: { email: string; callbackURL?: string }) => {
       const res = await sendVerificationEmail({
         email,
-        callbackURL: callbackURL || `${typeof window !== "undefined" ? window.location.origin : ""}/`,
+        callbackURL:
+          callbackURL || `${typeof window !== "undefined" ? window.location.origin : ""}/`,
       });
       if (res.error) {
         throw new Error(res.error.message || "Failed to resend verification email.");
@@ -240,24 +227,9 @@ export const useAuth = () => {
     },
     onSuccess: (data) => {
       toast.success("Welcome! Signed in with Google.");
-      const authPayload = data as unknown as {
-        user?: User;
-        session?: { token?: string };
-        token?: string;
-      };
-      const authUser = authPayload?.user;
-      const authSession = authPayload?.session;
-      if (authUser) {
-        dispatch(
-          setSession({
-            user: authUser as unknown as User,
-            token: authSession?.token || authPayload?.token || null,
-          })
-        );
-      }
       queryClient.invalidateQueries({ queryKey: authKeys.all });
-      const userRole = authUser?.role || role;
-      router.push(getRoleDashboardRoute(userRole));
+      const authUser = (data as unknown as { user?: User })?.user;
+      router.push(getRoleDashboardRoute(authUser?.role || role));
     },
     onError: (err: Error) => {
       toast.error(err.message || "Google sign-in failed");

@@ -27,7 +27,7 @@ export const RoleSelectorTabs: React.FC<RoleSelectorTabsProps> = ({
         }`}
       >
         <User className="h-4 w-4 text-primary" />
-        <span>I'm a Patient</span>
+        <span>I&apos;m a Patient</span>
       </button>
 
       <button
@@ -41,7 +41,7 @@ export const RoleSelectorTabs: React.FC<RoleSelectorTabsProps> = ({
         }`}
       >
         <Stethoscope className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-        <span>I'm a Doctor</span>
+        <span>I&apos;m a Doctor</span>
       </button>
     </div>
   );

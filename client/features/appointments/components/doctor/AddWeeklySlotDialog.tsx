@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useId } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import { AvailabilitySlot } from "@/lib/doctor-mock-data";
+import { AvailabilitySlot } from "@/features/doctors/types";
 import { TIME_OPTIONS, to24Hour } from "@/lib/time";
 
 const DAYS_OF_WEEK = [
@@ -63,6 +63,10 @@ export const AddWeeklySlotDialog: React.FC<AddWeeklySlotDialogProps> = ({
   onAddSlot,
   isLoading = false,
 }) => {
+  // Pure, stable id prefix. Slot ids are derived from the submitted values
+  // instead of an impure `Date.now()`/`Math.random()` call.
+  const slotIdPrefix = useId();
+
   const {
     control,
     handleSubmit,
@@ -83,7 +87,7 @@ export const AddWeeklySlotDialog: React.FC<AddWeeklySlotDialogProps> = ({
     const formattedEnd = to24Hour(data.endTime);
 
     const newSlot: AvailabilitySlot = {
-      id: `slot-${Date.now()}`,
+      id: `${slotIdPrefix}-${data.dayOfWeek}-${formattedStart}-${formattedEnd}`,
       dayOfWeek: data.dayOfWeek,
       startTime: formattedStart,
       endTime: formattedEnd,

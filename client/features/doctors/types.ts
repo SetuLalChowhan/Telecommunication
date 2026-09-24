@@ -82,7 +82,18 @@ export interface DoctorProfile {
   qualifications?: DoctorQualification[];
   availabilities?: DoctorAvailability[];
   reviews?: DoctorReview[];
-  documents?: any[];
+  documents?: DoctorDocument[];
+}
+
+/**
+ * A verification document uploaded by a doctor (registration, degree, ID).
+ */
+export interface DoctorDocument {
+  id: string;
+  type: string;
+  fileUrl: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  uploadedAt: string;
 }
 
 /** Re-use the canonical pagination contract instead of redeclaring it. */
@@ -180,6 +191,18 @@ export interface DoctorDashboardData {
   todaySchedule: DoctorDashboardBooking[];
   activeDaysCount: number;
   verified: boolean;
+}
+
+/**
+ * A single editable row in the doctor's weekly availability grid.
+ */
+export interface AvailabilitySlot {
+  id: string;
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+  consultationDuration: number;
+  isActive: boolean;
 }
 
 export interface DoctorDayOff {

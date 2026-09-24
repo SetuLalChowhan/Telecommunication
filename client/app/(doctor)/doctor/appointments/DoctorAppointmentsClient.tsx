@@ -8,7 +8,7 @@ import {
   useCompleteDoctorBooking,
   useCancelDoctorBooking,
 } from "@/features/doctors/api/queries";
-import { DoctorScheduleItem, DashboardAppointment } from "@/lib/dashboard-mock-data";
+import { DoctorScheduleItem, DashboardAppointment } from "@/features/appointments/types";
 import { DoctorDashboardBooking } from "@/features/doctors/types";
 import { MAX_PAGE_SIZE } from "@/lib/api/types";
 import {

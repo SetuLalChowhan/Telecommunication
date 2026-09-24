@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AvailabilitySlot } from "@/lib/doctor-mock-data";
+import { AvailabilitySlot } from "@/features/doctors/types";
 import { to12Hour } from "@/lib/time";
 
 interface DoctorAvailabilityTableProps {

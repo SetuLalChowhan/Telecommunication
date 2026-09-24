@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useSyncExternalStore } from "react";
-import { DoctorProfile, DoctorAvailability } from "@/types/doctor";
+import { DoctorProfile, DoctorAvailability } from "@/features/doctors/types";
 import { toDateInputValue } from "@/lib/time";
 import { useAuth } from "@/features/auth/api/queries";
 import {
@@ -56,11 +56,12 @@ export const DoctorBookingSidebar: React.FC<DoctorBookingSidebarProps> = ({
   const [phone, setPhone] = useState(user?.phone || "");
   const [bookedDetails, setBookedDetails] = useState<RawBooking | null>(null);
 
-  React.useEffect(() => {
-    if (user?.phone && !phone) {
-      setPhone(user.phone);
-    }
-  }, [user?.phone, phone]);
+  // Seed the phone field from the signed-in profile the first time it loads.
+  const [isPhoneSeeded, setIsPhoneSeeded] = useState(false);
+  if (!isPhoneSeeded && user?.phone) {
+    setIsPhoneSeeded(true);
+    setPhone(user.phone);
+  }
 
   const selectedDateStr = toDateInputValue(selectedDate);
 

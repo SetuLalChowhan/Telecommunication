@@ -4,7 +4,7 @@ import React from "react";
 import { Calendar, Video, Check, Loader2, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DoctorScheduleItem } from "@/lib/dashboard-mock-data";
+import { DoctorScheduleItem } from "@/features/appointments/types";
 import { cn } from "@/lib/utils";
 
 interface DoctorNextConsultationProps {

@@ -319,7 +319,7 @@ export function to12Hour(timeStr?: string | null): string {
 
   const clean = trimmed.replace(/[^\d:]/g, "");
   const [hStr, mStr] = clean.split(":");
-  let h = parseInt(hStr, 10) || 0;
+  const h = parseInt(hStr, 10) || 0;
   const m = parseInt(mStr, 10) || 0;
 
   const ampm = h >= 12 ? "PM" : "AM";

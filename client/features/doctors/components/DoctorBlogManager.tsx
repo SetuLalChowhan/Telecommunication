@@ -148,13 +148,16 @@ export function DoctorBlogManager() {
   const [form, setForm] = useState<FormState>(emptyForm());
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  // Reset form when dialog closes
-  useEffect(() => {
+  // Reset the form when the dialog closes. Adjusting state while rendering is
+  // React's recommended alternative to a `setState`-inside-`useEffect`.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (!open) {
       setForm(emptyForm());
       setEditPost(null);
     }
-  }, [open]);
+  }
 
   const openCreate = () => {
     setEditPost(null);

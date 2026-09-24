@@ -1,5 +1,21 @@
-import { DashboardAppointment, RecommendedDoctor } from "@/lib/dashboard-mock-data";
+import type { DashboardAppointment } from "@/features/appointments/types";
 import { formatDate, formatTime, relativeDayLabel } from "@/lib/time";
+
+/** Re-exported so patient components can import every row type from one place. */
+export type { DashboardAppointment };
+
+/** Compact doctor card shown in the "recommended for you" dashboard row. */
+export interface RecommendedDoctor {
+  id: string;
+  name: string;
+  specialty: string;
+  hospital: string;
+  rating: number;
+  reviewsCount: number;
+  fee: number;
+  avatar: string;
+  availabilityToday: boolean;
+}
 
 export interface PatientDashboardStats {
   totalConsultations: number;

@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { Loader2, Calendar, Video, Plus, Phone } from "lucide-react";
-import { DashboardAppointment } from "@/lib/dashboard-mock-data";
+import { DashboardAppointment } from "@/features/appointments/types";
 import { AppointmentDetailsDialog, TablePagination } from "@/features/appointments/components";
 import {
   useBookingSummary,

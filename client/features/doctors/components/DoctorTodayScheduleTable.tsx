@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DoctorScheduleItem } from "@/lib/dashboard-mock-data";
+import { DoctorScheduleItem } from "@/features/appointments/types";
 import { cn } from "@/lib/utils";
 
 interface DoctorTodayScheduleTableProps {

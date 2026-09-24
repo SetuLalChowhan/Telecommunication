@@ -3,7 +3,7 @@
 import React from "react";
 import ReactPaginate from "react-paginate";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { PaginationMeta } from "@/types/doctor";
+import { PaginationMeta } from "@/features/doctors/types";
 
 interface DoctorPaginationProps {
   meta: PaginationMeta;

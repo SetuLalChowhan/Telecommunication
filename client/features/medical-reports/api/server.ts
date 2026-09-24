@@ -9,27 +9,16 @@ import {
 /**
  * Server-side fetcher for the patient's medical reports.
  *
- * Cookie forwarding is handled once by the canonical server client.
+ * Cookie forwarding is handled once by the canonical server client, and a
+ * backend outage propagates to the route error boundary rather than rendering
+ * as "no reports".
  */
 export async function getMyMedicalReportsServer(
   params?: MedicalReportsQueryParams,
   options?: ServerFetchOptions
 ): Promise<MedicalReportsResponse> {
-  try {
-    return await serverGetPage<MedicalReport>(
-      `/medical-reports/my-reports${buildQueryString(params)}`,
-      { ...CACHE.private.server, ...options }
-    );
-  } catch (error) {
-    console.error("Failed to fetch medical reports on server:", error);
-    return {
-      data: [],
-      meta: {
-        page: params?.page || 1,
-        limit: params?.limit || 10,
-        total: 0,
-        totalPages: 1,
-      },
-    };
-  }
+  return serverGetPage<MedicalReport>(
+    `/medical-reports/my-reports${buildQueryString(params)}`,
+    { ...CACHE.private.server, ...options }
+  );
 }

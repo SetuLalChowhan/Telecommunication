@@ -1,25 +1,34 @@
 "use client";
 
-import React, { useEffect, useState, useTransition } from "react";
+import React, { useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 export function TopProgressBar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const routeKey = `${pathname}?${searchParams.toString()}`;
+
   const [isNavigating, setIsNavigating] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [lastRoute, setLastRoute] = useState(routeKey);
 
-  // When pathname or searchParams change, complete the bar
-  useEffect(() => {
+  // A route change means the pending navigation completed. Adjusting state
+  // while rendering is React's recommended alternative to a
+  // `setState`-inside-`useEffect`.
+  if (lastRoute !== routeKey) {
+    setLastRoute(routeKey);
     if (isNavigating) {
+      setIsNavigating(false);
       setProgress(100);
-      const timer = setTimeout(() => {
-        setIsNavigating(false);
-        setProgress(0);
-      }, 300);
-      return () => clearTimeout(timer);
     }
-  }, [pathname, searchParams]);
+  }
+
+  // Fade the completed bar out once the route has settled.
+  useEffect(() => {
+    if (progress !== 100) return;
+    const timer = setTimeout(() => setProgress(0), 300);
+    return () => clearTimeout(timer);
+  }, [progress]);
 
   // Intercept click on internal links
   useEffect(() => {
