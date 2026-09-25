@@ -49,18 +49,22 @@ export const useAuth = () => {
   // 1. Session & current user resolution
   const { data: session, isPending: isSessionLoading } = useSession();
 
-  const isAuthenticated = Boolean(session?.user);
-
-  // Fetch the full backend profile when authenticated. The query key matches
-  // `authProfilePrefetch` in `../api/server`, so dashboard pages hydrate this
-  // entry on the server instead of flashing a default role.
+  // Fetch the full backend profile. The query key matches `authProfilePrefetch`
+  // in `../api/server`, so dashboard pages hydrate this entry on the server
+  // and public pages (like Home) instantly resolve the active user from cache or backend.
   const { data: profileUser, isLoading: isProfileLoading } = useQuery<User | null>({
     queryKey: authKeys.profile(),
     queryFn: async () => {
-      const res = await apiClient.get("/users/me");
-      return res.data?.data || res.data || null;
+      try {
+        const res = await apiClient.get("/users/me");
+        return res.data?.data || res.data || null;
+      } catch (err: unknown) {
+        if (err instanceof ApiError && err.status === 401) {
+          return null;
+        }
+        throw err;
+      }
     },
-    enabled: !isSessionLoading && isAuthenticated,
     staleTime: CACHE.profile.client.staleTime,
     retry: (failureCount, error) => {
       // A missing/expired session is a normal signed-out state, not a fault.
@@ -70,7 +74,9 @@ export const useAuth = () => {
   });
 
   const user = profileUser || (session?.user as unknown as User) || null;
+  const isAuthenticated = Boolean(user);
   const role = (user?.role as Role) || "PATIENT";
+  const isAuthLoading = !user && (isProfileLoading || isSessionLoading);
 
   // 2. Auth mutations
 
@@ -85,11 +91,16 @@ export const useAuth = () => {
     },
     onSuccess: (data, variables) => {
       toast.success("Welcome back! Signed in successfully.");
+      const authPayload = data as unknown as { user?: User; data?: { user?: User } };
+      const authUser = authPayload?.user || authPayload?.data?.user;
+      if (authUser) {
+        queryClient.setQueryData(authKeys.profile(), authUser);
+      }
       queryClient.invalidateQueries({ queryKey: authKeys.all });
-      const authUser = (data as unknown as { user?: User })?.user;
       const userRole = authUser?.role || role;
       const destination = variables.redirectTo || getRoleDashboardRoute(userRole);
       router.push(destination);
+      router.refresh();
     },
     onError: (err: Error) => {
       toast.error(err.message || "Failed to sign in");
@@ -129,10 +140,11 @@ export const useAuth = () => {
     },
     onSuccess: () => {
       toast.success("Signed out successfully");
-      // Drop every cached server response so the next user never sees the
-      // previous session's private data.
+      // Drop cached profile and user data immediately
+      queryClient.setQueryData(authKeys.profile(), null);
       queryClient.clear();
       router.push("/login");
+      router.refresh();
     },
     onError: (err: Error) => {
       toast.error(err.message || "Failed to log out");
@@ -227,9 +239,15 @@ export const useAuth = () => {
     },
     onSuccess: (data) => {
       toast.success("Welcome! Signed in with Google.");
+      const authPayload = data as unknown as { user?: User; data?: { user?: User } };
+      const authUser = authPayload?.user || authPayload?.data?.user;
+      if (authUser) {
+        queryClient.setQueryData(authKeys.profile(), authUser);
+      }
       queryClient.invalidateQueries({ queryKey: authKeys.all });
-      const authUser = (data as unknown as { user?: User })?.user;
-      router.push(getRoleDashboardRoute(authUser?.role || role));
+      const userRole = authUser?.role || role;
+      router.push(getRoleDashboardRoute(userRole));
+      router.refresh();
     },
     onError: (err: Error) => {
       toast.error(err.message || "Google sign-in failed");
@@ -260,7 +278,7 @@ export const useAuth = () => {
     isPatient: role === "PATIENT",
     isAdmin: role === "ADMIN",
     isAuthenticated,
-    isSessionLoading: isSessionLoading || (isAuthenticated && isProfileLoading),
+    isSessionLoading: isAuthLoading,
 
     // Auth Action Methods
     login: (params: LoginParams, redirectTo?: string) =>
