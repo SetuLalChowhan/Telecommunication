@@ -114,6 +114,18 @@ export interface DoctorQueryParams {
   verified?: boolean;
 }
 
+/** `PATCH /admin/doctors/:id` payload — all fields optional. */
+export interface UpdateDoctorPayload {
+  experienceYears?: number;
+  fee?: number;
+  bio?: string;
+  bmdcNumber?: string;
+  designation?: string;
+  hospitalAffiliation?: string;
+  clinicAddress?: string;
+  slug?: string;
+}
+
 export const doctorKeys = {
   all: ["admin", "doctors"] as const,
   list: (params: DoctorQueryParams) => [...doctorKeys.all, "list", params] as const,

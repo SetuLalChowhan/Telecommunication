@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -6,7 +7,17 @@ import { DocumentStatus } from '@prisma/client';
 import { AdminRepository } from './admin.repository.js';
 import { AdminDoctorQueryDto } from './dto/admin-doctor-query.dto.js';
 import { RejectDoctorDto } from './dto/reject-doctor.dto.js';
+import { UpdatePatientDto } from './dto/update-patient.dto.js';
+import { UpdateBookingDto } from './dto/update-booking.dto.js';
+import { UpdateDoctorDto } from './dto/update-doctor.dto.js';
 import { createPaginationMeta } from '../common/pagination/pagination.utils.js';
+
+/** Drops keys whose value is `undefined` so Prisma never receives empty sets. */
+function compact<T extends object>(input: T): T {
+  return Object.fromEntries(
+    Object.entries(input).filter(([, value]) => value !== undefined),
+  ) as T;
+}
 
 @Injectable()
 export class AdminService {
@@ -35,6 +46,26 @@ export class AdminService {
     }
 
     return doctor;
+  }
+
+  async updateDoctor(doctorId: string, dto: UpdateDoctorDto) {
+    const doctor = await this.repo.findDoctorById(doctorId);
+
+    if (!doctor) {
+      throw new NotFoundException(`Doctor with ID "${doctorId}" not found`);
+    }
+
+    return this.repo.updateDoctor(doctorId, compact(dto));
+  }
+
+  async deleteDoctor(doctorId: string) {
+    const doctor = await this.repo.findDoctorById(doctorId);
+
+    if (!doctor) {
+      throw new NotFoundException(`Doctor with ID "${doctorId}" not found`);
+    }
+
+    return this.repo.deleteDoctor(doctorId);
   }
 
   async approveDoctor(doctorId: string, adminUserId: string) {
@@ -121,6 +152,51 @@ export class AdminService {
     return patient;
   }
 
+  async updatePatient(patientId: string, dto: UpdatePatientDto) {
+    const patient = await this.repo.findPatientWithUser(patientId);
+
+    if (!patient) {
+      throw new NotFoundException(`Patient with ID "${patientId}" not found`);
+    }
+
+    if (dto.email) {
+      const existing = await this.repo.findUserByEmail(dto.email);
+      if (existing && existing.id !== patient.userId) {
+        throw new ConflictException('A user with this email already exists');
+      }
+    }
+
+    const userData = compact({
+      name: dto.name,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      email: dto.email,
+      phone: dto.phone,
+      emailVerified: dto.emailVerified,
+      dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
+    });
+
+    const profileData = compact({
+      address: dto.address,
+      gender: dto.gender,
+      bloodGroup: dto.bloodGroup,
+      emergencyContactName: dto.emergencyContactName,
+      emergencyContactPhone: dto.emergencyContactPhone,
+    });
+
+    return this.repo.updatePatient(patientId, patient.userId, userData, profileData);
+  }
+
+  async deletePatient(patientId: string) {
+    const patient = await this.repo.findPatientWithUser(patientId);
+
+    if (!patient) {
+      throw new NotFoundException(`Patient with ID "${patientId}" not found`);
+    }
+
+    return this.repo.deletePatient(patientId, patient.userId);
+  }
+
   async listAppointments(query: {
     status?: any;
     doctorId?: string;
@@ -138,6 +214,36 @@ export class AdminService {
     };
   }
 
+  async getAppointmentDetails(bookingId: string) {
+    const booking = await this.repo.findBookingById(bookingId);
+
+    if (!booking) {
+      throw new NotFoundException(`Booking with ID "${bookingId}" not found`);
+    }
+
+    return booking;
+  }
+
+  async updateAppointment(bookingId: string, dto: UpdateBookingDto) {
+    const booking = await this.repo.findBookingById(bookingId);
+
+    if (!booking) {
+      throw new NotFoundException(`Booking with ID "${bookingId}" not found`);
+    }
+
+    return this.repo.updateBooking(bookingId, compact(dto));
+  }
+
+  async deleteAppointment(bookingId: string) {
+    const booking = await this.repo.findBookingById(bookingId);
+
+    if (!booking) {
+      throw new NotFoundException(`Booking with ID "${bookingId}" not found`);
+    }
+
+    return this.repo.deleteBooking(bookingId);
+  }
+
   async listReviews(query: { doctorId?: string; page?: number; limit?: number } = {}) {
     const page = query.page || 1;
     const limit = query.limit || 10;
@@ -147,5 +253,15 @@ export class AdminService {
       data: rows,
       meta: createPaginationMeta(page, limit, total),
     };
+  }
+
+  async deleteReview(reviewId: string) {
+    const result = await this.repo.deleteReview(reviewId);
+
+    if (!result) {
+      throw new NotFoundException(`Review with ID "${reviewId}" not found`);
+    }
+
+    return result;
   }
 }

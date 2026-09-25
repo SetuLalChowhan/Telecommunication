@@ -19,10 +19,11 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { Pagination } from "@/components/common/Pagination";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/common/States";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
-import { useDoctors } from "@/features/doctors/api/doctors.queries";
+import { useDeleteDoctor, useDoctors } from "@/features/doctors/api/doctors.queries";
 import { DoctorsTable } from "@/features/doctors/components/DoctorsTable";
+import { EditDoctorDialog } from "@/features/doctors/components/EditDoctorDialog";
 import { useDoctorVerification } from "@/features/doctors/hooks/useDoctorVerification";
-import type { DoctorQueryParams } from "@/features/doctors/types";
+import type { AdminDoctor, DoctorQueryParams } from "@/features/doctors/types";
 
 const PAGE_LIMIT = 10;
 
@@ -58,6 +59,9 @@ const Doctors = () => {
 
   const { data, isPending, isError, error, refetch, isFetching } = useDoctors(params);
   const verification = useDoctorVerification();
+  const removeDoctor = useDeleteDoctor();
+  const [editing, setEditing] = useState<AdminDoctor | null>(null);
+  const [deleting, setDeleting] = useState<AdminDoctor | null>(null);
 
   const doctors = data?.data ?? [];
   const isApprove = verification.pending?.type === "approve";
@@ -120,7 +124,9 @@ const Doctors = () => {
                 doctors={doctors}
                 onApprove={verification.requestApprove}
                 onReject={verification.requestReject}
-                isUpdating={verification.isPending}
+                onEdit={setEditing}
+                onDelete={setDeleting}
+                isUpdating={verification.isPending || removeDoctor.isPending}
               />
               {data && (
                 <Pagination meta={data.meta} onPageChange={setPage} isFetching={isFetching} />
@@ -147,6 +153,34 @@ const Doctors = () => {
         destructive={!isApprove}
         isPending={verification.isPending}
         onConfirm={verification.confirm}
+      />
+
+      <EditDoctorDialog
+        doctor={editing}
+        open={editing !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditing(null);
+        }}
+      />
+
+      <ConfirmDialog
+        open={deleting !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleting(null);
+        }}
+        title="Delete this doctor?"
+        description={
+          deleting
+            ? `${deleting.user.name ?? deleting.user.email} and all of their appointments will be permanently removed.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        destructive
+        isPending={removeDoctor.isPending}
+        onConfirm={() => {
+          if (!deleting) return;
+          removeDoctor.mutate(deleting.id, { onSettled: () => setDeleting(null) });
+        }}
       />
     </div>
   );

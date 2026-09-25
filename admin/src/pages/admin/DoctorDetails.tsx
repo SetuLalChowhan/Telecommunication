@@ -1,5 +1,6 @@
-import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Check, ExternalLink, X } from "lucide-react";
+import { useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, Check, ExternalLink, Pencil, Trash2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +21,12 @@ import {
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ErrorState, TableSkeleton } from "@/components/common/States";
 import { isNotFound } from "@/lib/api/error";
-import { useDoctor, useUpdateDocumentStatus } from "@/features/doctors/api/doctors.queries";
+import {
+  useDeleteDoctor,
+  useDoctor,
+  useUpdateDocumentStatus,
+} from "@/features/doctors/api/doctors.queries";
+import { EditDoctorDialog } from "@/features/doctors/components/EditDoctorDialog";
 import {
   DoctorStatusBadge,
   DocumentStatusBadge,
@@ -59,9 +65,13 @@ function InfoRow({
 
 const DoctorDetails = () => {
   const { id = "" } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: doctor, isPending, isError, error, refetch } = useDoctor(id);
   const verification = useDoctorVerification();
   const documentStatus = useUpdateDocumentStatus();
+  const removeDoctor = useDeleteDoctor();
+  const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const isApprove = verification.pending?.type === "approve";
 
@@ -118,6 +128,15 @@ const DoctorDetails = () => {
               variant="outline"
               size="sm"
               className="gap-1.5 text-xs font-semibold cursor-pointer"
+              onClick={() => setEditing(true)}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              Edit
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs font-semibold cursor-pointer"
               disabled={doctor.verified || verification.isPending}
               onClick={() => verification.requestApprove(doctor)}
             >
@@ -133,6 +152,15 @@ const DoctorDetails = () => {
             >
               <X className="h-3.5 w-3.5" />
               Reject
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="gap-1.5 text-xs font-semibold cursor-pointer"
+              onClick={() => setConfirmDelete(true)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete
             </Button>
           </div>
         </div>
@@ -330,6 +358,23 @@ const DoctorDetails = () => {
         destructive={!isApprove}
         isPending={verification.isPending}
         onConfirm={verification.confirm}
+      />
+
+      <EditDoctorDialog doctor={doctor} open={editing} onOpenChange={setEditing} />
+
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title="Delete this doctor?"
+        description={`${doctor.user.name ?? doctor.user.email} and all of their appointments will be permanently removed.`}
+        confirmLabel="Delete"
+        destructive
+        isPending={removeDoctor.isPending}
+        onConfirm={() =>
+          removeDoctor.mutate(doctor.id, {
+            onSuccess: () => navigate("/dashboard/doctors"),
+          })
+        }
       />
     </div>
   );

@@ -14,8 +14,16 @@ const Unauthorized = lazy(() => import("@/pages/sites/Unauthorized"));
 const Dashboard = lazy(() => import("@/pages/admin/Dashboard"));
 const Doctors = lazy(() => import("@/pages/admin/Doctors"));
 const DoctorDetails = lazy(() => import("@/pages/admin/DoctorDetails"));
+const Patients = lazy(() => import("@/pages/admin/Patients"));
+const PatientDetails = lazy(() => import("@/pages/admin/PatientDetails"));
+const Appointments = lazy(() => import("@/pages/admin/Appointments"));
+const Reviews = lazy(() => import("@/pages/admin/Reviews"));
 const Settings = lazy(() => import("@/pages/admin/Settings"));
 const ComponentsShowcase = lazy(() => import("@/pages/admin/ComponentsShowcase"));
+
+// The component showcase is a development-only reference page and must not be
+// reachable (or bundled into navigation) in a production build.
+const isDev = import.meta.env.DEV;
 
 const withSuspense = (node: ReactNode) => (
   <Suspense fallback={<FullPageSpinner />}>{node}</Suspense>
@@ -53,9 +61,13 @@ const router = createBrowserRouter([
       { index: true, element: withSuspense(<Dashboard />) },
       { path: "doctors", element: withSuspense(<Doctors />) },
       { path: "doctors/:id", element: withSuspense(<DoctorDetails />) },
+      { path: "patients", element: withSuspense(<Patients />) },
+      { path: "patients/:id", element: withSuspense(<PatientDetails />) },
+      { path: "appointments", element: withSuspense(<Appointments />) },
+      { path: "reviews", element: withSuspense(<Reviews />) },
       { path: "settings", element: <Navigate to="/dashboard/settings/profile" replace /> },
       { path: "settings/:tab", element: withSuspense(<Settings />) },
-      { path: "showcase", element: withSuspense(<ComponentsShowcase />) },
+      ...(isDev ? [{ path: "showcase", element: withSuspense(<ComponentsShowcase />) }] : []),
       { path: "*", element: <Navigate to="/dashboard" replace /> },
     ],
   },

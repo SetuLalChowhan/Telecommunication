@@ -3,12 +3,19 @@ import { toast } from "react-toastify";
 import { describeApiError } from "@/lib/api/error";
 import { CACHE } from "@/lib/query/policy";
 import { doctorKeys } from "../types";
-import type { AdminDoctor, DoctorQueryParams, DocumentStatus } from "../types";
+import type {
+  AdminDoctor,
+  DoctorQueryParams,
+  DocumentStatus,
+  UpdateDoctorPayload,
+} from "../types";
 import {
   approveDoctor,
+  deleteDoctor,
   getDoctorById,
   getDoctors,
   rejectDoctor,
+  updateDoctor,
   updateDocumentStatus,
 } from "./doctors.api";
 
@@ -80,6 +87,37 @@ export function useUpdateDocumentStatus() {
       updateDocumentStatus(documentId, status),
     onSuccess: () => {
       toast.success("Document status updated.");
+      queryClient.invalidateQueries({ queryKey: doctorKeys.all });
+    },
+    onError: (error) => {
+      toast.error(describeApiError(error));
+    },
+  });
+}
+
+export function useUpdateDoctor() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateDoctorPayload }) =>
+      updateDoctor(id, payload),
+    onSuccess: () => {
+      toast.success("Doctor updated successfully.");
+      queryClient.invalidateQueries({ queryKey: doctorKeys.all });
+    },
+    onError: (error) => {
+      toast.error(describeApiError(error));
+    },
+  });
+}
+
+export function useDeleteDoctor() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => deleteDoctor(id),
+    onSuccess: () => {
+      toast.success("Doctor deleted.");
       queryClient.invalidateQueries({ queryKey: doctorKeys.all });
     },
     onError: (error) => {

@@ -1,65 +1,73 @@
-import React, { useState } from "react"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Link } from "react-router-dom";
+import { CalendarDays, Stethoscope, UserRoundCheck, Star } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { DashboardStats } from "@/features/dashboard/components/DashboardStats";
 
-// Import modular dashboard sub-components
-import StatsCards from "@/components/dashboard/StatsCards"
-import RevenueChart from "@/components/dashboard/RevenueChart"
-import DeviceChart from "@/components/dashboard/DeviceChart"
-import SalesChart from "@/components/dashboard/SalesChart"
-import TransactionsTable from "@/components/dashboard/TransactionsTable"
+const QUICK_LINKS = [
+  {
+    to: "/dashboard/doctors",
+    title: "Doctors",
+    description: "Review registrations and verify credentials.",
+    icon: <Stethoscope className="h-4 w-4" />,
+  },
+  {
+    to: "/dashboard/patients",
+    title: "Patients",
+    description: "Browse and manage patient accounts.",
+    icon: <UserRoundCheck className="h-4 w-4" />,
+  },
+  {
+    to: "/dashboard/appointments",
+    title: "Appointments",
+    description: "Oversee consultations and their status.",
+    icon: <CalendarDays className="h-4 w-4" />,
+  },
+  {
+    to: "/dashboard/reviews",
+    title: "Reviews",
+    description: "Moderate patient feedback.",
+    icon: <Star className="h-4 w-4" />,
+  },
+];
 
-const Dashboard: React.FC = () => {
-  const [range, setRange] = useState<"daily" | "weekly" | "monthly">("weekly")
-
+const Dashboard = () => {
   return (
     <div className="space-y-6">
-      {/* Upper header section */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-foreground">Dashboard</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Operational review, charts telemetry, and activity checklists.
-          </p>
-        </div>
-
-        {/* Compact Tabs configuration */}
-        <div className="flex items-center gap-2">
-          <Tabs
-            value={range}
-            onValueChange={(value) => setRange(value as "daily" | "weekly" | "monthly")}
-            className="w-auto"
-          >
-            <TabsList className="bg-muted p-1 rounded-lg h-9">
-              <TabsTrigger value="daily" className="text-xs h-7 px-3 py-1 font-medium cursor-pointer">Daily</TabsTrigger>
-              <TabsTrigger value="weekly" className="text-xs h-7 px-3 py-1 font-medium cursor-pointer">Weekly</TabsTrigger>
-              <TabsTrigger value="monthly" className="text-xs h-7 px-3 py-1 font-medium cursor-pointer">Monthly</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+      <div>
+        <h2 className="text-3xl font-extrabold tracking-tight text-foreground">Dashboard</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          Live operational metrics for the platform.
+        </p>
       </div>
 
-      {/* Grid Stats Cards Component */}
-      <StatsCards />
+      {/* Real counters from /admin/dashboard/metrics — no static figures. */}
+      <DashboardStats />
 
-      {/* Charts section */}
-      <div className="grid gap-4 md:grid-cols-3">
-        {/* Line Chart Component */}
-        <RevenueChart range={range} />
-
-        {/* Donut Chart Component */}
-        <DeviceChart />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {QUICK_LINKS.map((link) => (
+          <Card key={link.to} className="border border-border/70 shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-bold">{link.title}</CardTitle>
+              <span className="text-muted-foreground">{link.icon}</span>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <CardDescription className="text-xs">{link.description}</CardDescription>
+              <Button asChild variant="outline" size="sm" className="h-8 text-xs font-semibold cursor-pointer">
+                <Link to={link.to}>Open</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
       </div>
-
-      {/* Bar Chart section */}
-      <div className="grid gap-4 md:grid-cols-3">
-        {/* Bar Chart Component */}
-        <SalesChart range={range} />
-      </div>
-
-      {/* Table section */}
-      <TransactionsTable />
     </div>
-  )
-}
+  );
+};
 
-export default Dashboard
+export default Dashboard;

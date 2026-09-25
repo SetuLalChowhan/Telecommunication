@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DocumentStatus } from '@prisma/client';
+import { BookingStatus, DocumentStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import {
   createPaginationMeta,
@@ -43,6 +43,39 @@ export class AdminRepository {
     return this.prisma.doctorProfile.findUnique({
       where: { id: doctorId },
       include: { ...ADMIN_DOCTOR_INCLUDE, availability: true, daysOff: true },
+    });
+  }
+
+  async updateDoctor(
+    doctorId: string,
+    data: {
+      experienceYears?: number;
+      fee?: number;
+      bio?: string;
+      bmdcNumber?: string;
+      designation?: string;
+      hospitalAffiliation?: string;
+      clinicAddress?: string;
+      slug?: string;
+    },
+  ) {
+    return this.prisma.doctorProfile.update({
+      where: { id: doctorId },
+      data,
+      include: { ...ADMIN_DOCTOR_INCLUDE, availability: true, daysOff: true },
+    });
+  }
+
+  /**
+   * Removes a doctor and everything that depends on them.
+   * Bookings restrict deletion, so they are cleared first (their reviews cascade
+   * and their reports have their booking link nulled by the schema).
+   */
+  async deleteDoctor(doctorId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.booking.deleteMany({ where: { doctorId } });
+      await tx.doctorProfile.delete({ where: { id: doctorId } });
+      return { id: doctorId };
     });
   }
 
@@ -144,6 +177,47 @@ export class AdminRepository {
     });
   }
 
+  async findPatientWithUser(patientId: string) {
+    return this.prisma.patientProfile.findUnique({
+      where: { id: patientId },
+      select: { id: true, userId: true },
+    });
+  }
+
+  async findUserByEmail(email: string) {
+    return this.prisma.user.findUnique({ where: { email }, select: { id: true } });
+  }
+
+  async updatePatient(
+    patientId: string,
+    userId: string,
+    userData: Record<string, unknown>,
+    profileData: Record<string, unknown>,
+  ) {
+    await this.prisma.$transaction(async (tx) => {
+      if (Object.keys(userData).length > 0) {
+        await tx.user.update({ where: { id: userId }, data: userData });
+      }
+      if (Object.keys(profileData).length > 0) {
+        await tx.patientProfile.update({ where: { id: patientId }, data: profileData });
+      }
+    });
+
+    return this.findPatientById(patientId);
+  }
+
+  /**
+   * Deletes a patient account. The patient's bookings restrict deletion, so they
+   * are removed first; the linked user cascades the profile and medical reports.
+   */
+  async deletePatient(patientId: string, userId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.booking.deleteMany({ where: { patientId } });
+      await tx.user.delete({ where: { id: userId } });
+      return { id: patientId };
+    });
+  }
+
   // -- Appointments ----------------------------------------------------------
 
   async findAppointments(query: { status?: any; doctorId?: string; patientId?: string; page?: number; limit?: number }) {
@@ -172,6 +246,38 @@ export class AdminRepository {
     return { rows, total };
   }
 
+  async findBookingById(bookingId: string) {
+    return this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        doctor: { include: { user: { select: { name: true, email: true, phone: true } } } },
+        patient: { include: { user: { select: { name: true, email: true, phone: true } } } },
+        reports: true,
+        review: true,
+      },
+    });
+  }
+
+  async updateBooking(
+    bookingId: string,
+    data: { status?: BookingStatus; notes?: string; meetLink?: string },
+  ) {
+    return this.prisma.booking.update({
+      where: { id: bookingId },
+      data,
+      include: {
+        doctor: { include: { user: { select: { name: true, email: true, phone: true } } } },
+        patient: { include: { user: { select: { name: true, email: true, phone: true } } } },
+        reports: true,
+        review: true,
+      },
+    });
+  }
+
+  async deleteBooking(bookingId: string) {
+    return this.prisma.booking.delete({ where: { id: bookingId } });
+  }
+
   // -- Reviews ---------------------------------------------------------------
 
   async findReviews(query: { doctorId?: string; page?: number; limit?: number }) {
@@ -198,5 +304,38 @@ export class AdminRepository {
     ]);
 
     return { rows, total };
+  }
+
+  /**
+   * Deletes a review and recomputes the affected doctor's rating aggregate so
+   * the public profile never shows a stale score.
+   */
+  async deleteReview(reviewId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const review = await tx.review.findUnique({
+        where: { id: reviewId },
+        include: { booking: { select: { doctorId: true } } },
+      });
+      if (!review) return null;
+
+      await tx.review.delete({ where: { id: reviewId } });
+
+      const doctorId = review.booking.doctorId;
+      const aggregate = await tx.review.aggregate({
+        where: { booking: { doctorId } },
+        _avg: { rating: true },
+        _count: { _all: true },
+      });
+
+      await tx.doctorProfile.update({
+        where: { id: doctorId },
+        data: {
+          rating: aggregate._avg.rating ?? 0,
+          totalReviews: aggregate._count._all,
+        },
+      });
+
+      return { id: reviewId };
+    });
   }
 }

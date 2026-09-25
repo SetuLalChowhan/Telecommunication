@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -10,7 +11,11 @@ import {
 import { DocumentStatus } from '@prisma/client';
 import { AdminService } from './admin.service.js';
 import { AdminDoctorQueryDto } from './dto/admin-doctor-query.dto.js';
+import { AdminQueryDto } from './dto/admin-query.dto.js';
 import { RejectDoctorDto } from './dto/reject-doctor.dto.js';
+import { UpdatePatientDto } from './dto/update-patient.dto.js';
+import { UpdateBookingDto } from './dto/update-booking.dto.js';
+import { UpdateDoctorDto } from './dto/update-doctor.dto.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { CurrentUser } from '../common/decorator/current-user.decorator.js';
@@ -46,6 +51,18 @@ export class AdminController {
     return this.adminService.getDoctorDetails(id);
   }
 
+  @Patch('doctors/:id')
+  @ResponseMessage('Doctor updated successfully')
+  updateDoctor(@Param('id') id: string, @Body() dto: UpdateDoctorDto) {
+    return this.adminService.updateDoctor(id, dto);
+  }
+
+  @Delete('doctors/:id')
+  @ResponseMessage('Doctor deleted successfully')
+  deleteDoctor(@Param('id') id: string) {
+    return this.adminService.deleteDoctor(id);
+  }
+
   @Patch('doctors/:id/approve')
   @ResponseMessage('Doctor approved successfully')
   approveDoctor(
@@ -76,12 +93,8 @@ export class AdminController {
 
   @Get('patients')
   @ResponseMessage('Patients list fetched successfully')
-  listPatients(
-    @Query('search') search?: string,
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-  ) {
-    return this.adminService.listPatients({ search, page: Number(page) || 1, limit: Number(limit) || 10 });
+  listPatients(@Query() query: AdminQueryDto) {
+    return this.adminService.listPatients(query);
   }
 
   @Get('patients/:id')
@@ -90,35 +103,51 @@ export class AdminController {
     return this.adminService.getPatientDetails(id);
   }
 
+  @Patch('patients/:id')
+  @ResponseMessage('Patient updated successfully')
+  updatePatient(@Param('id') id: string, @Body() dto: UpdatePatientDto) {
+    return this.adminService.updatePatient(id, dto);
+  }
+
+  @Delete('patients/:id')
+  @ResponseMessage('Patient deleted successfully')
+  deletePatient(@Param('id') id: string) {
+    return this.adminService.deletePatient(id);
+  }
+
   @Get('appointments')
   @ResponseMessage('All appointments fetched successfully')
-  listAppointments(
-    @Query('status') status?: any,
-    @Query('doctorId') doctorId?: string,
-    @Query('patientId') patientId?: string,
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-  ) {
-    return this.adminService.listAppointments({
-      status,
-      doctorId,
-      patientId,
-      page: Number(page) || 1,
-      limit: Number(limit) || 10,
-    });
+  listAppointments(@Query() query: AdminQueryDto) {
+    return this.adminService.listAppointments(query);
+  }
+
+  @Get('appointments/:id')
+  @ResponseMessage('Appointment details fetched successfully')
+  getAppointmentDetails(@Param('id') id: string) {
+    return this.adminService.getAppointmentDetails(id);
+  }
+
+  @Patch('appointments/:id')
+  @ResponseMessage('Appointment updated successfully')
+  updateAppointment(@Param('id') id: string, @Body() dto: UpdateBookingDto) {
+    return this.adminService.updateAppointment(id, dto);
+  }
+
+  @Delete('appointments/:id')
+  @ResponseMessage('Appointment deleted successfully')
+  deleteAppointment(@Param('id') id: string) {
+    return this.adminService.deleteAppointment(id);
   }
 
   @Get('reviews')
   @ResponseMessage('All reviews fetched successfully')
-  listReviews(
-    @Query('doctorId') doctorId?: string,
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-  ) {
-    return this.adminService.listReviews({
-      doctorId,
-      page: Number(page) || 1,
-      limit: Number(limit) || 10,
-    });
+  listReviews(@Query() query: AdminQueryDto) {
+    return this.adminService.listReviews(query);
+  }
+
+  @Delete('reviews/:id')
+  @ResponseMessage('Review deleted successfully')
+  deleteReview(@Param('id') id: string) {
+    return this.adminService.deleteReview(id);
   }
 }

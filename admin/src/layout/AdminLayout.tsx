@@ -2,7 +2,14 @@ import React, { useEffect, useState } from "react"
 import { Outlet, ScrollRestoration, useLocation } from "react-router-dom"
 import CommonNavbar from "../pages/admin/CommonNavbar"
 import SideBar, { type SidebarItem } from "../pages/admin/SideBar"
-import { LayoutDashboard, Settings, Layers, Stethoscope } from "lucide-react"
+import {
+  LayoutDashboard,
+  Settings,
+  Stethoscope,
+  UserRoundCheck,
+  CalendarDays,
+  Star,
+} from "lucide-react"
 
 const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -29,11 +36,25 @@ const AdminLayout: React.FC = () => {
       activePaths: ["/dashboard/doctors/*"],
     },
     {
-      id: 2,
-      icon: <Layers className="h-5 w-5" />,
-      text: "Components Showcase",
-      path: "/dashboard/showcase",
-      activePaths: ["/dashboard/showcase"],
+      id: 5,
+      icon: <UserRoundCheck className="h-5 w-5" />,
+      text: "Patients",
+      path: "/dashboard/patients",
+      activePaths: ["/dashboard/patients/*"],
+    },
+    {
+      id: 6,
+      icon: <CalendarDays className="h-5 w-5" />,
+      text: "Appointments",
+      path: "/dashboard/appointments",
+      activePaths: ["/dashboard/appointments"],
+    },
+    {
+      id: 7,
+      icon: <Star className="h-5 w-5" />,
+      text: "Reviews",
+      path: "/dashboard/reviews",
+      activePaths: ["/dashboard/reviews"],
     },
     {
       id: 3,

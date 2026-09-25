@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Check, Eye, X } from "lucide-react";
+import { Check, Eye, Pencil, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -17,6 +17,8 @@ interface DoctorsTableProps {
   doctors: AdminDoctor[];
   onApprove: (doctor: AdminDoctor) => void;
   onReject: (doctor: AdminDoctor) => void;
+  onEdit: (doctor: AdminDoctor) => void;
+  onDelete: (doctor: AdminDoctor) => void;
   isUpdating?: boolean;
 }
 
@@ -25,6 +27,8 @@ export function DoctorsTable({
   doctors,
   onApprove,
   onReject,
+  onEdit,
+  onDelete,
   isUpdating = false,
 }: DoctorsTableProps) {
   return (
@@ -90,11 +94,31 @@ export function DoctorsTable({
                   variant="outline"
                   size="sm"
                   className="h-8 gap-1.5 text-xs font-semibold cursor-pointer"
+                  disabled={isUpdating}
+                  onClick={() => onEdit(doctor)}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  Edit
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs font-semibold cursor-pointer"
                   disabled={doctor.verified || isUpdating}
                   onClick={() => onApprove(doctor)}
                 >
                   <Check className="h-3.5 w-3.5" />
                   Verify
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs font-semibold cursor-pointer"
+                  disabled={isUpdating}
+                  onClick={() => onDelete(doctor)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Delete
                 </Button>
                 <Button
                   variant="destructive"

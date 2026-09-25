@@ -1,6 +1,13 @@
 import { http } from "@/lib/api/client";
 import type { PaginatedResult } from "@/lib/api/types";
-import type { AdminDoctor, AdminDoctorDetail, DoctorDocument, DoctorQueryParams, DocumentStatus } from "../types";
+import type {
+  AdminDoctor,
+  AdminDoctorDetail,
+  DoctorDocument,
+  DoctorQueryParams,
+  DocumentStatus,
+  UpdateDoctorPayload,
+} from "../types";
 
 /**
  * Every function here maps to a verified NestJS admin endpoint
@@ -9,6 +16,8 @@ import type { AdminDoctor, AdminDoctorDetail, DoctorDocument, DoctorQueryParams,
  *   GET    /admin/doctors                    -> list (search / filter / paginate)
  *   GET    /admin/doctors/pending            -> pending verification queue
  *   GET    /admin/doctors/:id                -> detail
+ *   PATCH  /admin/doctors/:id                -> edit profile fields
+ *   DELETE /admin/doctors/:id                -> remove the doctor
  *   PATCH  /admin/doctors/:id/approve        -> approve
  *   PATCH  /admin/doctors/:id/reject         -> reject
  *   PATCH  /admin/documents/:id/status       -> per-document status
@@ -26,6 +35,17 @@ export async function getPendingDoctors(
 
 export async function getDoctorById(id: string): Promise<AdminDoctorDetail> {
   return http.get<AdminDoctorDetail>(`/admin/doctors/${id}`);
+}
+
+export async function updateDoctor(
+  id: string,
+  payload: UpdateDoctorPayload,
+): Promise<AdminDoctorDetail> {
+  return http.patch<AdminDoctorDetail>(`/admin/doctors/${id}`, payload);
+}
+
+export async function deleteDoctor(id: string): Promise<{ id: string }> {
+  return http.delete<{ id: string }>(`/admin/doctors/${id}`);
 }
 
 export async function approveDoctor(id: string): Promise<AdminDoctor> {
