@@ -370,6 +370,20 @@ export class GoogleService {
     try {
       const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
+      const formatRFC3339WithOffset = (date: Date, offsetHours = 6) => {
+        const localMs = date.getTime() + offsetHours * 60 * 60 * 1000;
+        const localDate = new Date(localMs);
+        const YYYY = localDate.getUTCFullYear();
+        const MM = String(localDate.getUTCMonth() + 1).padStart(2, '0');
+        const DD = String(localDate.getUTCDate()).padStart(2, '0');
+        const HH = String(localDate.getUTCHours()).padStart(2, '0');
+        const mm = String(localDate.getUTCMinutes()).padStart(2, '0');
+        const ss = String(localDate.getUTCSeconds()).padStart(2, '0');
+        const sign = offsetHours >= 0 ? '+' : '-';
+        const absHours = String(Math.abs(offsetHours)).padStart(2, '0');
+        return `${YYYY}-${MM}-${DD}T${HH}:${mm}:${ss}${sign}${absHours}:00`;
+      };
+
       const event = await calendar.events.insert({
         calendarId: 'primary',
         conferenceDataVersion: 1,
@@ -377,10 +391,12 @@ export class GoogleService {
           summary: `Consultation: Dr. ${doctorName || 'Doctor'} & ${patientName || 'Patient'}`,
           description: `Telemedicine video consultation.\nBooking ID: ${bookingId}\nNotes: ${notes || 'None'}`,
           start: {
-            dateTime: slotStart.toISOString(),
+            dateTime: formatRFC3339WithOffset(slotStart, 6),
+            timeZone: 'Asia/Dhaka',
           },
           end: {
-            dateTime: slotEnd.toISOString(),
+            dateTime: formatRFC3339WithOffset(slotEnd, 6),
+            timeZone: 'Asia/Dhaka',
           },
           attendees: patientEmail?.trim()
             ? [{ email: patientEmail.trim() }]
