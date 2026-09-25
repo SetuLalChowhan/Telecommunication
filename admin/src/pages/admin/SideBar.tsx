@@ -102,58 +102,66 @@ const SideBar: React.FC<SideBarProps> = ({ sidebar, open, setOpen }) => {
 
               if (hasSublinks) {
                 return (
-                  <div key={item.id} className="space-y-1">
+                  <div key={item.id} className="space-y-0.5">
                     {/* Collapsible Trigger */}
                     <button
+                      type="button"
                       onClick={() => toggleGroup(item.id)}
+                      aria-expanded={isGroupOpen}
                       className={cn(
-                        "w-full flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer text-left",
+                        "flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors",
                         active
-                          ? "bg-primary/5 text-primary"
+                          ? "bg-primary/10 font-semibold text-primary"
                           : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                       )}
                     >
-                      <div className="flex items-center gap-3.5">
+                      <span className="flex items-center gap-3.5">
                         {item.icon && (
                           <span className={cn("shrink-0", active ? "text-primary" : "text-muted-foreground")}>
                             {item.icon}
                           </span>
                         )}
                         <span>{item.text}</span>
-                      </div>
+                      </span>
                       <ChevronDown
                         className={cn(
-                          "h-4 w-4 shrink-0 transition-transform duration-200 text-muted-foreground",
+                          "h-4 w-4 shrink-0 transition-transform duration-200",
+                          active ? "text-primary" : "text-muted-foreground/70",
                           isGroupOpen && "rotate-180"
                         )}
                       />
                     </button>
 
-                    {/* Sublinks dropdown drawer */}
+                    {/* Sublinks dropdown drawer — grid-rows animation avoids the
+                        clipping/jumpy max-height trick and keeps an aligned rail. */}
                     <div
                       className={cn(
-                        "overflow-hidden transition-all duration-200 pl-9 pr-2 space-y-1",
-                        isGroupOpen ? "max-h-40 opacity-100 py-1" : "max-h-0 opacity-0 py-0"
+                        "grid transition-[grid-template-rows,opacity] duration-200 ease-out",
+                        isGroupOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
                       )}
                     >
-                      {item.sublink!.map((sub) => {
-                        const subActive = location.pathname === sub.path
-                        return (
-                          <Link
-                            key={sub.id}
-                            to={sub.path}
-                            onClick={() => setOpen(false)}
-                            className={cn(
-                              "block rounded-md px-3.5 py-1.5 text-xs font-semibold transition-colors",
-                              subActive
-                                ? "bg-primary text-primary-foreground font-bold shadow-sm"
-                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                            )}
-                          >
-                            {sub.text}
-                          </Link>
-                        )
-                      })}
+                      <div className="overflow-hidden">
+                        <div className="ml-[1.375rem] space-y-0.5 border-l border-border pb-1 pl-[1.5rem]">
+                          {item.sublink!.map((sub) => {
+                            const subActive = location.pathname === sub.path
+                            return (
+                              <Link
+                                key={sub.id}
+                                to={sub.path}
+                                onClick={() => setOpen(false)}
+                                className={cn(
+                                  "block rounded-md px-3 py-2 text-[13px] font-medium transition-colors",
+                                  subActive
+                                    ? "bg-primary font-semibold text-primary-foreground shadow-sm"
+                                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                )}
+                              >
+                                {sub.text}
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )

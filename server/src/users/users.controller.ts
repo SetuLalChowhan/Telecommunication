@@ -16,6 +16,7 @@ import { UsersService } from './users.service.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateProfileDto } from './dto/update-profile.dto.js';
 import { AdminUpdateUserDto } from './dto/admin-update-user.dto.js';
+import { UpdateUserSettingsDto } from './dto/update-settings.dto.js';
 import { PaginationDto } from '../common/pagination/pagination.dto.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
@@ -48,6 +49,27 @@ export class UsersController {
     @UploadedFile() file?: Express.Multer.File,
   ) {
     return this.usersService.updateProfile(userId, dto, file);
+  }
+
+  /**
+   * Get the authenticated user's preferences and notification settings.
+   */
+  @Get('me/settings')
+  @ResponseMessage('Settings fetched successfully')
+  getSettings(@CurrentUser('id') userId: string) {
+    return this.usersService.getSettings(userId);
+  }
+
+  /**
+   * Update the authenticated user's preferences and notification settings.
+   */
+  @Patch('me/settings')
+  @ResponseMessage('Settings updated successfully')
+  updateSettings(
+    @CurrentUser('id') userId: string,
+    @Body() dto: UpdateUserSettingsDto,
+  ) {
+    return this.usersService.updateSettings(userId, dto);
   }
 
   /**

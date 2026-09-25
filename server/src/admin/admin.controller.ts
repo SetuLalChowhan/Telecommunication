@@ -6,8 +6,10 @@ import {
   Param,
   Patch,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { DocumentStatus } from '@prisma/client';
 import { AdminService } from './admin.service.js';
 import { AdminDoctorQueryDto } from './dto/admin-doctor-query.dto.js';
@@ -89,6 +91,20 @@ export class AdminController {
     @Body('status') status: DocumentStatus,
   ) {
     return this.adminService.updateDocumentStatus(documentId, status);
+  }
+
+  @Get('documents/:id/file')
+  @ResponseMessage('Document file fetched successfully')
+  getDocumentFile(
+    @Param('id') documentId: string,
+    @Query('action') action: 'view' | 'download',
+    @Res() res: Response,
+  ) {
+    return this.adminService.streamDocumentFile(
+      documentId,
+      action || 'view',
+      res,
+    );
   }
 
   @Get('patients')

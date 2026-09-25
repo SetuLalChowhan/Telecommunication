@@ -21,9 +21,13 @@ import { ApiEnvelope, EMPTY_PAGINATION_META, PaginatedResult } from "./types";
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  // Do NOT pin a global `Content-Type: application/json` here. Axios already
+  // sets it automatically for plain-object payloads, but a global JSON header
+  // makes axios serialize `FormData` bodies to JSON too (see axios
+  // `defaults.transformRequest`). That would turn a multipart upload into
+  // `{ ...fields, image: {} }` and trip the server's `forbidNonWhitelisted`
+  // pipe with "property image should not exist". Leaving it unset lets the
+  // browser attach the correct `multipart/form-data; boundary=...` header.
 });
 
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {

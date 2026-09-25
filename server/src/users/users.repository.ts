@@ -77,4 +77,38 @@ export class UsersRepository {
       },
     });
   }
+
+  // -- Settings --------------------------------------------------------------
+
+  async findSettings(userId: string) {
+    return this.prisma.userSetting.findUnique({ where: { userId } });
+  }
+
+  /**
+   * Returns the user's settings, creating a row with schema defaults on first
+   * access so callers never have to special-case a missing record.
+   */
+  async ensureSettings(userId: string) {
+    const existing = await this.prisma.userSetting.findUnique({ where: { userId } });
+    if (existing) return existing;
+    return this.prisma.userSetting.create({ data: { userId } });
+  }
+
+  async updateSettings(userId: string, data: UserSettingsInput) {
+    return this.prisma.userSetting.upsert({
+      where: { userId },
+      update: data,
+      create: { userId, ...data },
+    });
+  }
+}
+
+export interface UserSettingsInput {
+  language?: string;
+  theme?: string;
+  timezone?: string;
+  emailAlerts?: boolean;
+  pushAlerts?: boolean;
+  weeklyDigest?: boolean;
+  marketingEmails?: boolean;
 }

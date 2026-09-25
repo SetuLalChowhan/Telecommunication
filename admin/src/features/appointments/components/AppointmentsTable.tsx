@@ -90,9 +90,9 @@ export function AppointmentsTable({
                   View
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="default"
                   size="sm"
-                  className="h-8 gap-1.5 text-xs font-semibold cursor-pointer"
+                  className="h-8 gap-1.5 text-xs font-semibold text-white cursor-pointer"
                   disabled={isUpdating}
                   onClick={() => onEdit(appointment)}
                 >

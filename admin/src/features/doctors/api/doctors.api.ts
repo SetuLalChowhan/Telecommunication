@@ -1,4 +1,4 @@
-import { http } from "@/lib/api/client";
+import { apiClient, http } from "@/lib/api/client";
 import type { PaginatedResult } from "@/lib/api/types";
 import type {
   AdminDoctor,
@@ -21,6 +21,7 @@ import type {
  *   PATCH  /admin/doctors/:id/approve        -> approve
  *   PATCH  /admin/doctors/:id/reject         -> reject
  *   PATCH  /admin/documents/:id/status       -> per-document status
+ *   GET    /admin/documents/:id/file         -> streamed/signed document file
  */
 
 export async function getDoctors(params: DoctorQueryParams = {}): Promise<PaginatedResult<AdminDoctor>> {
@@ -61,4 +62,23 @@ export async function updateDocumentStatus(
   status: DocumentStatus,
 ): Promise<DoctorDocument> {
   return http.patch<DoctorDocument>(`/admin/documents/${documentId}/status`, { status });
+}
+
+/**
+ * Fetches a verification document as a Blob through the authenticated backend
+ * proxy (`GET /admin/documents/:id/file`).
+ *
+ * The stored storage URL cannot be opened directly (it is not publicly
+ * deliverable and returns 401), and a plain new-tab link would not carry the
+ * bearer token, so the file is pulled through the normal authenticated client.
+ */
+export async function fetchDocumentFile(
+  documentId: string,
+  action: "view" | "download" = "view",
+): Promise<Blob> {
+  const res = await apiClient.get(`/admin/documents/${documentId}/file`, {
+    params: { action },
+    responseType: "blob",
+  });
+  return res.data as Blob;
 }

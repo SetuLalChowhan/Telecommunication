@@ -8,6 +8,7 @@ import { UsersRepository } from './users.repository.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateProfileDto } from './dto/update-profile.dto.js';
 import { AdminUpdateUserDto } from './dto/admin-update-user.dto.js';
+import { UpdateUserSettingsDto } from './dto/update-settings.dto.js';
 import { CloudinaryService } from '../common/cloudinary/cloudinary.service.js';
 import { PaginationDto } from '../common/pagination/pagination.dto.js';
 import { createPaginationMeta } from '../common/pagination/pagination.utils.js';
@@ -168,5 +169,21 @@ export class UsersService {
     }
 
     return this.repo.delete(id);
+  }
+
+  /**
+   * Settings for the authenticated user. A row is created on first read so the
+   * client always receives concrete defaults.
+   */
+  async getSettings(userId: string) {
+    return this.repo.ensureSettings(userId);
+  }
+
+  async updateSettings(userId: string, dto: UpdateUserSettingsDto) {
+    const data = Object.fromEntries(
+      Object.entries(dto).filter(([, value]) => value !== undefined),
+    );
+
+    return this.repo.updateSettings(userId, data);
   }
 }

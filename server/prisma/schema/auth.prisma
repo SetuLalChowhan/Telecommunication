@@ -17,6 +17,7 @@ model User {
 
   doctorProfile    DoctorProfile?
   patientProfile   PatientProfile?
+  settings         UserSetting?
    notifications   Notification[]
   verifiedDoctors  DoctorProfile[] @relation("DoctorVerifiedBy")
 }

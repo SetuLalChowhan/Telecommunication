@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Check, ExternalLink, Pencil, Trash2, X } from "lucide-react";
+import { toast } from "react-toastify";
+import { ArrowLeft, Check, ExternalLink, Loader2, Pencil, Trash2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,12 +21,13 @@ import {
 } from "@/components/ui/table";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ErrorState, TableSkeleton } from "@/components/common/States";
-import { isNotFound } from "@/lib/api/error";
+import { describeApiError, isNotFound } from "@/lib/api/error";
 import {
   useDeleteDoctor,
   useDoctor,
   useUpdateDocumentStatus,
 } from "@/features/doctors/api/doctors.queries";
+import { fetchDocumentFile } from "@/features/doctors/api/doctors.api";
 import { EditDoctorDialog } from "@/features/doctors/components/EditDoctorDialog";
 import {
   DoctorStatusBadge,
@@ -72,11 +74,40 @@ const DoctorDetails = () => {
   const removeDoctor = useDeleteDoctor();
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [openingDocumentId, setOpeningDocumentId] = useState<string | null>(null);
 
   const isApprove = verification.pending?.type === "approve";
 
   const setDocumentStatus = (document: DoctorDocument, status: DocumentStatus) => {
     documentStatus.mutate({ documentId: document.id, status });
+  };
+
+  /**
+   * Documents live behind an authenticated proxy, so the file is fetched with
+   * the bearer token and opened from a blob URL. The tab is opened up-front so
+   * the browser still treats it as part of the user's click.
+   */
+  const openDocument = async (document: DoctorDocument) => {
+    const win = window.open("", "_blank");
+    if (win) win.opener = null;
+
+    setOpeningDocumentId(document.id);
+    try {
+      const blob = await fetchDocumentFile(document.id, "view");
+      const url = URL.createObjectURL(blob);
+      if (win) {
+        win.location.href = url;
+      } else {
+        window.open(url, "_blank");
+      }
+      // Keep the blob alive long enough for the new tab to load it.
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (err) {
+      win?.close();
+      toast.error(describeApiError(err));
+    } finally {
+      setOpeningDocumentId(null);
+    }
   };
 
   if (isError) {
@@ -253,15 +284,20 @@ const DoctorDetails = () => {
                 {doctor.documents.map((document) => (
                   <TableRow key={document.id}>
                     <TableCell className="text-xs font-semibold text-foreground">
-                      <a
-                        href={document.fileUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 text-primary hover:underline"
+                      <button
+                        type="button"
+                        onClick={() => openDocument(document)}
+                        disabled={openingDocumentId === document.id}
+                        title={`Open ${document.docType} in a new tab`}
+                        className="inline-flex cursor-pointer items-center gap-1.5 text-primary hover:underline disabled:opacity-60"
                       >
                         {document.docType}
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
+                        {openingDocumentId === document.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <ExternalLink className="h-3 w-3" />
+                        )}
+                      </button>
                     </TableCell>
                     <TableCell>
                       <DocumentStatusBadge status={document.status} />

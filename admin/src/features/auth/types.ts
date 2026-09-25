@@ -4,11 +4,14 @@ export type Role = "ADMIN" | "DOCTOR" | "PATIENT";
 export interface CurrentUser {
   id: string;
   name: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
   email: string;
   emailVerified: boolean;
   image: string | null;
   role: Role;
   phone?: string | null;
+  dateOfBirth?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
