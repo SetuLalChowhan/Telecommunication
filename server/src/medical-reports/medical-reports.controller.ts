@@ -12,6 +12,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import { MedicalReportsService } from './medical-reports.service.js';
 import { UploadReportDto } from './dto/upload-report.dto.js';
 import { reportUploadOptions } from '../common/utils/file-upload.util.js';
@@ -85,7 +86,7 @@ export class MedicalReportsController {
     @Query('action') action: 'view' | 'download',
     @CurrentUser('id') userId: string,
     @CurrentUser('role') role: string,
-    @Res() res: any,
+    @Res() res: Response,
   ) {
     return this.medicalReportsService.streamReportFile(
       id,

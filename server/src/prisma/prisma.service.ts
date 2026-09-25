@@ -1,7 +1,8 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
+import { closeAuthDatabase } from '../auth/auth.js';
 
 @Injectable()
 export class PrismaService
@@ -21,7 +22,9 @@ export class PrismaService
 
       // Handle unexpected errors on idle database connections to prevent pool crashes
       PrismaService.pool.on('error', (err) => {
-        console.warn('Postgres connection pool idle error (will reconnect):', err.message);
+        new Logger(PrismaService.name).warn(
+          `Postgres connection pool idle error (will reconnect): ${err.message}`,
+        );
       });
     }
 
@@ -35,5 +38,9 @@ export class PrismaService
 
   async onModuleDestroy() {
     await this.$disconnect();
+    // Better Auth owns a separate pool/client at module scope; close it too so
+    // shutdown never leaks database connections.
+    await closeAuthDatabase();
+    await PrismaService.pool?.end().catch(() => undefined);
   }
 }

@@ -8,6 +8,21 @@ import pg from 'pg';
 
 import { sendEmail } from './email.js';
 import { firstFreeSlug, generateDoctorSlug } from '../common/utils/slug.utils.js';
+import { parseTrustedOrigins } from '../config/env.schema.js';
+
+/**
+ * Roles a public registration is ever allowed to receive. Privileged roles
+ * (e.g. ADMIN) can only be granted through the authenticated admin API, never
+ * through signup payloads or social-login input.
+ */
+const SELF_ASSIGNABLE_ROLES = ['PATIENT', 'DOCTOR'] as const;
+
+export function sanitizePublicRole(value: unknown): 'PATIENT' | 'DOCTOR' {
+  const requested = typeof value === 'string' ? value.trim().toUpperCase() : '';
+  return (SELF_ASSIGNABLE_ROLES as readonly string[]).includes(requested)
+    ? (requested as 'PATIENT' | 'DOCTOR')
+    : 'PATIENT';
+}
 
 const authPool = new pg.Pool({
   connectionString: process.env.DATABASE_URL!,
@@ -22,12 +37,25 @@ const prisma = new PrismaClient({
   adapter,
 });
 
+/**
+ * Closes the pool + Prisma client that Better Auth owns at module scope so the
+ * process can shut down without leaking database connections. Called from the
+ * Nest lifecycle (see `PrismaService.onModuleDestroy`).
+ */
+export async function closeAuthDatabase(): Promise<void> {
+  await prisma.$disconnect().catch(() => undefined);
+  await authPool.end().catch(() => undefined);
+}
+
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:5000',
 
-  trustedOrigins: process.env.TRUSTED_ORIGINS
-    ? process.env.TRUSTED_ORIGINS.split(',')
-    : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5000'],
+  trustedOrigins: (() => {
+    const origins = parseTrustedOrigins(process.env.TRUSTED_ORIGINS);
+    return origins.length > 0
+      ? origins
+      : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5000'];
+  })(),
 
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
@@ -53,6 +81,12 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
+        // The role is coerced server-side before it ever reaches the database,
+        // so a crafted signup/social payload cannot self-assign ADMIN (or any
+        // value outside the public allowlist).
+        before: async (user) => ({
+          data: { ...user, role: sanitizePublicRole(user.role) },
+        }),
         after: async (user) => {
           if (user.role === 'DOCTOR') {
             // Clean, name-based public URL (`dr-ithika`). Uniqueness is only
@@ -83,6 +117,15 @@ export const auth = betterAuth({
           }
         },
       },
+      update: {
+        // Users may edit their own profile through Better Auth; the role field
+        // must never be changed that way (admin promotion is a separate,
+        // audited flow that writes through Prisma).
+        before: async (user) => {
+          if (user.role === undefined) return;
+          return { data: { ...user, role: sanitizePublicRole(user.role) } };
+        },
+      },
     },
   },
 
@@ -90,6 +133,7 @@ export const auth = betterAuth({
     additionalFields: {
       role: {
         type: 'string',
+        required: false,
         defaultValue: 'PATIENT',
       },
       phone: {

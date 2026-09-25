@@ -4,10 +4,22 @@ const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12; // 96 bits standard for AES-GCM
 const PREFIX = 'enc:v1:';
 
+const MIN_SECRET_LENGTH = 32;
+
+/**
+ * Derives the 256-bit AES key from a caller-supplied secret.
+ *
+ * There is intentionally no hardcoded fallback: a fixed key baked into the
+ * source would let anyone decrypt stored OAuth tokens. Missing or weak secrets
+ * fail loudly instead of silently degrading to an insecure key.
+ */
 function getDerivedKey(secret: string): Buffer {
-  return createHash('sha256')
-    .update(secret || 'telemedicine-app-encryption-fallback-key-2026')
-    .digest();
+  if (!secret || secret.trim().length < MIN_SECRET_LENGTH) {
+    throw new Error(
+      `Encryption secret must be at least ${MIN_SECRET_LENGTH} characters. Set TOKEN_ENCRYPTION_KEY (or BETTER_AUTH_SECRET).`,
+    );
+  }
+  return createHash('sha256').update(secret).digest();
 }
 
 /**

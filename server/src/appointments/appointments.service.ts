@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { BookingStatus, DayOfWeek, NotificationType } from '@prisma/client';
@@ -170,6 +171,8 @@ function isValidSlotAgainstSchedules(
 
 @Injectable()
 export class AppointmentsService {
+  private readonly logger = new Logger(AppointmentsService.name);
+
   constructor(
     private readonly repo: AppointmentsRepository,
     private readonly googleService: GoogleService,
@@ -307,7 +310,7 @@ export class AppointmentsService {
         relatedBookingId: booking.id,
       });
     } catch (err) {
-      console.error('Failed to dispatch booking creation notifications:', err);
+      this.logger.error('Failed to dispatch booking creation notifications', err as Error);
     }
 
     return booking;
@@ -444,7 +447,7 @@ export class AppointmentsService {
         googleEventId = result.googleEventId || null;
       }
     } catch (err) {
-      console.error('Failed to create Google Meet event during confirmation:', err);
+      this.logger.error('Failed to create Google Meet event during confirmation', err as Error);
     }
 
     const updated = await this.repo.updateBooking(bookingId, {
@@ -466,7 +469,7 @@ export class AppointmentsService {
         relatedBookingId: booking.id,
       });
     } catch (err) {
-      console.error('Failed to dispatch patient confirmation notification:', err);
+      this.logger.error('Failed to dispatch patient confirmation notification', err as Error);
     }
 
     return updated;
@@ -503,7 +506,7 @@ export class AppointmentsService {
         relatedBookingId: booking.id,
       });
     } catch (err) {
-      console.error('Failed to dispatch cancellation notification:', err);
+      this.logger.error('Failed to dispatch cancellation notification', err as Error);
     }
 
     return updated;

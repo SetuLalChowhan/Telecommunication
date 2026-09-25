@@ -26,7 +26,7 @@ describe('GoogleService', () => {
         if (key === 'GOOGLE_CLIENT_ID') return 'mock-client-id';
         if (key === 'GOOGLE_CLIENT_SECRET') return 'mock-client-secret';
         if (key === 'GOOGLE_CALENDAR_REDIRECT_URI') return 'http://localhost:3000/api/google/callback';
-        if (key === 'BETTER_AUTH_SECRET') return 'test-encryption-secret-key';
+        if (key === 'BETTER_AUTH_SECRET') return 'test-encryption-secret-key-min-32-chars!!';
         return null;
       }),
     };
@@ -143,7 +143,7 @@ describe('GoogleService', () => {
 
   describe('Token encryption at rest', () => {
     it('correctly encrypts and decrypts OAuth tokens', () => {
-      const secret = 'super-secret-key-12345';
+      const secret = 'super-secret-key-12345-with-enough-length';
       const plainToken = '1//0gAbCdEfGhIjKlMnOpQrStUvWxYz';
 
       const encrypted = encryptToken(plainToken, secret);
@@ -155,7 +155,7 @@ describe('GoogleService', () => {
     });
 
     it('returns plaintext safely for legacy unencrypted tokens', () => {
-      const secret = 'super-secret-key-12345';
+      const secret = 'super-secret-key-12345-with-enough-length';
       const legacyPlainToken = 'legacy-plain-refresh-token';
 
       const decrypted = decryptToken(legacyPlainToken, secret);

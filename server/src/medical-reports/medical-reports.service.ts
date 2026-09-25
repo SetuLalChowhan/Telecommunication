@@ -4,11 +4,27 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { MedicalReportsRepository } from './medical-reports.repository.js';
 import { UploadReportDto } from './dto/upload-report.dto.js';
 import { CloudinaryService } from '../common/cloudinary/cloudinary.service.js';
+import { assertFileSignature } from '../common/utils/file-upload.util.js';
 import { createPaginationMeta } from '../common/pagination/pagination.utils.js';
 import { PaginationDto } from '../common/pagination/pagination.dto.js';
+
+const CONTENT_TYPES: Record<string, string> = {
+  pdf: 'application/pdf',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  gif: 'image/gif',
+};
+
+function normalizeFormat(ext?: string | null): string {
+  const normalized = (ext || '').toLowerCase();
+  return normalized in CONTENT_TYPES ? normalized : 'pdf';
+}
 
 @Injectable()
 export class MedicalReportsService {
@@ -26,6 +42,10 @@ export class MedicalReportsService {
     if (!file) {
       throw new BadRequestException('Report file is required (PDF, JPG, PNG)');
     }
+
+    // The extension/MIME are client-controlled; verify the real content before
+    // anything is forwarded to storage.
+    assertFileSignature(file, ['image', 'pdf']);
 
     let patientId: string;
 
@@ -45,6 +65,12 @@ export class MedicalReportsService {
       if (booking.doctor.userId !== userId) {
         throw new ForbiddenException(
           'You can only upload prescriptions or reports for your own appointments',
+        );
+      }
+
+      if (booking.status === 'CANCELLED' || booking.status === 'COMPLETED') {
+        throw new BadRequestException(
+          'You can only upload reports for active appointments',
         );
       }
 
@@ -151,7 +177,7 @@ export class MedicalReportsService {
     action: 'view' | 'download',
     userId: string,
     role: string,
-    res: any,
+    res: Response,
   ) {
     const report = await this.repo.findReportById(reportId);
 
@@ -172,66 +198,61 @@ export class MedicalReportsService {
       );
     }
 
-    const isPdf =
-      report.fileUrl.toLowerCase().endsWith('.pdf') ||
-      (Boolean(report.fileName) && report.fileName!.toLowerCase().endsWith('.pdf'));
+    const rawFileName = report.fileName || 'medical-document';
+    const extFromName = rawFileName.match(/\.([a-zA-Z0-9]+)$/)?.[1];
+    const extFromUrl = report.fileUrl.match(/\.([a-zA-Z0-9]+)(?:[?#]|$)/)?.[1];
+    const format = normalizeFormat(extFromName || extFromUrl);
 
     const { publicId, resourceType } = this.cloudinaryService.extractPublicId(
       report.fileUrl,
     );
+    const isCloudinary = report.fileUrl.includes('res.cloudinary.com');
 
-    const downloadUrl = isPdf
-      ? this.cloudinaryService.getPrivateDownloadUrl(
-          publicId,
-          'pdf',
-          resourceType,
-        )
-      : report.fileUrl;
+    // Every protected file is streamed through the backend, never handed back
+    // as a permanent public URL. Cloudinary assets — images included, not just
+    // PDFs — are fetched through a short-lived signed URL.
+    let sourceUrl: string;
+    if (isCloudinary) {
+      sourceUrl = this.cloudinaryService.getPrivateDownloadUrl(
+        publicId,
+        format,
+        resourceType,
+      );
+    } else if (report.fileUrl.startsWith('/')) {
+      const base = (process.env.BETTER_AUTH_URL || '').replace(/\/+$/, '');
+      sourceUrl = `${base}${report.fileUrl}`;
+    } else {
+      sourceUrl = report.fileUrl;
+    }
 
-    const response = await fetch(downloadUrl);
+    const response = await fetch(sourceUrl);
     if (!response.ok) {
       throw new NotFoundException('Could not retrieve file from storage provider');
     }
 
     const contentType =
+      CONTENT_TYPES[format] ||
       response.headers.get('content-type') ||
-      (isPdf ? 'application/pdf' : 'application/octet-stream');
+      'application/octet-stream';
 
     const dispositionType = action === 'download' ? 'attachment' : 'inline';
-    const fallbackName = isPdf ? 'medical-report.pdf' : 'medical-document';
-    const rawFileName = report.fileName || fallbackName;
-
-    let ext = '';
-    const extMatch = rawFileName.match(/\.([a-zA-Z0-9]+)$/);
-    if (extMatch) {
-      ext = extMatch[1].toLowerCase();
-    } else {
-      const urlExtMatch = report.fileUrl.match(/\.([a-zA-Z0-9]+)(?:[?#]|$)/);
-      if (urlExtMatch) {
-        ext = urlExtMatch[1].toLowerCase();
-      } else if (isPdf || contentType.includes('pdf')) {
-        ext = 'pdf';
-      } else if (contentType.includes('jpeg') || contentType.includes('jpg')) {
-        ext = 'jpg';
-      } else if (contentType.includes('png')) {
-        ext = 'png';
-      } else if (contentType.includes('webp')) {
-        ext = 'webp';
-      } else {
-        ext = 'pdf';
-      }
-    }
 
     let safeFileName = rawFileName.replace(/[^\w.-]/g, '_');
-    if (ext && !safeFileName.toLowerCase().endsWith(`.${ext}`)) {
-      safeFileName = `${safeFileName}.${ext}`;
+    if (!safeFileName.toLowerCase().endsWith(`.${format}`)) {
+      safeFileName = `${safeFileName}.${format}`;
     }
 
+    // Protected health information must never be cached or sniffed into a
+    // different content type by the browser or an intermediary proxy.
     res.setHeader('Content-Type', contentType);
     res.setHeader(
       'Content-Disposition',
       `${dispositionType}; filename="${safeFileName}"; filename*=UTF-8''${encodeURIComponent(safeFileName)}`,
     );
+    res.setHeader('Cache-Control', 'private, no-store, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'no-referrer');
 
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);

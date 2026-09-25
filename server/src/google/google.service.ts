@@ -45,10 +45,14 @@ export class GoogleService {
   }
 
   private get encryptionSecret(): string {
+    // A dedicated key is preferred so rotating the session secret does not
+    // strand stored OAuth tokens. `BETTER_AUTH_SECRET` remains a fallback.
+    // There is deliberately no hardcoded default — a missing key must fail
+    // loudly rather than encrypt with a key that ships in the source.
     return (
+      this.configService.get<string>('TOKEN_ENCRYPTION_KEY') ||
       this.configService.get<string>('BETTER_AUTH_SECRET') ||
-      this.configService.get<string>('GOOGLE_CLIENT_SECRET') ||
-      'telemedicine-app-encryption-key-2026'
+      ''
     );
   }
 
