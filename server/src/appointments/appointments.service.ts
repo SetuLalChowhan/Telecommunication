@@ -292,6 +292,7 @@ export class AppointmentsService {
       const slotTime = slotStart.toLocaleString('en-US', {
         dateStyle: 'medium',
         timeStyle: 'short',
+        timeZone: 'Asia/Dhaka',
       });
 
       await this.notificationsService.createNotification({
@@ -460,6 +461,7 @@ export class AppointmentsService {
       const slotTime = booking.slotStart.toLocaleString('en-US', {
         dateStyle: 'medium',
         timeStyle: 'short',
+        timeZone: 'Asia/Dhaka',
       });
       await this.notificationsService.createNotification({
         userId: booking.patient.userId,
@@ -502,7 +504,7 @@ export class AppointmentsService {
         userId: targetUserId,
         type: NotificationType.BOOKING_CANCELLED,
         title: 'Appointment Cancelled',
-        message: `${actorName} has cancelled the appointment scheduled for ${booking.slotStart.toLocaleDateString()}.`,
+        message: `${actorName} has cancelled the appointment scheduled for ${booking.slotStart.toLocaleDateString('en-US', { timeZone: 'Asia/Dhaka' })}.`,
         relatedBookingId: booking.id,
       });
     } catch (err) {
