@@ -35,11 +35,8 @@ async function bootstrap() {
   }
 
   // Security Headers
-  const helmetAny: any = helmet;
-  const helmetFn =
-    typeof helmetAny === 'function' ? helmetAny : helmetAny.default;
   app.use(
-    helmetFn({
+    helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
       contentSecurityPolicy: false,
     }),
