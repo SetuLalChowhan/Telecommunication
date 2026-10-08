@@ -21,32 +21,32 @@ export default function BrandLogo({
     <Link
       href="/"
       className={cn(
-        "group inline-flex items-center rounded-xl transition-all duration-200 hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+        "group inline-flex items-center rounded-full transition-all duration-200 hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         compact ? "gap-2" : "gap-2.5",
         className
       )}
     >
       <div
         className={cn(
-          "flex items-center justify-center bg-primary text-white transition-transform duration-200 group-hover:scale-105",
+          "flex items-center justify-center rounded-full bg-[#f3f1eb] text-foreground border border-border transition-colors group-hover:border-[#cbcbcb]",
           compact
-            ? "h-8 w-8 rounded-lg"
-            : "h-10 w-10 rounded-xl shadow-md shadow-primary/25"
+            ? "h-7 w-7"
+            : "h-9 w-9"
         )}
       >
-        <Activity size={iconSize} className="stroke-[2.5]" />
+        <Activity size={iconSize} className="stroke-[2] text-foreground" />
       </div>
       <div className="flex flex-col">
         <span
           className={cn(
-            "flex items-center gap-1 font-bold leading-tight tracking-tight text-foreground",
-            compact ? "text-[17px]" : "text-[21px]"
+            "flex items-center gap-1 font-medium leading-tight tracking-[-0.03em] text-foreground",
+            compact ? "text-[16px]" : "text-[18px]"
           )}
         >
-          Tele<span className="font-extrabold text-primary">Health</span>
+          Tele<span className="font-semibold text-foreground">Health</span>
         </span>
         {showTagline && (
-          <span className="text-[11px] font-medium text-muted-foreground tracking-wide">
+          <span className="text-[11px] font-normal text-muted-foreground tracking-normal">
             Care Anytime, Anywhere
           </span>
         )}

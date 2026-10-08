@@ -11,34 +11,34 @@ const TestimonialsSection = async () => {
   if (content.items.length === 0) return null;
 
   return (
-    <section className="w-full border-b border-border/60 bg-background py-16 sm:py-20">
-      <div className="container-page">
-        {/* Header */}
-        <div className="mb-10 max-w-2xl space-y-4 sm:mb-12">
-          <span className="eyebrow-text block text-primary">{content.badge}</span>
-          <h2 className="text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
-            {content.title}
+    <section className="relative w-full border-b border-border/60 bg-[#f3f1eb] py-16 sm:py-24 blue-wash">
+      <div className="container-page relative z-10">
+        {/* Header - Centered Editorial */}
+        <div className="mx-auto mb-12 max-w-2xl text-center space-y-4 sm:mb-16">
+          <span className="inline-flex items-center rounded-[30px] border border-border bg-white px-3.5 py-1 text-xs font-medium tracking-[0.24px] text-foreground">
+            {content.badge}
+          </span>
+          <h2 className="font-serif text-3xl sm:text-4xl lg:text-[44px] font-normal leading-tight tracking-[-0.03em] text-foreground">
+            What patients say about <span className="text-[#97cde5]">care</span>
           </h2>
           <p className="text-sm leading-relaxed text-secondary-text">
             {content.subtitle}
           </p>
         </div>
 
-        {/* Cards */}
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {/* Cards - 16px white cards on cream band */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {content.items.map((item, index) => (
             <figure
               key={`${item.name}-${index}`}
-              className="flex flex-col rounded-xl border border-border bg-card p-6"
+              className="flex flex-col justify-between rounded-2xl border border-border bg-card p-7 transition-colors hover:border-[#cbcbcb]"
             >
-              <Quote className="h-5 w-5 text-primary/40" aria-hidden="true" />
-
-              <blockquote className="mt-3 flex-1 text-sm leading-relaxed text-body">
+              <blockquote className="font-serif text-[18px] sm:text-[19px] font-normal leading-relaxed text-foreground">
                 &ldquo;{item.quote}&rdquo;
               </blockquote>
 
-              <figcaption className="mt-5 flex items-center gap-3 border-t border-border/70 pt-4">
-                <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
+              <figcaption className="mt-6 flex items-center gap-3.5 border-t border-border/70 pt-4">
+                <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-border bg-[#f3f1eb]">
                   {item.avatar && (
                     <Image
                       src={item.avatar}
@@ -50,10 +50,10 @@ const TestimonialsSection = async () => {
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-foreground">
+                  <p className="truncate text-sm font-medium text-foreground tracking-tight">
                     {item.name}
                   </p>
-                  <p className="truncate text-xs text-muted-foreground">{item.role}</p>
+                  <p className="truncate text-xs text-[#4a4a4c]">{item.role}</p>
                 </div>
               </figcaption>
             </figure>

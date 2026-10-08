@@ -23,14 +23,16 @@ const DoctorsSection = async () => {
   });
 
   return (
-    <section className="w-full border-b border-border/60 bg-background py-16 sm:py-20">
+    <section className="w-full border-b border-border/60 bg-background py-16 sm:py-24">
       <div className="container-page">
         <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-14">
           {/* Header */}
           <div className="flex flex-col gap-6 lg:col-span-4">
             <div className="space-y-4">
-              <span className="eyebrow-text block text-primary">{content.badge}</span>
-              <h2 className="text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
+              <span className="inline-flex items-center rounded-[30px] border border-border bg-[#dddcdd]/60 px-3.5 py-1 text-xs font-medium tracking-[0.24px] text-foreground">
+                {content.badge}
+              </span>
+              <h2 className="font-serif text-3xl sm:text-4xl lg:text-[40px] font-normal leading-tight tracking-[-0.03em] text-foreground">
                 {content.title}
               </h2>
               <p className="text-sm leading-relaxed text-secondary-text">
@@ -41,14 +43,14 @@ const DoctorsSection = async () => {
             <div className="flex flex-wrap items-center gap-3">
               <Link
                 href={content.ctaLink}
-                className="group inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-dark"
+                className="group inline-flex items-center justify-center rounded-[100px] bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all hover:brightness-95"
               >
                 <span>{content.ctaText}</span>
                 <ChevronRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link
                 href="/consult"
-                className="inline-flex items-center justify-center rounded-lg border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground transition-colors hover:border-primary hover:text-primary"
+                className="inline-flex items-center justify-center rounded-[100px] border border-border bg-card px-5 py-3 text-sm font-normal text-foreground transition-colors hover:border-[#cbcbcb]"
               >
                 How consultation works
               </Link>

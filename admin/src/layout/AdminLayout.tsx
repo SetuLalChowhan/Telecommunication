@@ -85,9 +85,9 @@ const AdminLayout: React.FC = () => {
           {/* Top Navbar */}
           <CommonNavbar open={sidebarOpen} setOpen={setSidebarOpen} />
 
-          {/* Core scrollable viewport - Full Width */}
-          <main className="flex-1 overflow-y-auto px-4 md:px-8 py-6 bg-muted/20">
-            <div className="w-full space-y-6">
+          {/* Core scrollable viewport - Parchment Cream Backdrop */}
+          <main className="flex-1 overflow-y-auto px-4 md:px-8 py-8 bg-[#f3f1eb]">
+            <div className="w-full space-y-6 max-w-7xl mx-auto">
               <Outlet />
             </div>
           </main>

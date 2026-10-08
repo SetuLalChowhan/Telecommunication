@@ -74,17 +74,20 @@ const SideBar: React.FC<SideBarProps> = ({ sidebar, open, setOpen }) => {
           <Link
             to="/dashboard"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 font-bold text-lg text-foreground tracking-tight"
+            className="flex items-center gap-2.5 font-medium text-base text-foreground tracking-tight"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-              <Box className="h-5 w-5 stroke-[2.5]" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f3f1eb] text-foreground border border-border">
+              <Box className="h-4 w-4 stroke-[2]" />
             </div>
-            <span>AdminPanel</span>
+            <span className="font-medium tracking-[-0.03em] text-foreground">TeleHealth</span>
+            <span className="rounded-[30px] border border-border bg-[#dddcdd]/50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.24px] text-foreground">
+              Admin
+            </span>
           </Link>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 lg:hidden text-muted-foreground hover:text-foreground"
+            className="h-8 w-8 rounded-full lg:hidden text-muted-foreground hover:text-foreground"
             onClick={() => setOpen(false)}
           >
             <X className="h-4 w-4" />
@@ -102,22 +105,22 @@ const SideBar: React.FC<SideBarProps> = ({ sidebar, open, setOpen }) => {
 
               if (hasSublinks) {
                 return (
-                  <div key={item.id} className="space-y-0.5">
+                  <div key={item.id} className="space-y-1">
                     {/* Collapsible Trigger */}
                     <button
                       type="button"
                       onClick={() => toggleGroup(item.id)}
                       aria-expanded={isGroupOpen}
                       className={cn(
-                        "flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors",
+                        "flex w-full cursor-pointer items-center justify-between gap-3 rounded-full px-3.5 py-2.5 text-left text-sm font-medium transition-colors",
                         active
-                          ? "bg-primary/10 font-semibold text-primary"
-                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                          ? "bg-[#c8dfaa] text-[#28262a]"
+                          : "text-secondary-text hover:bg-[#f3f1eb] hover:text-foreground"
                       )}
                     >
-                      <span className="flex items-center gap-3.5">
+                      <span className="flex items-center gap-3">
                         {item.icon && (
-                          <span className={cn("shrink-0", active ? "text-primary" : "text-muted-foreground")}>
+                          <span className={cn("shrink-0", active ? "text-[#28262a]" : "text-muted-foreground")}>
                             {item.icon}
                           </span>
                         )}
@@ -126,14 +129,13 @@ const SideBar: React.FC<SideBarProps> = ({ sidebar, open, setOpen }) => {
                       <ChevronDown
                         className={cn(
                           "h-4 w-4 shrink-0 transition-transform duration-200",
-                          active ? "text-primary" : "text-muted-foreground/70",
+                          active ? "text-[#28262a]" : "text-muted-foreground",
                           isGroupOpen && "rotate-180"
                         )}
                       />
                     </button>
 
-                    {/* Sublinks dropdown drawer — grid-rows animation avoids the
-                        clipping/jumpy max-height trick and keeps an aligned rail. */}
+                    {/* Sublinks dropdown drawer */}
                     <div
                       className={cn(
                         "grid transition-[grid-template-rows,opacity] duration-200 ease-out",
@@ -141,7 +143,7 @@ const SideBar: React.FC<SideBarProps> = ({ sidebar, open, setOpen }) => {
                       )}
                     >
                       <div className="overflow-hidden">
-                        <div className="ml-[1.375rem] space-y-0.5 border-l border-border pb-1 pl-[1.5rem]">
+                        <div className="ml-4 space-y-1 border-l border-border pl-3 pt-1">
                           {item.sublink!.map((sub) => {
                             const subActive = location.pathname === sub.path
                             return (
@@ -150,10 +152,10 @@ const SideBar: React.FC<SideBarProps> = ({ sidebar, open, setOpen }) => {
                                 to={sub.path}
                                 onClick={() => setOpen(false)}
                                 className={cn(
-                                  "block rounded-md px-3 py-2 text-[13px] font-medium transition-colors",
+                                  "block rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
                                   subActive
-                                    ? "bg-primary font-semibold text-primary-foreground shadow-sm"
-                                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                    ? "bg-[#c8dfaa] text-[#28262a]"
+                                    : "text-secondary-text hover:bg-[#f3f1eb] hover:text-foreground"
                                 )}
                               >
                                 {sub.text}
@@ -174,14 +176,14 @@ const SideBar: React.FC<SideBarProps> = ({ sidebar, open, setOpen }) => {
                     to={item.path || "/"}
                     onClick={() => setOpen(false)}
                     className={cn(
-                      "flex items-center gap-3.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                      "flex items-center gap-3 rounded-full px-3.5 py-2.5 text-sm font-medium transition-colors",
                       active
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        ? "bg-[#c8dfaa] text-[#28262a]"
+                        : "text-secondary-text hover:bg-[#f3f1eb] hover:text-foreground"
                     )}
                   >
                     {item.icon && (
-                      <span className={cn("shrink-0", active ? "text-primary-foreground" : "text-muted-foreground")}>
+                      <span className={cn("shrink-0", active ? "text-[#28262a]" : "text-muted-foreground")}>
                         {item.icon}
                       </span>
                     )}
@@ -197,11 +199,11 @@ const SideBar: React.FC<SideBarProps> = ({ sidebar, open, setOpen }) => {
         <div className="p-4 border-t border-border mt-auto">
           <Button
             variant="ghost"
-            className="w-full justify-start gap-3.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+            className="w-full justify-start gap-3 rounded-full text-secondary-text hover:text-destructive hover:bg-destructive/10 cursor-pointer text-sm font-normal"
             disabled={logout.isPending}
             onClick={() => logout.mutate(undefined, { onSuccess: () => navigate("/login") })}
           >
-            <LogOut className="h-5 w-5" />
+            <LogOut className="h-4 w-4" />
             <span>{logout.isPending ? "Signing out…" : "Log Out"}</span>
           </Button>
         </div>

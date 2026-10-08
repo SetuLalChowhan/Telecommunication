@@ -47,7 +47,7 @@ export const Header: React.FC = () => {
         </div>
       )}
 
-      <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/95 backdrop-blur-md transition-colors">
+      <header className="sticky top-0 z-40 w-full border-b border-border/50 bg-background/95 backdrop-blur-md transition-colors">
         <div className="container-page flex h-16 sm:h-[4.5rem] items-center justify-between">
           {/* Mobile Header */}
           <div className="flex items-center justify-between w-full md:hidden">
@@ -56,7 +56,7 @@ export const Header: React.FC = () => {
               size="icon"
               onClick={() => setMobileDrawerOpen(true)}
               aria-label="Open navigation menu"
-              className="h-9.5 w-9.5 rounded-lg text-foreground hover:bg-muted"
+              className="h-9 w-9 rounded-full text-foreground hover:bg-muted"
             >
               <Menu className="h-5 w-5" />
             </Button>
@@ -80,7 +80,7 @@ export const Header: React.FC = () => {
                 />
               ) : (
                 <Link href="/login">
-                  <Button variant="ghost" size="sm"                    className="font-semibold text-xs sm:text-sm px-3 h-9 rounded-lg text-primary hover:bg-primary/10">
+                  <Button variant="ghost" size="sm" className="font-normal text-xs sm:text-sm px-3.5 h-9 rounded-full text-foreground hover:bg-muted">
                     Log in
                   </Button>
                 </Link>
@@ -95,8 +95,8 @@ export const Header: React.FC = () => {
             <div className="flex items-center gap-3.5 min-w-[160px] justify-end">
               {!mounted || isSessionLoading ? (
                 <div className="flex items-center gap-2">
-                  <div className="h-10 w-20 rounded-lg bg-muted/60 animate-pulse" />
-                  <div className="h-10 w-28 rounded-lg bg-primary/20 animate-pulse" />
+                  <div className="h-10 w-20 rounded-full bg-muted/60 animate-pulse" />
+                  <div className="h-10 w-28 rounded-full bg-primary/20 animate-pulse" />
                 </div>
               ) : isAuthenticated ? (
                 <UserDropdownMenu
@@ -113,12 +113,12 @@ export const Header: React.FC = () => {
               ) : (
                 <div className="flex items-center gap-2.5">
                   <Link href="/login">
-                    <Button variant="ghost" className="h-10 px-4 text-[15px] font-medium rounded-lg text-foreground hover:bg-muted">
+                    <Button variant="ghost" className="h-10 px-4 text-sm font-normal rounded-full text-foreground hover:bg-muted">
                       Log in
                     </Button>
                   </Link>
                   <Link href="/register">
-                    <Button className="h-10 px-5 text-[15px] font-semibold rounded-lg bg-primary hover:bg-primary-dark text-white gap-1.5">
+                    <Button className="h-10 px-5 text-sm font-medium rounded-full bg-primary hover:brightness-95 text-primary-foreground gap-1.5">
                       <span>Get started</span>
                       <ArrowRight className="h-4 w-4" />
                     </Button>

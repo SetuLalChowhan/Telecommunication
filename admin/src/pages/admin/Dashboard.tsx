@@ -39,11 +39,13 @@ const QUICK_LINKS = [
 
 const Dashboard = () => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-extrabold tracking-tight text-foreground">Dashboard</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Live operational metrics for the platform.
+        <h2 className="text-3xl font-normal tracking-[-0.03em] text-foreground">
+          Platform <span className="text-[#97cde5]">Overview</span>
+        </h2>
+        <p className="text-sm text-secondary-text mt-1">
+          Live operational clinical metrics and management portals.
         </p>
       </div>
 
@@ -52,15 +54,15 @@ const Dashboard = () => {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {QUICK_LINKS.map((link) => (
-          <Card key={link.to} className="border border-border/70 shadow-sm">
+          <Card key={link.to} className="border border-border bg-card rounded-2xl transition-colors hover:border-[#cbcbcb]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-bold">{link.title}</CardTitle>
+              <CardTitle className="text-sm font-medium tracking-tight">{link.title}</CardTitle>
               <span className="text-muted-foreground">{link.icon}</span>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <CardDescription className="text-xs">{link.description}</CardDescription>
-              <Button asChild variant="outline" size="sm" className="h-8 text-xs font-semibold cursor-pointer">
-                <Link to={link.to}>Open</Link>
+            <CardContent className="space-y-4">
+              <CardDescription className="text-xs text-secondary-text">{link.description}</CardDescription>
+              <Button asChild variant="outline" size="sm" className="h-8 rounded-full text-xs font-normal cursor-pointer">
+                <Link to={link.to}>Open portal</Link>
               </Button>
             </CardContent>
           </Card>

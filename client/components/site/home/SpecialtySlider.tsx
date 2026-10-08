@@ -36,13 +36,13 @@ export function SpecialtySlider({ items }: SpecialtySliderProps) {
           return (
             <div
               key={`${item.slug}-${item.title}`}
-              className="flex min-w-[270px] max-w-[290px] shrink-0 snap-start flex-col justify-between rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/40"
+              className="flex min-w-[270px] max-w-[290px] shrink-0 snap-start flex-col justify-between rounded-2xl border border-border bg-card p-6 transition-colors hover:border-[#cbcbcb]"
             >
               <div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Icon className="h-5 w-5" />
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f3f1eb] text-foreground border border-border">
+                  <Icon className="h-5 w-5 stroke-[1.8]" />
                 </div>
-                <h3 className="mt-4 text-base font-semibold text-foreground">
+                <h3 className="mt-4 text-base font-medium tracking-tight text-foreground">
                   {item.title}
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed text-secondary-text">
@@ -53,9 +53,9 @@ export function SpecialtySlider({ items }: SpecialtySliderProps) {
               <div className="mt-5 border-t border-border/70 pt-3">
                 <Link
                   href={`/doctors?specialty=${encodeURIComponent(item.slug)}`}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary transition-colors hover:text-primary-dark"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground transition-colors hover:underline underline-offset-4 decoration-[#97cde5]"
                 >
-                  <span>View doctors</span>
+                  <span>View specialists</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
@@ -69,7 +69,7 @@ export function SpecialtySlider({ items }: SpecialtySliderProps) {
           type="button"
           onClick={() => scroll("left")}
           aria-label="Scroll specialties left"
-          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-border bg-card text-foreground transition-colors hover:border-primary hover:text-primary"
+          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:border-[#cbcbcb]"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -77,7 +77,7 @@ export function SpecialtySlider({ items }: SpecialtySliderProps) {
           type="button"
           onClick={() => scroll("right")}
           aria-label="Scroll specialties right"
-          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-border bg-card text-foreground transition-colors hover:border-primary hover:text-primary"
+          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:border-[#cbcbcb]"
         >
           <ChevronRight className="h-4 w-4" />
         </button>

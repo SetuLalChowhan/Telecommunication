@@ -1,14 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Poppins, Noto_Sans_Bengali } from "next/font/google";
+import { Inter, Source_Serif_4, Noto_Sans_Bengali } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers";
 import { baseMetadata, siteJsonLd } from "@/lib/seo";
 
-const poppins = Poppins({
-  weight: ["300", "400", "500", "600", "700"],
+const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
+  weight: ["400", "500", "600", "700"],
+});
+
+const sourceSerif = Source_Serif_4({
+  variable: "--font-serif",
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "600"],
 });
 
 const notoSansBengali = Noto_Sans_Bengali({
@@ -24,7 +31,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b1220" },
+    { media: "(prefers-color-scheme: dark)", color: "#1c1a1e" },
   ],
 };
 
@@ -36,11 +43,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${poppins.variable} ${notoSansBengali.variable} h-full antialiased`}
+      className={`${inter.variable} ${sourceSerif.variable} ${notoSansBengali.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body
-        className="flex min-h-full flex-col bg-background font-sans text-foreground selection:bg-accent selection:text-primary"
+        className="flex min-h-full flex-col bg-background font-sans text-foreground selection:bg-[#97cde5]/30 selection:text-foreground"
         suppressHydrationWarning
       >
         {/* Site-wide Organization + WebSite graph. Rendered once, server-side. */}

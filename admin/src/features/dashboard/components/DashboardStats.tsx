@@ -35,15 +35,15 @@ const STATS: StatDefinition[] = [
 
 function StatCard({ title, value, icon, accent }: { title: string; value: number; icon: ReactNode; accent?: string }) {
   return (
-    <Card className="border border-border/70 shadow-sm transition-colors hover:border-primary/30">
+    <Card className="border border-border bg-card rounded-2xl transition-colors hover:border-[#cbcbcb]">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <span className="text-[11px] font-medium uppercase tracking-[0.24px] text-secondary-text">
           {title}
         </span>
         <span className={accent ?? "text-muted-foreground"}>{icon}</span>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold tracking-tight text-foreground">
+        <div className="text-2xl font-normal tracking-[-0.03em] text-foreground tabular-nums">
           {value.toLocaleString()}
         </div>
       </CardContent>

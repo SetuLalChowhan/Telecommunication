@@ -21,14 +21,16 @@ const HowItWorksSection = async () => {
   );
 
   return (
-    <section className="w-full border-b border-border/60 bg-muted/30 py-16 sm:py-20">
+    <section className="w-full border-b border-border/60 bg-background py-16 sm:py-24">
       <div className="container-page">
         <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-14">
           {/* Steps */}
           <div className="flex flex-col gap-6 lg:col-span-6">
             <div className="space-y-4">
-              <span className="eyebrow-text block text-primary">{content.badge}</span>
-              <h2 className="text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
+              <span className="inline-flex items-center rounded-[30px] border border-border bg-[#dddcdd]/60 px-3.5 py-1 text-xs font-medium tracking-[0.24px] text-foreground">
+                {content.badge}
+              </span>
+              <h2 className="font-serif text-3xl sm:text-4xl lg:text-[40px] font-normal leading-tight tracking-[-0.03em] text-foreground">
                 {content.title}
               </h2>
               <p className="max-w-xl text-sm leading-relaxed text-secondary-text">
@@ -43,20 +45,20 @@ const HowItWorksSection = async () => {
                 return (
                   <li
                     key={`${item.step}-${index}`}
-                    className="flex flex-col rounded-xl border border-border bg-card p-3"
+                    className="flex flex-col rounded-2xl border border-border bg-card p-4"
                   >
-                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border border-border/60 bg-muted/40">
+                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-border/60 bg-[#f3f1eb]">
                       <Illustration />
-                      <span className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-md bg-primary text-[11px] font-semibold text-primary-foreground">
+                      <span className="absolute left-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-[#c8dfaa] text-[11px] font-medium text-[#28262a]">
                         {item.step}
                       </span>
                     </div>
 
                     <div className="mt-3 px-1 pb-0.5">
-                      <h3 className="text-sm font-semibold text-foreground">
+                      <h3 className="text-sm font-medium tracking-tight text-foreground">
                         {item.title}
                       </h3>
-                      <p className="mt-0.5 text-[11px] text-secondary-text">
+                      <p className="mt-1 text-xs text-secondary-text">
                         {item.subtitle}
                       </p>
                     </div>
@@ -66,16 +68,18 @@ const HowItWorksSection = async () => {
             </ol>
           </div>
 
-          {/* Consultation scene */}
+          {/* Consultation scene on Parchment Stage */}
           <div className="lg:col-span-6">
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-border bg-muted sm:aspect-[14/11]">
-              <Image
-                src={image}
-                alt="Medical specialist ready for an online consultation"
-                fill
-                sizes="(min-width: 1024px) 50vw, 100vw"
-                className="object-cover object-top sm:object-center"
-              />
+            <div className="relative aspect-[4/3] w-full rounded-[24px] bg-[#f3f1eb] p-3 border border-border/70 sm:aspect-[14/11]">
+              <div className="relative h-full w-full overflow-hidden rounded-[18px] border border-border/60 bg-card">
+                <Image
+                  src={image}
+                  alt="Medical specialist ready for an online consultation"
+                  fill
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  className="object-cover object-top sm:object-center"
+                />
+              </div>
             </div>
           </div>
         </div>

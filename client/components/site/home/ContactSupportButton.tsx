@@ -27,7 +27,7 @@ export function ContactSupportButton({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex cursor-pointer items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-dark"
+        className="inline-flex cursor-pointer items-center justify-center rounded-[100px] bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all hover:brightness-95"
       >
         <MessageSquare className="mr-2 h-4 w-4" aria-hidden="true" />
         <span>{label}</span>
