@@ -5,6 +5,7 @@ import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import { join } from 'node:path';
+
 import { AppModule } from './app.module.js';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter.js';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor.js';
@@ -17,29 +18,29 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     // Required by the Better Auth Nest adapter, which registers its own body
-    // parser so it can validate raw payloads/HMAC signatures. Do not flip this
-    // to `true` without first verifying Better Auth still receives raw bodies.
+    // parser so it can validate raw payloads/HMAC signatures.
     bodyParser: false,
     logger,
   });
 
   const config = app.get(ConfigService);
-  const isProduction = config.get<string>('NODE_ENV') === 'production';
+  const isProduction =
+    config.get<string>('NODE_ENV') === 'production';
 
   // Trust exactly the configured number of reverse proxies so rate limiting
-  // and audit logs see the real client IP. Left unset when directly exposed.
+  // and audit logs see the real client IP.
   const trustProxy = config.get<number>('TRUST_PROXY');
+
   if (trustProxy !== undefined) {
     app.set('trust proxy', trustProxy);
   }
 
   // Security Headers
-  const helmetAny: any = helmet;
-  const helmetFn =
-    typeof helmetAny === 'function' ? helmetAny : helmetAny.default;
   app.use(
-    helmetFn({
-      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    helmet({
+      crossOriginResourcePolicy: {
+        policy: 'cross-origin',
+      },
       contentSecurityPolicy: false,
     }),
   );
@@ -48,6 +49,7 @@ async function bootstrap() {
   const configuredOrigins = parseTrustedOrigins(
     config.get<string>('TRUSTED_ORIGINS'),
   );
+
   const allowedOrigins =
     configuredOrigins.length > 0
       ? configuredOrigins
@@ -63,6 +65,7 @@ async function bootstrap() {
     const insecure = allowedOrigins.filter(
       (origin) => !origin.startsWith('https://'),
     );
+
     if (insecure.length > 0) {
       throw new Error(
         `Refusing to start: non-https trusted origins in production: ${insecure.join(', ')}`,
@@ -75,31 +78,45 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Static files (legacy uploads). New uploads are served through authenticated
-  // endpoints; this only keeps older locally-stored assets reachable.
+  // Static files (legacy uploads).
+  // New uploads are served through authenticated endpoints.
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
   });
 
-  // Global validation pipe, interceptors and filters
+  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-      transformOptions: { enableImplicitConversion: true },
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
     }),
   );
-  app.useGlobalInterceptors(new TransformInterceptor(app.get(Reflector)));
+
+  // Global interceptor
+  app.useGlobalInterceptors(
+    new TransformInterceptor(app.get(Reflector)),
+  );
+
+  // Global exception filter
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  // Swagger Documentation & Lifecycle hooks
+  // Swagger Documentation
   setupSwagger(app);
+
+  // Graceful shutdown
   app.enableShutdownHooks();
 
   const port = config.get<number>('PORT') ?? 3000;
+
   await app.listen(port);
-  logger.log(`Server running on http://localhost:${port} | Docs: http://localhost:${port}/api/docs`);
+
+  logger.log(
+    `Server running on http://localhost:${port} | Docs: http://localhost:${port}/api/docs`,
+  );
 }
 
 bootstrap();
