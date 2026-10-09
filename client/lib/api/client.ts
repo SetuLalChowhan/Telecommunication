@@ -16,7 +16,9 @@ import {
  * The single canonical API base URL for browser requests.
  */
 export const API_BASE_URL =
+  process.env.NEXT_PRIVATE_API_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
+  env.NEXT_PRIVATE_API_URL ||
   env.NEXT_PUBLIC_API_URL ||
   'http://localhost:5000';
 

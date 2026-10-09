@@ -15,8 +15,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => makeQueryClient());
 
   const googleClientId =
-    env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+    process.env.NEXT_PRIVATE_GOOGLE_CLIENT_ID ||
+    env.NEXT_PRIVATE_GOOGLE_CLIENT_ID ||
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+    env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+    process.env.GOOGLE_CLIENT_ID ||
     '';
 
   const app = (
