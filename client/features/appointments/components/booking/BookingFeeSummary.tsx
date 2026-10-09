@@ -42,7 +42,7 @@ export const BookingFeeSummary: React.FC<BookingFeeSummaryProps> = ({
             <Phone className="h-3.5 w-3.5 text-primary" />
             <span>Contact Phone Number</span>
           </span>
-          <span className="text-[10px] font-bold text-primary tracking-wide uppercase">Required</span>
+          <span className="text-[10px] font-semibold text-destructive uppercase tracking-wider bg-destructive/10 px-1.5 py-0.5 rounded border border-destructive/20">Required</span>
         </label>
         <Input
           type="tel"

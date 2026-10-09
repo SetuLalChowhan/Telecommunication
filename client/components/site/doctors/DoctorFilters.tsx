@@ -148,10 +148,10 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
                 key={item.val}
                 type="button"
                 onClick={() => onExperienceChange(item.val)}
-                className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors text-center cursor-pointer border ${
+                className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all text-center cursor-pointer border ${
                   isSelected
-                    ? "border-primary bg-primary/10 text-primary font-semibold"
-                    : "border-border bg-card text-foreground hover:border-primary/40"
+                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                    : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-muted/50"
                 }`}
               >
                 {item.label}

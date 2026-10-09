@@ -90,7 +90,7 @@ export const DoctorAboutSection: React.FC<DoctorAboutSectionProps> = ({
                 className="p-4 rounded-lg border border-border bg-muted/40 space-y-1.5"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">
+                  <span className="text-xs font-bold text-foreground bg-card border border-border px-2.5 py-0.5 rounded-md shadow-xs">
                     {q.degree}
                   </span>
                   {q.passingYear && (

@@ -79,14 +79,14 @@ export const DoctorHeroCard: React.FC<DoctorHeroCardProps> = ({ doctor }) => {
                 )}
               </div>
 
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/25">
                 <Video className="h-3.5 w-3.5" />
                 <span>Video Visit</span>
               </span>
             </div>
 
             {/* Designation & Specialty */}
-            <p className="text-sm font-semibold text-primary">
+            <p className="text-sm font-semibold text-foreground/80">
               {doctor.designation || mainSpecialty?.name || "Medical Specialist"}
             </p>
 
@@ -108,7 +108,7 @@ export const DoctorHeroCard: React.FC<DoctorHeroCardProps> = ({ doctor }) => {
             {/* Specialty Pills */}
             <div className="flex flex-wrap items-center gap-1.5 pt-1.5">
               {mainSpecialty && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-semibold">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-muted/80 border border-border text-foreground text-xs font-semibold">
                   {mainSpecialty.name}
                 </span>
               )}
@@ -116,7 +116,7 @@ export const DoctorHeroCard: React.FC<DoctorHeroCardProps> = ({ doctor }) => {
               {otherSpecialties.map((spec) => (
                 <span
                   key={spec.id || spec.slug}
-                  className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-muted text-muted-foreground text-xs font-medium"
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-muted/80 border border-border text-foreground text-xs font-medium"
                 >
                   {spec.name}
                 </span>

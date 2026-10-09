@@ -98,7 +98,7 @@ export const DoctorDetailsContent: React.FC<DoctorDetailsContentProps> = ({
 
           <Link
             href="/doctors"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-dark transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground bg-card hover:bg-muted/60 px-3 py-1.5 rounded-lg border border-border shadow-xs transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             <span>Back to directory</span>

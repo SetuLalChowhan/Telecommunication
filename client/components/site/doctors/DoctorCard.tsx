@@ -73,7 +73,7 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor }) => {
       <div className="p-5 flex flex-1 flex-col justify-between gap-4">
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+            <span className="inline-flex items-center rounded-full border border-border/80 bg-muted/80 px-2.5 py-0.5 text-xs font-semibold text-foreground">
               {primarySpecialty}
             </span>
 
@@ -85,7 +85,7 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor }) => {
             )}
           </div>
 
-          <h3 className="text-base font-semibold text-foreground tracking-tight line-clamp-1 group-hover:text-primary transition-colors">
+          <h3 className="text-base font-bold text-foreground tracking-tight line-clamp-1 group-hover:text-primary transition-colors">
             <Link href={profileUrl}>{doctorName}</Link>
           </h3>
 

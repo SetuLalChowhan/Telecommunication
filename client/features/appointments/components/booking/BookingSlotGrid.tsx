@@ -48,7 +48,7 @@ export const BookingSlotGrid: React.FC<BookingSlotGridProps> = ({
       <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center justify-between">
         <span>Available time slots</span>
         {!isLoading && slots.length > 0 && (
-          <span className="text-[11px] font-semibold text-primary lowercase">
+          <span className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 lowercase">
             {availableCount} of {slots.length} free
           </span>
         )}

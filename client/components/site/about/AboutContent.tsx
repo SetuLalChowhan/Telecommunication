@@ -101,37 +101,37 @@ export async function AboutContent() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 sm:py-20">
+      <section className="py-16 sm:py-24">
         <div className="container-page">
-          <div className="mx-auto max-w-5xl space-y-6 rounded-xl bg-primary p-8 text-center text-primary-foreground sm:p-12">
-            <div className="mx-auto max-w-2xl space-y-3">
-              <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+          <div className="mx-auto max-w-5xl space-y-6 rounded-2xl bg-gradient-to-br from-[#415e45] via-[#334b37] to-[#253728] p-8 text-center text-white shadow-xl sm:p-14 border border-white/10">
+            <div className="mx-auto max-w-2xl space-y-3.5">
+              <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3.5 py-1 text-xs font-medium text-white backdrop-blur-xs">
+                Accessible Healthcare For Everyone
+              </span>
+              <h2 className="font-serif text-3xl font-normal tracking-tight text-white sm:text-4xl lg:text-[42px] leading-tight">
                 Ready to experience accessible, verified healthcare?
               </h2>
-              <p className="text-sm leading-relaxed text-primary-foreground/85">
+              <p className="text-sm leading-relaxed text-white/85 max-w-xl mx-auto">
                 Connect with a licensed specialist in under 10 minutes, or book a scheduled
                 consultation at your convenience.
               </p>
             </div>
 
-            <div className="flex flex-col items-center justify-center gap-3 pt-2 sm:flex-row">
-              <Button
-                asChild
-                className="h-11 w-full gap-2 rounded-lg bg-white px-6 text-sm font-semibold text-primary hover:bg-white/90 sm:w-auto"
+            <div className="flex flex-col items-center justify-center gap-3.5 pt-4 sm:flex-row">
+              <Link
+                href="/doctors"
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-white px-7 text-sm font-bold text-[#253728] hover:bg-white/95 shadow-md transition-all sm:w-auto"
               >
-                <Link href="/doctors">
-                  <span>Find a doctor</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
+                <span>Find a doctor</span>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
 
-              <Button
-                asChild
-                variant="outline"
-                className="h-11 w-full rounded-lg border-white/40 bg-white/10 px-6 text-sm font-semibold text-white hover:bg-white/20 sm:w-auto"
+              <Link
+                href="/register"
+                className="inline-flex h-11 w-full items-center justify-center rounded-full border-2 border-white/80 bg-white/10 px-7 text-sm font-bold text-white hover:bg-white/20 backdrop-blur-xs transition-all sm:w-auto"
               >
-                <Link href="/register">Create patient account</Link>
-              </Button>
+                <span>Create patient account</span>
+              </Link>
             </div>
           </div>
         </div>
