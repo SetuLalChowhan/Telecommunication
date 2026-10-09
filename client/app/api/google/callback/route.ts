@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const cookieStore = await cookies();
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+    const apiUrl = process.env.NEXT_PRIVATE_API_URL || "http://localhost:5000";
 
     const response = await fetch(`${apiUrl}/google/connect`, {
       method: "POST",

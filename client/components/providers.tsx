@@ -16,7 +16,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   // Configured entirely through environment variables. No credential is ever
   // hardcoded in source — see the reorganization docs, section 7.
-  const googleClientId = env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const googleClientId = env.NEXT_PRIVATE_GOOGLE_CLIENT_ID;
 
   const app = (
     <QueryClientProvider client={queryClient}>
