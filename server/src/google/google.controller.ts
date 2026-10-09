@@ -30,6 +30,7 @@ export class GoogleController {
       dto.code,
       userId,
       dto.state,
+      dto.redirectUri,
     );
   }
 

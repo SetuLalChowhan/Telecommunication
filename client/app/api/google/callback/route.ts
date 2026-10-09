@@ -9,6 +9,7 @@ import { cookies } from "next/headers";
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
+  const state = searchParams.get("state");
   const error = searchParams.get("error");
 
   const baseUrl = request.nextUrl.origin;
@@ -34,7 +35,11 @@ export async function GET(request: NextRequest) {
         "Content-Type": "application/json",
         Cookie: cookieStore.toString(),
       },
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({
+        code,
+        state: state || undefined,
+        redirectUri: `${baseUrl}/api/google/callback`,
+      }),
     });
 
     const data = await response.json().catch(() => ({}));

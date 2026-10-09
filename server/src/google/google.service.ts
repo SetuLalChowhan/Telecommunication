@@ -59,11 +59,11 @@ export class GoogleService {
   /**
    * Creates an OAuth2 client instance using configured server credentials & redirect URI
    */
-  private getOAuth2Client() {
+  private getOAuth2Client(customRedirectUri?: string) {
     return new google.auth.OAuth2(
       this.clientId,
       this.clientSecret,
-      this.redirectUri,
+      customRedirectUri || this.redirectUri,
     );
   }
 
@@ -102,7 +102,8 @@ export class GoogleService {
   async handleOAuthCallback(
     code: string,
     userId: string,
-    state: string,
+    state?: string,
+    redirectUri?: string,
   ) {
     if (!this.clientId || !this.clientSecret) {
       throw new BadRequestException(
@@ -110,24 +111,22 @@ export class GoogleService {
       );
     }
 
-    // 1. Mandatory State verification (check validity BEFORE consuming/deleting)
-    if (!state) {
-      throw new BadRequestException('Missing OAuth state parameter');
+    // 1. State verification if state was provided
+    if (state) {
+      const stateRecord = await this.repo.findOAuthState(state);
+      if (
+        !stateRecord ||
+        stateRecord.value !== userId ||
+        stateRecord.expiresAt <= new Date()
+      ) {
+        throw new BadRequestException('Invalid or expired OAuth state');
+      }
+
+      // Consume the one-time state
+      await this.repo.consumeOAuthState(stateRecord.id);
     }
 
-    const stateRecord = await this.repo.findOAuthState(state);
-    if (
-      !stateRecord ||
-      stateRecord.value !== userId ||
-      stateRecord.expiresAt <= new Date()
-    ) {
-      throw new BadRequestException('Invalid or expired OAuth state');
-    }
-
-    // Consume the one-time state
-    await this.repo.consumeOAuthState(stateRecord.id);
-
-    const oauth2Client = this.getOAuth2Client();
+    const oauth2Client = this.getOAuth2Client(redirectUri);
 
     let tokens;
     try {
