@@ -1,6 +1,4 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { createObserveModule } from '@nestjs/observe';
 import { auth } from './auth/auth.js';
 import { AuthModule } from '@thallesp/nestjs-better-auth';
@@ -34,13 +32,6 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     }),
     CloudinaryModule,
 
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 120,
-      },
-    ]),
-
     AuthModule.forRoot({
       auth,
     }),
@@ -60,12 +51,6 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     CmsModule,
     BlogsModule,
     ContactsModule,
-  ],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
   ],
 })
 export class AppModule implements NestModule {

@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express, { type Request, type Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { AppModule } from './app.module.js';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter.js';
@@ -33,6 +34,15 @@ async function bootstrap() {
   if (trustProxy !== undefined) {
     server.set('trust proxy', trustProxy);
   }
+
+  server.use(
+    rateLimit({
+      windowMs: 60 * 1000,
+      limit: 120,
+      standardHeaders: true,
+      legacyHeaders: false,
+    }),
+  );
 
   // Security Headers
   app.use(

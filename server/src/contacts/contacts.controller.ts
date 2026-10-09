@@ -11,7 +11,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
-import { Throttle } from '@nestjs/throttler';
 import { ContactsService } from './contacts.service.js';
 import {
   CreateContactMessageDto,
@@ -30,7 +29,6 @@ export class ContactsController {
 
   @Post()
   @AllowAnonymous()
-  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @ResponseMessage('Message received. Our support team will contact you shortly.')
   submit(
     @Body() dto: CreateContactMessageDto,
