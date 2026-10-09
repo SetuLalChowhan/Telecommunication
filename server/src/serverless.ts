@@ -80,6 +80,7 @@ async function bootstrap() {
   app.enableCors({
     origin: allowedOrigins,
     credentials: true,
+    exposedHeaders: ['set-auth-token'],
   });
 
   app.useGlobalPipes(

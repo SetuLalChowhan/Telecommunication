@@ -40,13 +40,38 @@ export const apiClient: AxiosInstance = axios.create({
 });
 
 apiClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => config,
+  (config: InternalAxiosRequestConfig) => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('auth_token');
+      if (token && !config.headers.Authorization) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    return config;
+  },
   (error) => Promise.reject(error),
 );
 
 apiClient.interceptors.response.use(
-  (response) => response,
-  (error: AxiosError) => Promise.reject(toApiError(error)),
+  (response) => {
+    if (typeof window !== 'undefined') {
+      const authToken =
+        response.headers['set-auth-token'] ||
+        response.data?.token ||
+        response.data?.data?.token ||
+        response.data?.session?.token;
+      if (authToken && typeof authToken === 'string') {
+        localStorage.setItem('auth_token', authToken);
+      }
+    }
+    return response;
+  },
+  (error: AxiosError) => {
+    if (error.response?.status === 401 && typeof window !== 'undefined') {
+      // If 401 Unauthorized, we keep or clear invalid token
+    }
+    return Promise.reject(toApiError(error));
+  },
 );
 
 /**

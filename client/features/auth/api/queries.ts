@@ -91,8 +91,12 @@ export const useAuth = () => {
     },
     onSuccess: (data, variables) => {
       toast.success("Welcome back! Signed in successfully.");
-      const authPayload = data as unknown as { user?: User; data?: { user?: User } };
+      const authPayload = data as unknown as { user?: User; data?: { user?: User; token?: string }; token?: string; session?: { token?: string } };
       const authUser = authPayload?.user || authPayload?.data?.user;
+      const authToken = authPayload?.token || authPayload?.data?.token || authPayload?.session?.token;
+      if (typeof window !== "undefined" && authToken) {
+        localStorage.setItem("auth_token", authToken);
+      }
       if (authUser) {
         queryClient.setQueryData(authKeys.profile(), authUser);
       }
@@ -139,6 +143,9 @@ export const useAuth = () => {
       await signOut();
     },
     onSuccess: () => {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("auth_token");
+      }
       toast.success("Signed out successfully");
       // Drop cached profile and user data immediately
       queryClient.setQueryData(authKeys.profile(), null);
@@ -239,8 +246,12 @@ export const useAuth = () => {
     },
     onSuccess: (data) => {
       toast.success("Welcome! Signed in with Google.");
-      const authPayload = data as unknown as { user?: User; data?: { user?: User } };
+      const authPayload = data as unknown as { user?: User; data?: { user?: User; token?: string }; token?: string; session?: { token?: string } };
       const authUser = authPayload?.user || authPayload?.data?.user;
+      const authToken = authPayload?.token || authPayload?.data?.token || authPayload?.session?.token;
+      if (typeof window !== "undefined" && authToken) {
+        localStorage.setItem("auth_token", authToken);
+      }
       if (authUser) {
         queryClient.setQueryData(authKeys.profile(), authUser);
       }
