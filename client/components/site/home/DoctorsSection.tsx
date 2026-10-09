@@ -20,7 +20,7 @@ const DoctorsSection = async () => {
     limit: content.limit,
     page: 1,
     sortBy: "rating",
-  });
+  }).catch(() => ({ data: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } }));
 
   return (
     <section className="w-full border-b border-border/60 bg-background py-16 sm:py-24">

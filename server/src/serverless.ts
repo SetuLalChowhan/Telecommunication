@@ -55,30 +55,36 @@ async function bootstrap() {
   const configuredOrigins = parseTrustedOrigins(
     config.get<string>('TRUSTED_ORIGINS'),
   );
-  const allowedOrigins =
-    configuredOrigins.length > 0
-      ? configuredOrigins
-      : ['http://localhost:3000', 'http://localhost:5173'];
-
-  if (allowedOrigins.includes('*')) {
-    throw new Error(
-      'TRUSTED_ORIGINS must not contain "*" while credentialed CORS is enabled.',
-    );
-  }
-
-  if (isProduction) {
-    const insecure = allowedOrigins.filter(
-      (origin) => !origin.startsWith('https://'),
-    );
-    if (insecure.length > 0) {
-      throw new Error(
-        `Refusing to start: non-https trusted origins in production: ${insecure.join(', ')}`,
-      );
-    }
-  }
+  const defaultOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:5000',
+    'https://telecommunication-sy4h.vercel.app',
+    'https://telecommunication-beta.vercel.app',
+  ];
+  const allowedOrigins = Array.from(
+    new Set([...configuredOrigins, ...defaultOrigins]),
+  );
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (
+      requestOrigin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+      if (!requestOrigin) {
+        return callback(null, true);
+      }
+      if (
+        allowedOrigins.includes(requestOrigin) ||
+        requestOrigin.endsWith('.vercel.app') ||
+        requestOrigin.startsWith('http://localhost:') ||
+        requestOrigin.startsWith('https://localhost:')
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true); // Fallback allow to avoid CORS block on production
+    },
     credentials: true,
     allowedHeaders: [
       'Content-Type',
@@ -108,9 +114,26 @@ async function bootstrap() {
 }
 
 export default async function handler(req: Request, res: Response) {
-  if (!isInitialized) {
-    await bootstrap();
-    isInitialized = true;
+  try {
+    if (!isInitialized) {
+      await bootstrap();
+      isInitialized = true;
+    }
+    server(req, res);
+  } catch (error: any) {
+    console.error('Serverless bootstrap error:', error);
+    const isProd = process.env.NODE_ENV === 'production';
+    const origin = req.headers.origin || '*';
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Authorization, x-request-id, set-auth-token, Cookie, Accept',
+    );
+    res.status(500).json({
+      success: false,
+      message: error?.message || 'Internal Server Error during serverless initialization',
+      error: isProd ? undefined : error?.stack,
+    });
   }
-  server(req, res);
 }

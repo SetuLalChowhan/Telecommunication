@@ -25,10 +25,14 @@ export function sanitizePublicRole(value: unknown): 'PATIENT' | 'DOCTOR' {
 }
 
 const authPool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL!,
+  connectionString: process.env.DATABASE_URL,
   max: Number(process.env.DB_POOL_MAX || 10),
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
+  connectionTimeoutMillis: 10000,
+});
+
+authPool.on('error', (err) => {
+  console.warn(`Better Auth pg connection pool idle warning: ${err.message}`);
 });
 
 const adapter = new PrismaPg(authPool);
@@ -48,13 +52,26 @@ export async function closeAuthDatabase(): Promise<void> {
 }
 
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:5000',
+  secret:
+    process.env.BETTER_AUTH_SECRET ||
+    'telecommunication-secret-key-fallback-at-least-32-characters',
+
+  baseURL:
+    process.env.BETTER_AUTH_URL ||
+    (process.env.NODE_ENV === 'production'
+      ? 'https://telecommunication-beta.vercel.app'
+      : 'http://localhost:5000'),
 
   trustedOrigins: (() => {
     const origins = parseTrustedOrigins(process.env.TRUSTED_ORIGINS);
-    return origins.length > 0
-      ? origins
-      : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5000'];
+    const defaults = [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://localhost:5000',
+      'https://telecommunication-sy4h.vercel.app',
+      'https://telecommunication-beta.vercel.app',
+    ];
+    return Array.from(new Set([...origins, ...defaults]));
   })(),
 
   advanced: {

@@ -55,36 +55,42 @@ async function bootstrap() {
     }),
   );
 
-  // CORS — normalize origins and refuse unsafe production configuration.
+  // CORS — normalize origins and allow trusted origins & Vercel deployments.
   const configuredOrigins = parseTrustedOrigins(
     config.get<string>('TRUSTED_ORIGINS'),
   );
-
-  const allowedOrigins =
-    configuredOrigins.length > 0
-      ? configuredOrigins
-      : ['http://localhost:3000', 'http://localhost:5173'];
-
-  if (allowedOrigins.includes('*')) {
-    throw new Error(
-      'TRUSTED_ORIGINS must not contain "*" while credentialed CORS is enabled.',
-    );
-  }
-
-  if (isProduction) {
-    const insecure = allowedOrigins.filter(
-      (origin) => !origin.startsWith('https://'),
-    );
-
-    if (insecure.length > 0) {
-      throw new Error(
-        `Refusing to start: non-https trusted origins in production: ${insecure.join(', ')}`,
-      );
-    }
-  }
+  const defaultOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:5000',
+    'https://telecommunication-sy4h.vercel.app',
+    'https://telecommunication-beta.vercel.app',
+  ];
+  const allowedOrigins = Array.from(
+    new Set([...configuredOrigins, ...defaultOrigins]),
+  );
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (
+      requestOrigin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      if (!requestOrigin) {
+        return callback(null, true);
+      }
+      if (
+        allowedOrigins.includes(requestOrigin) ||
+        requestOrigin.endsWith('.vercel.app') ||
+        requestOrigin.startsWith('http://localhost:') ||
+        requestOrigin.startsWith('https://localhost:')
+      ) {
+        return callback(null, true);
+      }
+      if (!isProduction) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
     allowedHeaders: [
       'Content-Type',

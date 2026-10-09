@@ -21,11 +21,17 @@ const BlogSection = async () => {
   const store = await getCmsSectionsServer();
   const content = resolveBlogSection(store);
 
-  const featured = await getFeaturedBlogsServer();
-  const posts =
-    featured.length > 0
-      ? featured.slice(0, content.limit)
-      : (await getBlogsServer({ page: 1, limit: content.limit, sortBy: "newest" })).items;
+  const featured = await getFeaturedBlogsServer().catch(() => []);
+  let fallbackItems: any[] = [];
+  if (featured.length === 0) {
+    const blogRes = await getBlogsServer({
+      page: 1,
+      limit: content.limit,
+      sortBy: "newest",
+    }).catch(() => ({ items: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } }));
+    fallbackItems = blogRes.items;
+  }
+  const posts = featured.length > 0 ? featured.slice(0, content.limit) : fallbackItems;
 
   if (posts.length === 0) return null;
 
