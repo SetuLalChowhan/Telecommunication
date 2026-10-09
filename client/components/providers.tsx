@@ -14,9 +14,10 @@ import { TopProgressBar } from '@/components/common/TopProgressBar';
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => makeQueryClient());
 
-  // Configured entirely through environment variables. No credential is ever
-  // hardcoded in source — see the reorganization docs, section 7.
-  const googleClientId = env.NEXT_PRIVATE_GOOGLE_CLIENT_ID;
+  const googleClientId =
+    env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+    '';
 
   const app = (
     <QueryClientProvider client={queryClient}>
@@ -31,13 +32,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     </QueryClientProvider>
   );
 
-  // When no client ID is configured we still render the app; the Google
-  // sign-in button simply has no provider to attach to.
-  if (!googleClientId) {
-    return app;
-  }
-
   return (
-    <GoogleOAuthProvider clientId={googleClientId}>{app}</GoogleOAuthProvider>
+    <GoogleOAuthProvider clientId={googleClientId || 'no-client-id'}>
+      {app}
+    </GoogleOAuthProvider>
   );
 }

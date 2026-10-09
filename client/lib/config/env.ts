@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 const clientEnvSchema = z.object({
-  NEXT_PRIVATE_API_URL: z
+  NEXT_PUBLIC_API_URL: z
     .string()
     .url()
     .default('http://localhost:5000'),
@@ -9,7 +9,11 @@ const clientEnvSchema = z.object({
     .string()
     .url()
     .default('http://localhost:3000'),
-  NEXT_PRIVATE_GOOGLE_CLIENT_ID: z
+  NEXT_PUBLIC_BETTER_AUTH_URL: z
+    .string()
+    .url()
+    .optional(),
+  NEXT_PUBLIC_GOOGLE_CLIENT_ID: z
     .string()
     .optional()
     .default(''),
@@ -20,9 +24,21 @@ const clientEnvSchema = z.object({
 
 function parseEnv() {
   const result = clientEnvSchema.safeParse({
-    NEXT_PRIVATE_API_URL: process.env.NEXT_PRIVATE_API_URL,
-    NEXT_PUBLIC_CLIENT_URL: process.env.NEXT_PUBLIC_CLIENT_URL,
-    NEXT_PRIVATE_GOOGLE_CLIENT_ID: process.env.NEXT_PRIVATE_GOOGLE_CLIENT_ID,
+    NEXT_PUBLIC_API_URL:
+      process.env.NEXT_PUBLIC_API_URL ||
+      process.env.NEXT_PUBLIC_BACKEND_URL ||
+      process.env.NEXT_PRIVATE_API_URL,
+    NEXT_PUBLIC_CLIENT_URL:
+      process.env.NEXT_PUBLIC_CLIENT_URL ||
+      process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_BETTER_AUTH_URL:
+      process.env.NEXT_PUBLIC_BETTER_AUTH_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      process.env.NEXT_PRIVATE_BETTER_AUTH_URL,
+    NEXT_PUBLIC_GOOGLE_CLIENT_ID:
+      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+      process.env.NEXT_PRIVATE_GOOGLE_CLIENT_ID ||
+      process.env.GOOGLE_CLIENT_ID,
     NODE_ENV: process.env.NODE_ENV,
   });
 

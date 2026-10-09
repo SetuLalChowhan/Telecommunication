@@ -21,6 +21,7 @@ export type ServerFetchOptions = RequestInit & {
 };
 
 const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
   process.env.API_URL ||
   process.env.NEXT_PRIVATE_API_URL ||
   'http://localhost:5000';
