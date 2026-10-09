@@ -8,6 +8,8 @@ import AdviceSection from "@/components/site/home/AdviceSection";
 import TestimonialsSection from "@/components/site/home/TestimonialsSection";
 import BlogSection from "@/components/site/home/BlogSection";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "DocConnect - Instant Online Doctor Consultation & Telemedicine",
   description:

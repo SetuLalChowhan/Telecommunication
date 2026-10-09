@@ -15,6 +15,31 @@ export const authClient = createAuthClient({
     "http://localhost:5000",
   fetchOptions: {
     credentials: "include",
+    auth: {
+      type: "Bearer",
+      token: () => {
+        if (typeof window !== "undefined") {
+          return localStorage.getItem("auth_token") || "";
+        }
+        return "";
+      },
+    },
+    onRequest: (context) => {
+      if (typeof window !== "undefined") {
+        const token = localStorage.getItem("auth_token");
+        if (token) {
+          context.headers.set("Authorization", `Bearer ${token}`);
+        }
+      }
+    },
+    onResponse: (context) => {
+      if (typeof window !== "undefined") {
+        const token = context.response.headers.get("set-auth-token");
+        if (token && typeof token === "string") {
+          localStorage.setItem("auth_token", token);
+        }
+      }
+    },
   },
 });
 

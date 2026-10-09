@@ -12,6 +12,8 @@ import { getCmsSectionsServer } from "@/features/cms/api/server";
 import { getDoctorsServer } from "@/features/doctors/api/server";
 import { absoluteUrl } from "@/lib/seo";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Consult with Verified Doctors Online | DocConnect",
   description:
