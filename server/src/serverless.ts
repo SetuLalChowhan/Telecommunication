@@ -2,10 +2,9 @@ import 'dotenv/config';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
-import { NestExpressApplication } from '@nestjs/platform-express';
+import { ExpressAdapter } from '@nestjs/platform-express';
+import express, { type Request, type Response } from 'express';
 import helmet from 'helmet';
-import { join } from 'node:path';
-
 import { AppModule } from './app.module.js';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter.js';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor.js';
@@ -13,43 +12,39 @@ import { StructuredLogger } from './common/logger/structured-logger.service.js';
 import { setupSwagger } from './common/config/swagger.config.js';
 import { parseTrustedOrigins } from './config/env.schema.js';
 
+const server = express();
+let isInitialized = false;
+
 async function bootstrap() {
   const logger = new StructuredLogger('Bootstrap');
-
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    // Required by the Better Auth Nest adapter, which registers its own body
-    // parser so it can validate raw payloads/HMAC signatures.
-    bodyParser: false,
-    logger,
-  });
+  const app = await NestFactory.create(
+    AppModule,
+    new ExpressAdapter(server),
+    {
+      bodyParser: false,
+      logger,
+    },
+  );
 
   const config = app.get(ConfigService);
-  const isProduction =
-    config.get<string>('NODE_ENV') === 'production';
+  const isProduction = config.get<string>('NODE_ENV') === 'production';
 
-  // Trust exactly the configured number of reverse proxies so rate limiting
-  // and audit logs see the real client IP.
   const trustProxy = config.get<number>('TRUST_PROXY');
-
   if (trustProxy !== undefined) {
-    app.set('trust proxy', trustProxy);
+    server.set('trust proxy', trustProxy);
   }
 
   // Security Headers
   app.use(
     helmet({
-      crossOriginResourcePolicy: {
-        policy: 'cross-origin',
-      },
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
       contentSecurityPolicy: false,
     }),
   );
 
-  // CORS — normalize origins and refuse unsafe production configuration.
   const configuredOrigins = parseTrustedOrigins(
     config.get<string>('TRUSTED_ORIGINS'),
   );
-
   const allowedOrigins =
     configuredOrigins.length > 0
       ? configuredOrigins
@@ -65,7 +60,6 @@ async function bootstrap() {
     const insecure = allowedOrigins.filter(
       (origin) => !origin.startsWith('https://'),
     );
-
     if (insecure.length > 0) {
       throw new Error(
         `Refusing to start: non-https trusted origins in production: ${insecure.join(', ')}`,
@@ -78,45 +72,26 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Static files (legacy uploads).
-  // New uploads are served through authenticated endpoints.
-  app.useStaticAssets(join(process.cwd(), 'uploads'), {
-    prefix: '/uploads/',
-  });
-
-  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
+      transformOptions: { enableImplicitConversion: true },
     }),
   );
-
-  // Global interceptor
-  app.useGlobalInterceptors(
-    new TransformInterceptor(app.get(Reflector)),
-  );
-
-  // Global exception filter
+  app.useGlobalInterceptors(new TransformInterceptor(app.get(Reflector)));
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  // Swagger Documentation
   setupSwagger(app);
 
-  // Graceful shutdown
-  app.enableShutdownHooks();
-
-  const port = config.get<number>('PORT') ?? 3000;
-
-  await app.listen(port);
-
-  logger.log(
-    `Server running on http://localhost:${port} | Docs: http://localhost:${port}/api/docs`,
-  );
+  await app.init();
 }
 
-bootstrap();
+export default async function handler(req: Request, res: Response) {
+  if (!isInitialized) {
+    await bootstrap();
+    isInitialized = true;
+  }
+  server(req, res);
+}

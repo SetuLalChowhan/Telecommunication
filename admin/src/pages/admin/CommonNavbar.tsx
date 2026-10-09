@@ -103,10 +103,10 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({ open, setOpen }) => {
       <div className="flex items-center gap-4">
         {/* Search bar */}
         <div className="relative w-40 md:w-60 hidden md:block">
-          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           <Input
-            placeholder="Search..."
-            className="pl-9 h-8 text-xs bg-muted/40 border-border focus-visible:ring-primary"
+            placeholder="Search platform..."
+            className="pl-9 h-8.5 text-xs rounded-full bg-[#f3f1eb] border border-border focus-visible:ring-ring"
           />
         </div>
 

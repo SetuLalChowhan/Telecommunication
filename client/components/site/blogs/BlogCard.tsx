@@ -10,9 +10,9 @@ interface BlogCardProps {
 
 export const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
   return (
-    <article className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-primary/40">
+    <article className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:border-[#cbcbcb]">
       {/* Cover */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted/40">
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-[#f3f1eb]">
         {post.featuredImage ? (
           <Image
             src={post.featuredImage}
@@ -27,7 +27,7 @@ export const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
           </span>
         )}
 
-        <span className="absolute left-3 top-3 inline-flex items-center rounded-md bg-card/95 px-2 py-0.5 text-[11px] font-semibold text-primary">
+        <span className="absolute left-3 top-3 inline-flex items-center rounded-[30px] border border-border bg-card/95 px-3 py-0.5 text-[11px] font-medium tracking-[0.24px] text-foreground">
           {post.category}
         </span>
       </div>
@@ -36,7 +36,7 @@ export const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
       <div className="flex flex-1 flex-col justify-between gap-4 p-5">
         <div className="space-y-2.5">
           <div className="flex items-center gap-2 text-xs text-secondary-text">
-            <span className="font-semibold text-foreground">{post.author.name}</span>
+            <span className="font-medium text-foreground">{post.author.name}</span>
             <span aria-hidden="true">&bull;</span>
             <time
               dateTime={post.publishedAtIso ?? undefined}
@@ -47,7 +47,7 @@ export const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
             </time>
           </div>
 
-          <h3 className="line-clamp-2 text-base font-semibold leading-snug text-foreground transition-colors group-hover:text-primary">
+          <h3 className="line-clamp-2 text-base font-medium tracking-tight leading-snug text-foreground">
             <Link href={`/blogs/${post.slug}`}>{post.title}</Link>
           </h3>
 
@@ -64,7 +64,7 @@ export const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
 
           <Link
             href={`/blogs/${post.slug}`}
-            className="group/link inline-flex items-center text-xs font-semibold text-primary transition-colors hover:text-primary-dark sm:text-sm"
+            className="group/link inline-flex items-center text-xs font-medium text-foreground transition-colors hover:underline underline-offset-4 decoration-[#97cde5] sm:text-sm"
           >
             <span>Read article</span>
             <ArrowRight className="ml-1.5 h-3.5 w-3.5 transition-transform group-hover/link:translate-x-1" />

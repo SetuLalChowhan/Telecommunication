@@ -31,19 +31,36 @@ const Banner = async () => {
 
   return (
     <section className="w-full border-b border-border/60 bg-background">
-      <div className="container-page grid grid-cols-1 items-center gap-10 py-12 sm:py-16 lg:grid-cols-12 lg:gap-14 lg:py-20">
+      <div className="container-page grid grid-cols-1 items-center gap-10 py-14 sm:py-16 lg:grid-cols-12 lg:gap-14 lg:py-24">
         {/* Left: value proposition + search */}
         <div className="flex flex-col items-start space-y-6 text-left lg:col-span-7">
-          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
-            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+          <span className="inline-flex items-center gap-2 rounded-[30px] border border-border bg-[#dddcdd]/60 px-4 py-1 text-xs font-medium tracking-[0.24px] text-foreground">
+            <ShieldCheck className="h-3.5 w-3.5 text-foreground" aria-hidden="true" />
             {hero.badge}
           </span>
 
-          <h1 className="max-w-2xl text-3xl font-semibold leading-[1.15] tracking-tight text-foreground sm:text-4xl lg:text-[2.75rem]">
-            {hero.title}
+          <h1 className="max-w-2xl text-4xl font-normal leading-[1.08] tracking-[-0.04em] text-foreground sm:text-5xl lg:text-[3.5rem]">
+            {hero.title.includes("Doctor") ? (
+              <>
+                {hero.title.split("Doctor")[0]}
+                <span className="text-[#97cde5]">Doctor</span>
+                {hero.title.split("Doctor")[1]}
+              </>
+            ) : hero.title.includes("Healthcare") ? (
+              <>
+                {hero.title.split("Healthcare")[0]}
+                <span className="text-[#97cde5]">Healthcare</span>
+                {hero.title.split("Healthcare")[1]}
+              </>
+            ) : (
+              <span>
+                {hero.title}{" "}
+                <span className="text-[#97cde5]">Online</span>
+              </span>
+            )}
           </h1>
 
-          <p className="max-w-xl text-sm leading-relaxed text-secondary-text sm:text-base">
+          <p className="max-w-xl text-[17px] leading-relaxed text-secondary-text sm:text-[18px]">
             {hero.subtitle}
           </p>
 
@@ -59,7 +76,7 @@ const Banner = async () => {
               );
               return (
                 <li key={label} className="flex items-center gap-2">
-                  <Icon className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                  <Icon className="h-4 w-4 shrink-0 text-foreground/80" aria-hidden="true" />
                   <span>{label}</span>
                 </li>
               );
@@ -68,24 +85,26 @@ const Banner = async () => {
 
           <Link
             href={hero.ctaLink}
-            className="group inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:text-primary-dark"
+            className="group inline-flex items-center justify-center rounded-[100px] bg-primary px-6 py-3 text-base font-medium text-primary-foreground transition-all hover:brightness-95"
           >
             <span>{hero.ctaText}</span>
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
 
-        {/* Right: authentic consultation scene */}
+        {/* Right: Cream Product Stage container */}
         <div className="hidden lg:col-span-5 lg:block">
-          <div className="relative aspect-[4/3.4] w-full overflow-hidden rounded-xl border border-border bg-muted">
-            <Image
-              src={resolvedImage}
-              alt="Doctor consulting a patient online"
-              fill
-              priority
-              sizes="(min-width: 1024px) 40vw, 100vw"
-              className="object-cover object-[70%_center]"
-            />
+          <div className="relative aspect-[4/3.4] w-full rounded-[24px] bg-[#f3f1eb] p-3 border border-border/80">
+            <div className="relative h-full w-full overflow-hidden rounded-[18px] border border-border/60 bg-card">
+              <Image
+                src={resolvedImage}
+                alt="Doctor consulting a patient online"
+                fill
+                priority
+                sizes="(min-width: 1024px) 40vw, 100vw"
+                className="object-cover object-[70%_center]"
+              />
+            </div>
           </div>
         </div>
       </div>

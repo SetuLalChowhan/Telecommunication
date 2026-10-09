@@ -100,7 +100,7 @@ const SearchBar = ({ initialSpecialties = [] }: SearchBarProps) => {
     <form role="search" onSubmit={handleSubmit} className="w-full">
       <div
         ref={containerRef}
-        className="relative flex items-center gap-1.5 rounded-xl border border-border bg-card p-1.5 shadow-sm transition-colors focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15 sm:gap-2 sm:p-2"
+        className="relative flex items-center gap-1.5 rounded-full border border-border bg-card p-1.5 transition-colors focus-within:border-[#97cde5] focus-within:ring-2 focus-within:ring-[#97cde5]/20 sm:gap-2 sm:p-2"
       >
         {/* Specialty select — visible on tablet + */}
         <div className="hidden shrink-0 sm:block">
@@ -108,10 +108,10 @@ const SearchBar = ({ initialSpecialties = [] }: SearchBarProps) => {
             value={specialty || "all"}
             onValueChange={(val) => setSpecialty(val === "all" ? "" : val)}
           >
-            <SelectTrigger className="h-10 w-[150px] gap-2 rounded-lg border-none bg-transparent px-3 text-sm font-medium text-foreground shadow-none hover:bg-muted/50 focus:ring-0 lg:w-[165px]">
+            <SelectTrigger className="h-10 w-[150px] gap-2 rounded-full border-none bg-transparent px-3 text-sm font-medium text-foreground shadow-none hover:bg-muted/50 focus:ring-0 lg:w-[165px]">
               <SelectValue placeholder="All specialties" />
             </SelectTrigger>
-            <SelectContent className="max-h-72 w-[230px] border-border bg-popover">
+            <SelectContent className="max-h-72 w-[230px] rounded-2xl border-border bg-card">
               <SelectItem value="all">All specialties</SelectItem>
               {specialties.map((item) => (
                 <SelectItem key={item.id} value={item.slug}>
@@ -125,7 +125,7 @@ const SearchBar = ({ initialSpecialties = [] }: SearchBarProps) => {
         <div className="hidden h-6 w-px shrink-0 bg-border sm:block" aria-hidden="true" />
 
         {/* Query input */}
-        <div className="flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2.5 sm:h-11">
+        <div className="flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-full px-2.5 sm:h-11">
           <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
           <label htmlFor="hero-doctor-search" className="sr-only">
             Search doctors or specialties
@@ -164,7 +164,7 @@ const SearchBar = ({ initialSpecialties = [] }: SearchBarProps) => {
         {/* Submit button */}
         <Button
           type="submit"
-          className="h-10 shrink-0 rounded-lg px-4 text-sm font-semibold sm:h-11 sm:px-5"
+          className="h-10 shrink-0 rounded-full px-5 text-sm font-medium sm:h-11 sm:px-6"
         >
           <span className="sm:hidden">Search</span>
           <span className="hidden sm:inline">Find a doctor</span>
@@ -176,7 +176,7 @@ const SearchBar = ({ initialSpecialties = [] }: SearchBarProps) => {
             id={listId}
             role="listbox"
             aria-label="Doctor suggestions"
-            className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 overflow-hidden rounded-lg border border-border bg-popover shadow-md"
+            className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-2xl border border-border bg-card"
           >
             {suggestions.length > 0 ? (
               <ul className="max-h-72 overflow-y-auto py-1">

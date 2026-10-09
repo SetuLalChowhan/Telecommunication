@@ -6,9 +6,33 @@
 
 @theme {
   /* Fonts */
-  --font-sans: var(--font-sans), "Poppins", var(--font-bangla), "Noto Sans Bengali", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: var(--font-sans), 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: var(--font-serif), 'Source Serif 4', ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-stk-bureau-sans-book-trial: var(--font-sans), 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-stk-bureau-serif-book-trial: var(--font-serif), 'Source Serif 4', ui-serif, Georgia, serif;
+  --font-inter: var(--font-sans), 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-bangla: var(--font-bangla), "Noto Sans Bengali", sans-serif;
   --font-mono: "Geist Mono", monospace;
+
+  /* Alden Tokens — Colors */
+  --color-parchment-cream: #f3f1eb;
+  --color-ink-black: #28262a;
+  --color-graphite: #4a4a4c;
+  --color-paper-white: #ffffff;
+  --color-fog-border: #dddcdd;
+  --color-silver: #cbcbcb;
+  --color-sky-highlight: #97cde5;
+  --color-sage-action: #c8dfaa;
+
+  /* Typography — Scale */
+  --text-caption: 12px;
+  --text-body-sm: 14px;
+  --text-body: 16px;
+  --text-subheading: 18px;
+  --text-heading-sm: 24px;
+  --text-heading: 32px;
+  --text-heading-lg: 48px;
+  --text-display: 56px;
 
   /* Mobile-first responsive breakpoints */
   --breakpoint-xxs: 360px;
@@ -22,18 +46,27 @@
   --breakpoint-2xl: 1536px;
   --breakpoint-3xl: 1920px;
 
-  /* Shadows: clean, subtle, trustworthy healthcare shadows */
-  --shadow-subtle: 0 1px 2px 0 rgb(15 23 42 / 0.04);
-  --shadow-card: 0 1px 3px 0 rgb(15 23 42 / 0.06), 0 1px 2px -1px rgb(15 23 42 / 0.04);
-  --shadow-card-hover: 0 6px 18px -3px rgb(15 23 42 / 0.08), 0 2px 6px -2px rgb(15 23 42 / 0.04);
+  /* Shadows: Alden deliberately avoids box-shadows. Elevation is surface contrast */
+  --shadow-subtle: none;
+  --shadow-card: none;
+  --shadow-card-hover: none;
 
-  /* Radius tokens */
-  --radius: 0.75rem;
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
+  /* Radius tokens per Alden spec */
+  --radius: 16px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-3xl: 30px;
+  --radius-full: 100px;
+
+  /* Named Radii */
+  --radius-cards: 16px;
+  --radius-badges: 30px;
+  --radius-images: 24px;
+  --radius-buttons: 100px;
+  --radius-smallui: 4px;
 
   /* Animate */
   --animate-spin: spin 1s linear infinite;
@@ -46,8 +79,8 @@
 }
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 12px);
+  --radius-md: calc(var(--radius) - 8px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
@@ -116,139 +149,149 @@
 
 :root {
   /* Radius */
-  --radius: 0.75rem;
+  --radius: 16px;
 
-  /* Brand Colors - Sophisticated Healthcare Palette */
-  --primary: #2563EB;             /* Primary Healthcare Blue */
-  --primary-dark: #1D4ED8;        /* Deep Healthcare Blue */
-  --primary-foreground: #FFFFFF;
+  /* Brand Colors - Alden Editorial Healthcare Palette */
+  --primary: #c8dfaa;             /* Sage Action — Primary CTA fill */
+  --primary-dark: #b6cfa0;        /* Hover tone */
+  --primary-foreground: #28262a;  /* Ink Black */
 
-  --secondary: #0F766E;           /* Healthcare Teal */
-  --secondary-dark: #115E59;       /* Deep Healthcare Teal */
-  --secondary-foreground: #FFFFFF;
+  --secondary: #f3f1eb;           /* Parchment Cream */
+  --secondary-dark: #e8e5dc;
+  --secondary-foreground: #28262a;
 
-  --accent: #EFF6FF;              /* Soft Light Blue Tint */
-  --accent-foreground: #1D4ED8;   /* High-contrast Deep Blue */
+  --accent: #f3f1eb;              /* Parchment Cream alternate surface */
+  --accent-foreground: #28262a;
 
   /* Background & Surfaces */
-  --background: #F8FAFC;          /* Soft Clean Healthcare Background */
-  --foreground: #0F172A;          /* Dark Navy Main Text */
+  --background: #ffffff;          /* Paper White Page Canvas */
+  --foreground: #28262a;          /* Ink Black */
 
-  --surface: #FFFFFF;             /* Pure White Surface */
-  --surface-foreground: #0F172A;
+  --surface: #ffffff;             /* Card Surface */
+  --surface-foreground: #28262a;
 
-  --card: #FFFFFF;
-  --card-foreground: #0F172A;
+  --card: #ffffff;                /* Paper White Card */
+  --card-foreground: #28262a;
 
-  --popover: #FFFFFF;
-  --popover-foreground: #0F172A;
+  --popover: #ffffff;
+  --popover-foreground: #28262a;
 
   /* Typography & Secondary Content */
-  --body: #334155;                /* Slate Text (High Legibility Body) */
-  --secondary-text: #64748B;      /* Muted Slate Secondary Text */
-  --muted: #F1F5F9;               /* Soft Surface Slate */
-  --muted-foreground: #64748B;    /* Muted Text */
+  --body: #4a4a4c;                /* Graphite */
+  --secondary-text: #4a4a4c;      /* Graphite */
+  --muted: #f3f1eb;               /* Parchment Cream Band */
+  --muted-foreground: #4a4a4c;    /* Graphite */
 
   /* Borders & Inputs */
-  --border: #E2E8F0;              /* Crisp Light Border */
-  --input: #E2E8F0;
-  --ring: #2563EB;                /* Healthcare Blue Focus */
+  --border: #dddcdd;              /* Fog Border */
+  --input: #dddcdd;               /* Fog Border */
+  --ring: #97cde5;                /* Sky Highlight focus */
 
   /* Status Colors */
-  --success: #16A34A;             /* Clinical Success Green */
-  --success-foreground: #FFFFFF;
+  --success: #65a30d;
+  --success-foreground: #ffffff;
 
-  --warning: #D97706;             /* Clinical Amber Warning */
-  --warning-foreground: #FFFFFF;
+  --warning: #d97706;
+  --warning-foreground: #ffffff;
 
-  --error: #DC2626;               /* Clinical Red */
-  --error-foreground: #FFFFFF;
-  --destructive: #DC2626;
-  --destructive-foreground: #FFFFFF;
+  --error: #e11d48;
+  --error-foreground: #ffffff;
+  --destructive: #e11d48;
+  --destructive-foreground: #ffffff;
+
+  /* Direct Tokens */
+  --color-parchment-cream: #f3f1eb;
+  --color-ink-black: #28262a;
+  --color-graphite: #4a4a4c;
+  --color-paper-white: #ffffff;
+  --color-fog-border: #dddcdd;
+  --color-silver: #cbcbcb;
+  --color-sky-highlight: #97cde5;
+  --color-sage-action: #c8dfaa;
 
   /* Charts */
-  --chart-1: #2563EB;
-  --chart-2: #0F766E;
-  --chart-3: #0284C7;
-  --chart-4: #D97706;
-  --chart-5: #16A34A;
+  --chart-1: #c8dfaa;
+  --chart-2: #97cde5;
+  --chart-3: #28262a;
+  --chart-4: #4a4a4c;
+  --chart-5: #cbcbcb;
 
   /* Sidebar */
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #0F172A;
-  --sidebar-primary: #2563EB;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #EFF6FF;
-  --sidebar-accent-foreground: #1D4ED8;
-  --sidebar-border: #E2E8F0;
-  --sidebar-ring: #2563EB;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #28262a;
+  --sidebar-primary: #c8dfaa;
+  --sidebar-primary-foreground: #28262a;
+  --sidebar-accent: #f3f1eb;
+  --sidebar-accent-foreground: #28262a;
+  --sidebar-border: #dddcdd;
+  --sidebar-ring: #97cde5;
 }
 
 .dark {
   /* Background & Surfaces */
-  --background: #0B1120;          /* Deep Navy Dark */
-  --foreground: #F8FAFC;          /* Crisp Warm White Text */
+  --background: #19181a;
+  --foreground: #f3f1eb;
 
-  --surface: #1E293B;             /* Slate 800 Surface */
-  --surface-foreground: #F8FAFC;
+  --surface: #222023;
+  --surface-foreground: #f3f1eb;
 
-  --card: #131E30;                /* Deep Card Slate */
-  --card-foreground: #F8FAFC;
+  --card: #222023;
+  --card-foreground: #f3f1eb;
 
-  --popover: #131E30;
-  --popover-foreground: #F8FAFC;
+  --popover: #222023;
+  --popover-foreground: #f3f1eb;
 
-  /* Brand Colors (Adjusted for Dark Mode Accessibility) */
-  --primary: #3B82F6;             /* Bright Accessible Healthcare Blue */
-  --primary-dark: #2563EB;
-  --primary-foreground: #FFFFFF;
+  /* Brand Colors */
+  --primary: #c8dfaa;
+  --primary-dark: #b6cfa0;
+  --primary-foreground: #28262a;
 
-  --secondary: #14B8A6;           /* Bright Accessible Teal */
-  --secondary-dark: #0D9488;
-  --secondary-foreground: #042F2E;
+  --secondary: #28262a;
+  --secondary-dark: #1e1c1f;
+  --secondary-foreground: #f3f1eb;
 
-  --accent: #1E293B;
-  --accent-foreground: #38BDF8;
+  --accent: #28262a;
+  --accent-foreground: #97cde5;
 
   /* Typography & Secondary Content */
-  --body: #94A3B8;                /* Slate 400 */
-  --secondary-text: #94A3B8;
-  --muted: #1E293B;
-  --muted-foreground: #94A3B8;
+  --body: #cbcbcb;
+  --secondary-text: #a0a0a2;
+  --muted: #28262a;
+  --muted-foreground: #cbcbcb;
 
   /* Borders & Inputs */
-  --border: #334155;              /* Slate 700 */
-  --input: #334155;
-  --ring: #38BDF8;
+  --border: #38363b;
+  --input: #38363b;
+  --ring: #97cde5;
 
   /* Status Colors */
-  --success: #22C55E;
-  --success-foreground: #FFFFFF;
+  --success: #84cc16;
+  --success-foreground: #19181a;
 
-  --warning: #F59E0B;
-  --warning-foreground: #FFFFFF;
+  --warning: #f59e0b;
+  --warning-foreground: #19181a;
 
-  --error: #EF4444;
-  --error-foreground: #FFFFFF;
-  --destructive: #EF4444;
-  --destructive-foreground: #FFFFFF;
+  --error: #f43f5e;
+  --error-foreground: #ffffff;
+  --destructive: #f43f5e;
+  --destructive-foreground: #ffffff;
 
   /* Charts */
-  --chart-1: #3B82F6;
-  --chart-2: #14B8A6;
-  --chart-3: #38BDF8;
-  --chart-4: #F59E0B;
-  --chart-5: #22C55E;
+  --chart-1: #c8dfaa;
+  --chart-2: #97cde5;
+  --chart-3: #f3f1eb;
+  --chart-4: #cbcbcb;
+  --chart-5: #a0a0a2;
 
   /* Sidebar */
-  --sidebar: #0F172A;
-  --sidebar-foreground: #F8FAFC;
-  --sidebar-primary: #3B82F6;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #1E293B;
-  --sidebar-accent-foreground: #38BDF8;
-  --sidebar-border: #334155;
-  --sidebar-ring: #38BDF8;
+  --sidebar: #1d1c1e;
+  --sidebar-foreground: #f3f1eb;
+  --sidebar-primary: #c8dfaa;
+  --sidebar-primary-foreground: #28262a;
+  --sidebar-accent: #28262a;
+  --sidebar-accent-foreground: #97cde5;
+  --sidebar-border: #38363b;
+  --sidebar-ring: #97cde5;
 }
 
 @layer base {
@@ -265,21 +308,28 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased min-h-screen;
+    letter-spacing: -0.02em;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
-  /* Accessible heading defaults */
+  /* Accessible heading defaults with negative editorial tracking */
   h1, h2, h3, h4, h5, h6 {
-    @apply text-foreground font-semibold tracking-tight;
+    @apply text-foreground font-medium tracking-tight;
+    letter-spacing: -0.03em;
+  }
+
+  h1 {
+    letter-spacing: -0.04em;
   }
 
   p {
     @apply text-body leading-relaxed;
+    letter-spacing: -0.02em;
   }
 
   /* Accessible focus indicators */
   :focus-visible {
-    outline: 2px solid var(--primary);
+    outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
 }
@@ -293,28 +343,53 @@
   font-family: var(--font-sans), sans-serif;
 }
 
+.font-serif {
+  font-family: var(--font-serif), 'Source Serif 4', Georgia, serif;
+}
+
+/* Alden Stage & Decorative Wash */
+.parchment-stage {
+  background-color: var(--color-parchment-cream);
+}
+
+.blue-wash {
+  position: relative;
+  overflow: hidden;
+}
+
+.blue-wash::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 460px;
+  height: 460px;
+  background: radial-gradient(circle at bottom right, rgba(151, 205, 229, 0.25) 0%, rgba(151, 205, 229, 0) 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
 /* Glassmorphic clean utility */
 .glass {
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
 
 .dark .glass {
-  background-color: rgba(19, 30, 48, 0.85);
+  background-color: rgba(34, 32, 35, 0.92);
 }
 
 /*
- * Interactive surface: restrained feedback via border + shadow.
- * Intentionally no vertical lift — it reads as a demo flourish, not a product.
+ * Alden Flat Surface feedback:
+ * Restrained hairline border shift without shadow lift
  */
 .card-hover {
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .card-hover:hover {
-  box-shadow: var(--shadow-card-hover);
-  border-color: color-mix(in srgb, var(--primary) 32%, var(--border));
+  border-color: var(--color-silver);
 }
 
 /* Clean minimal scrollbars */

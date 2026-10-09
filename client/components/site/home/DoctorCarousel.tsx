@@ -74,25 +74,25 @@ export function DoctorCarousel({ doctors }: DoctorCarouselProps) {
           return (
             <div
               key={doctor.id}
-              className="group flex w-[260px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-primary/40"
+              className="group flex w-[260px] shrink-0 flex-col overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:border-[#cbcbcb]"
             >
-              <div className="relative aspect-[4/4.2] w-full overflow-hidden bg-muted">
+              <div className="relative aspect-[4/4.2] w-full overflow-hidden bg-[#f3f1eb]">
                 {image ? (
                   <Image
                     src={image}
                     alt={name}
                     fill
                     sizes="260px"
-                    className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
+                    className="object-cover object-top transition-transform duration-300 group-hover:scale-102"
                   />
                 ) : (
                   <Stethoscope className="absolute inset-0 m-auto h-10 w-10 text-muted-foreground" />
                 )}
 
                 {rating > 0 && (
-                  <div className="absolute right-2.5 top-2.5 flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-0.5">
+                  <div className="absolute right-2.5 top-2.5 flex items-center gap-1 rounded-full border border-border bg-card/95 px-2.5 py-0.5 backdrop-blur-xs">
                     <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                    <span className="text-xs font-semibold text-foreground">
+                    <span className="text-xs font-medium text-foreground">
                       {rating.toFixed(1)}
                     </span>
                     {reviews > 0 && (
@@ -103,11 +103,11 @@ export function DoctorCarousel({ doctors }: DoctorCarouselProps) {
               </div>
 
               <div className="flex flex-1 flex-col justify-between gap-3 p-4">
-                <div className="space-y-1">
-                  <span className="inline-block text-[11px] font-semibold text-primary">
+                <div className="space-y-1.5">
+                  <span className="inline-block rounded-[30px] border border-border bg-[#dddcdd]/50 px-2.5 py-0.5 text-[10px] font-medium tracking-[0.24px] text-foreground">
                     {displaySpecialty(doctor)}
                   </span>
-                  <h3 className="line-clamp-1 text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
+                  <h3 className="line-clamp-1 text-sm font-medium tracking-tight text-foreground">
                     <Link href={`/doctors/${doctor.slug || doctor.id}`}>{name}</Link>
                   </h3>
                   <p className="truncate text-[11px] text-secondary-text">
@@ -120,13 +120,13 @@ export function DoctorCarousel({ doctors }: DoctorCarouselProps) {
                     <span className="block text-[10px] uppercase text-muted-foreground">
                       Fee
                     </span>
-                    <span className="text-sm font-semibold text-foreground">
+                    <span className="text-sm font-medium text-foreground">
                       ৳{doctor.fee}
                     </span>
                   </div>
                   <Link
                     href={`/doctors/${doctor.slug || doctor.id}`}
-                    className="inline-flex items-center justify-center rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                    className="inline-flex items-center justify-center rounded-full bg-primary px-3.5 py-1 text-xs font-medium text-primary-foreground transition-all hover:brightness-95"
                   >
                     Consult
                   </Link>
@@ -142,7 +142,7 @@ export function DoctorCarousel({ doctors }: DoctorCarouselProps) {
           type="button"
           onClick={() => handleScroll("left")}
           aria-label="Scroll doctors left"
-          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-border bg-card text-foreground transition-colors hover:border-primary hover:text-primary"
+          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:border-[#cbcbcb]"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
@@ -150,7 +150,7 @@ export function DoctorCarousel({ doctors }: DoctorCarouselProps) {
           type="button"
           onClick={() => handleScroll("right")}
           aria-label="Scroll doctors right"
-          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-border bg-card text-foreground transition-colors hover:border-primary hover:text-primary"
+          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:border-[#cbcbcb]"
         >
           <ArrowRight className="h-4 w-4" />
         </button>
