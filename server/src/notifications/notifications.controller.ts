@@ -34,6 +34,12 @@ export class NotificationsController {
     return this.notificationsService.getUnreadCount(userId);
   }
 
+  @Patch('read-all')
+  @ResponseMessage('All notifications marked as read')
+  markAllAsRead(@CurrentUser('id') userId: string) {
+    return this.notificationsService.markAllAsRead(userId);
+  }
+
   @Patch(':id/read')
   @ResponseMessage('Notification marked as read')
   markAsRead(
@@ -41,11 +47,5 @@ export class NotificationsController {
     @CurrentUser('id') userId: string,
   ) {
     return this.notificationsService.markAsRead(id, userId);
-  }
-
-  @Patch('read-all')
-  @ResponseMessage('All notifications marked as read')
-  markAllAsRead(@CurrentUser('id') userId: string) {
-    return this.notificationsService.markAllAsRead(userId);
   }
 }

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Clock, ShieldAlert } from "lucide-react";
+import { ArrowRight, Clock, ShieldAlert, Calendar, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DoctorScheduleItem,
@@ -19,6 +19,7 @@ import {
   useDoctorDashboard,
   useConfirmDoctorBooking,
   useCompleteDoctorBooking,
+  useGoogleConnectionStatus,
 } from "../api/queries";
 import { DoctorDashboardBooking } from "../types";
 
@@ -74,8 +75,11 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   const { data: dashboardData, isLoading: isDashboardLoading } = useDoctorDashboard();
+  const { data: googleStatus, isLoading: isGoogleLoading } = useGoogleConnectionStatus();
   const confirmMutation = useConfirmDoctorBooking();
   const completeMutation = useCompleteDoctorBooking();
+
+  const isGoogleConnected = googleStatus?.isConnected ?? false;
 
   const handleConfirmAppointment = (id: string) => {
     setActionLoadingId(id);
@@ -144,6 +148,34 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
               className="h-8 gap-1.5 rounded-md border-amber-500/40 px-3 text-xs font-semibold text-amber-700 hover:bg-amber-500/10 dark:text-amber-400"
             >
               <span>Complete verification</span>
+            </Button>
+          </Link>
+        </div>
+      )}
+
+      {!isGoogleConnected && !isGoogleLoading && (
+        <div className="flex flex-col gap-3 rounded-xl border border-primary/25 bg-primary/5 p-3.5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3 sm:items-center">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Calendar className="h-4.5 w-4.5" />
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-xs font-semibold text-foreground">
+                Connect Google Calendar &amp; Meet for Automated Consultations
+              </p>
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                Link your Google account to automatically generate video consultation links and synchronize appointments with <strong>Asia/Dhaka (+06:00)</strong> timezone.
+              </p>
+            </div>
+          </div>
+          <Link href="/doctor/settings?tab=integrations" className="shrink-0">
+            <Button
+              variant="default"
+              size="sm"
+              className="h-8 gap-1.5 rounded-lg px-3.5 text-xs font-semibold shadow-sm"
+            >
+              <Video className="h-3.5 w-3.5" />
+              <span>Connect Google</span>
             </Button>
           </Link>
         </div>
