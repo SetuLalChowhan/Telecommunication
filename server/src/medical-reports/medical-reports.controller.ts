@@ -67,6 +67,22 @@ export class MedicalReportsController {
     );
   }
 
+  @Get('patient/:patientId')
+  @Roles('DOCTOR', 'ADMIN', 'PATIENT')
+  @UseGuards(RolesGuard)
+  @ResponseMessage('Patient reports fetched successfully')
+  getReportsByPatient(
+    @Param('patientId') patientId: string,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: string,
+  ) {
+    return this.medicalReportsService.getReportsByPatient(
+      patientId,
+      userId,
+      role,
+    );
+  }
+
   @Delete(':id')
   @UseGuards(RolesGuard)
   @ResponseMessage('Medical report deleted successfully')

@@ -152,6 +152,26 @@ export class MedicalReportsService {
     return this.repo.findByBooking(bookingId);
   }
 
+  async getReportsByPatient(patientId: string, userId: string, role: string) {
+    if (role === 'DOCTOR') {
+      const isAuthorized = await this.repo.isDoctorForPatient(userId, patientId);
+      if (!isAuthorized) {
+        throw new ForbiddenException(
+          'You are not authorized to view reports for this patient',
+        );
+      }
+    } else if (role !== 'ADMIN') {
+      const patient = await this.repo.findOrCreatePatient(userId);
+      if (!patient || patient.id !== patientId) {
+        throw new ForbiddenException(
+          'You are not authorized to view these medical reports',
+        );
+      }
+    }
+
+    return this.repo.findReportsByPatient(patientId);
+  }
+
   async deleteReport(reportId: string, userId: string, role: string) {
     const report = await this.repo.findReportById(reportId);
 
@@ -186,11 +206,20 @@ export class MedicalReportsService {
     }
 
     // Medical documents are protected health information: only the owning
-    // patient, the doctor on the related booking, or an admin may read them.
-    // The report id is never sufficient on its own to authorize access.
+    // patient, the doctor on the related booking or treating doctor, or an admin may read them.
     const isAdmin = role === 'ADMIN';
     const isOwner = report.patient?.userId === userId;
-    const isTreatingDoctor = report.booking?.doctor?.userId === userId;
+    let isTreatingDoctor = report.booking?.doctor?.userId === userId;
+
+    if (!isTreatingDoctor && role === 'DOCTOR') {
+      const isPatientDoctor = await this.repo.isDoctorForPatient(
+        userId,
+        report.patientId,
+      );
+      if (isPatientDoctor) {
+        isTreatingDoctor = true;
+      }
+    }
 
     if (!isAdmin && !isOwner && !isTreatingDoctor) {
       throw new ForbiddenException(

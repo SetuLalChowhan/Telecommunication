@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getReportFileUrl } from "@/features/medical-reports/api/client";
+import { getReportFileUrl, fetchReportBlob } from "@/features/medical-reports/api/client";
 import { MedicalReport } from "@/features/medical-reports/types";
 import {
   formatBookingStatus,
@@ -100,9 +100,7 @@ function DocumentPreview({ report }: { report: MedicalReport }) {
 
     const load = async () => {
       try {
-        const response = await fetch(viewUrl);
-        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
-        const blob = await response.blob();
+        const blob = await fetchReportBlob(report.id, "view");
         if (cancelled) return;
         createdUrl = URL.createObjectURL(blob);
         setBlobUrl(createdUrl);
@@ -118,7 +116,7 @@ function DocumentPreview({ report }: { report: MedicalReport }) {
       cancelled = true;
       if (createdUrl) URL.revokeObjectURL(createdUrl);
     };
-  }, [viewUrl, kind.isPdf]);
+  }, [report.id, kind.isPdf]);
 
   if (!kind.canPreview) {
     return <NoPreviewPanel kind={kind} />;
@@ -162,10 +160,10 @@ function DocumentPreview({ report }: { report: MedicalReport }) {
   );
 }
 
-interface RecordDetailsDialogProps {
+export interface RecordDetailsDialogProps {
   report: MedicalReport | null;
   onOpenChange: (open: boolean) => void;
-  onDeleteClick: (id: string) => void;
+  onDeleteClick?: ((id: string) => void) | null;
 }
 
 export function RecordDetailsDialog({
@@ -182,7 +180,7 @@ export function RecordDetailsDialog({
   const downloadUrl = getReportFileUrl(report.id, "download");
 
   const handleDelete = () => {
-    onDeleteClick(report.id);
+    onDeleteClick?.(report.id);
     onOpenChange(false);
   };
 
@@ -277,38 +275,60 @@ export function RecordDetailsDialog({
         </DialogBody>
 
         <DialogFooter className="sm:justify-between">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={handleDelete}
-            className="h-8 gap-1.5 rounded-md px-2.5 text-xs font-medium text-destructive hover:bg-destructive/10"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            <span>Delete</span>
-          </Button>
+          <div>
+            {onDeleteClick && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleDelete}
+                className="h-8 gap-1.5 rounded-md px-2.5 text-xs font-medium text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                <span>Delete</span>
+              </Button>
+            )}
+          </div>
 
           <div className="flex items-center gap-2">
             <Button
-              asChild
               variant="outline"
               size="sm"
+              onClick={async () => {
+                try {
+                  const blob = await fetchReportBlob(report.id, "view");
+                  const url = URL.createObjectURL(blob);
+                  window.open(url, "_blank");
+                } catch {
+                  window.open(viewUrl, "_blank");
+                }
+              }}
               className="h-8 gap-1.5 rounded-md px-3 text-xs font-semibold"
             >
-              <a href={viewUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-3.5 w-3.5" />
-                <span>Open in new tab</span>
-              </a>
+              <ExternalLink className="h-3.5 w-3.5" />
+              <span>Open in new tab</span>
             </Button>
             <Button
-              asChild
               size="sm"
+              onClick={async () => {
+                try {
+                  const blob = await fetchReportBlob(report.id, "download");
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = report.fileName || "medical-report";
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  setTimeout(() => URL.revokeObjectURL(url), 1000);
+                } catch {
+                  window.location.href = downloadUrl;
+                }
+              }}
               className="h-8 gap-1.5 rounded-md px-3 text-xs font-semibold"
             >
-              <a href={downloadUrl} download>
-                <Download className="h-3.5 w-3.5" />
-                <span>Download</span>
-              </a>
+              <Download className="h-3.5 w-3.5" />
+              <span>Download</span>
             </Button>
           </div>
         </DialogFooter>

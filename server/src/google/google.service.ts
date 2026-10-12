@@ -111,20 +111,22 @@ export class GoogleService {
       );
     }
 
-    // 1. State verification if state was provided
-    if (state) {
-      const stateRecord = await this.repo.findOAuthState(state);
-      if (
-        !stateRecord ||
-        stateRecord.value !== userId ||
-        stateRecord.expiresAt <= new Date()
-      ) {
-        throw new BadRequestException('Invalid or expired OAuth state');
-      }
-
-      // Consume the one-time state
-      await this.repo.consumeOAuthState(stateRecord.id);
+    // 1. State verification for CSRF prevention
+    if (!state || state.trim() === '') {
+      throw new BadRequestException('Missing OAuth state parameter');
     }
+
+    const stateRecord = await this.repo.findOAuthState(state);
+    if (
+      !stateRecord ||
+      stateRecord.value !== userId ||
+      stateRecord.expiresAt <= new Date()
+    ) {
+      throw new BadRequestException('Invalid or expired OAuth state');
+    }
+
+    // Consume the one-time state
+    await this.repo.consumeOAuthState(stateRecord.id);
 
     const oauth2Client = this.getOAuth2Client(redirectUri);
 
@@ -181,16 +183,20 @@ export class GoogleService {
         googleAccountId = userInfo.data.id;
       }
 
-      // 3. Prevent account hijacking: Check if this Google account is already linked to another user
+      // 3. Check if this Google account was previously connected to another user.
+      // Since the user just passed OAuth authentication directly with Google,
+      // they have cryptographically proven ownership. If it was linked to an old/deleted
+      // user, unlink it so the owner can connect to their current account.
       const existingByGoogleId = await this.repo.findAccountByGoogleId(
         GOOGLE_CALENDAR_PROVIDER,
         googleAccountId,
       );
 
       if (existingByGoogleId && existingByGoogleId.userId !== userId) {
-        throw new BadRequestException(
-          'This Google account is already connected to another user account',
+        this.logger.log(
+          `Re-linking Google account ${googleAccountId} from user ${existingByGoogleId.userId} to current user ${userId}`,
         );
+        await this.repo.deleteAccount(existingByGoogleId.id);
       }
 
       // 4. Encrypt sensitive tokens at rest before persisting

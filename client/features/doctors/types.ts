@@ -2,6 +2,8 @@
  * Doctor Domain & API Types
  */
 
+import type { MedicalReport } from "@/features/medical-reports/types";
+
 export interface Specialty {
   id: string;
   name: string;
@@ -259,6 +261,7 @@ export interface DoctorPatientRegistryItem {
   lastCondition: string;
   consultationCount: number;
   reportsCount: number;
+  medicalReports?: MedicalReport[];
 }
 
 export interface GoogleConnectionStatus {

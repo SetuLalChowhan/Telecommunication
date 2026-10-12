@@ -68,13 +68,31 @@ export class UsersRepository {
   }
 
   async delete(id: string) {
-    return this.prisma.user.delete({
-      where: { id },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const doctor = await tx.doctorProfile.findUnique({
+        where: { userId: id },
+        select: { id: true },
+      });
+      if (doctor) {
+        await tx.booking.deleteMany({ where: { doctorId: doctor.id } });
+      }
+
+      const patient = await tx.patientProfile.findUnique({
+        where: { userId: id },
+        select: { id: true },
+      });
+      if (patient) {
+        await tx.booking.deleteMany({ where: { patientId: patient.id } });
+      }
+
+      return tx.user.delete({
+        where: { id },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+        },
+      });
     });
   }
 

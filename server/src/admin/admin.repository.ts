@@ -67,14 +67,14 @@ export class AdminRepository {
   }
 
   /**
-   * Removes a doctor and everything that depends on them.
-   * Bookings restrict deletion, so they are cleared first (their reviews cascade
-   * and their reports have their booking link nulled by the schema).
+   * Removes a doctor and everything that depends on them including the User record.
+   * Bookings restrict deletion, so they are cleared first; deleting the user cascades
+   * the doctor profile, qualifications, specialties, documents, accounts, and sessions.
    */
-  async deleteDoctor(doctorId: string) {
+  async deleteDoctor(doctorId: string, userId: string) {
     return this.prisma.$transaction(async (tx) => {
       await tx.booking.deleteMany({ where: { doctorId } });
-      await tx.doctorProfile.delete({ where: { id: doctorId } });
+      await tx.user.delete({ where: { id: userId } });
       return { id: doctorId };
     });
   }

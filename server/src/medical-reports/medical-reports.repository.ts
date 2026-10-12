@@ -106,6 +106,27 @@ export class MedicalReportsRepository {
     });
   }
 
+  async isDoctorForPatient(doctorUserId: string, patientId: string): Promise<boolean> {
+    const doctor = await this.prisma.doctorProfile.findUnique({
+      where: { userId: doctorUserId },
+      select: { id: true },
+    });
+    if (!doctor) return false;
+    const booking = await this.prisma.booking.findFirst({
+      where: { doctorId: doctor.id, patientId },
+      select: { id: true },
+    });
+    return Boolean(booking);
+  }
+
+  async findReportsByPatient(patientId: string) {
+    return this.prisma.medicalReport.findMany({
+      where: { patientId },
+      orderBy: { uploadedAt: 'desc' },
+      include: REPORT_INCLUDE,
+    });
+  }
+
   async deleteReport(reportId: string) {
     return this.prisma.medicalReport.delete({ where: { id: reportId } });
   }
