@@ -4,10 +4,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import {
   fetchMyMedicalReports,
+  fetchReportsByPatient,
+  fetchReportsByBooking,
   uploadMedicalReport,
   deleteMedicalReport,
 } from "./client";
 import {
+  MedicalReport,
   MedicalReportsQueryParams,
   MedicalReportsResponse,
   medicalReportKeys,
@@ -77,5 +80,29 @@ export function useDeleteMedicalReport() {
         "Failed to delete report. Please try again.";
       toast.error(message);
     },
+  });
+}
+
+/**
+ * Query hook to fetch a patient's medical reports (for treating doctors or admin)
+ */
+export function usePatientMedicalReports(patientId?: string | null) {
+  return useQuery<MedicalReport[]>({
+    queryKey: medicalReportKeys.byPatient(patientId || ""),
+    queryFn: () => fetchReportsByPatient(patientId!),
+    enabled: Boolean(patientId),
+    staleTime: CACHE.private.client.staleTime,
+  });
+}
+
+/**
+ * Query hook to fetch reports attached to a booking
+ */
+export function useBookingMedicalReports(bookingId?: string | null) {
+  return useQuery<MedicalReport[]>({
+    queryKey: medicalReportKeys.byBooking(bookingId || ""),
+    queryFn: () => fetchReportsByBooking(bookingId!),
+    enabled: Boolean(bookingId),
+    staleTime: CACHE.private.client.staleTime,
   });
 }

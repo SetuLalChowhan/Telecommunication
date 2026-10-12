@@ -21,8 +21,14 @@ import {
   Check,
   Loader2,
   Phone,
+  Eye,
+  Download,
 } from "lucide-react";
 import { DashboardAppointment } from "@/features/appointments/types";
+import { MedicalReport } from "@/features/medical-reports/types";
+import { useBookingMedicalReports } from "@/features/medical-reports/api/queries";
+import { fetchReportBlob, getReportFileUrl } from "@/features/medical-reports/api/client";
+import { RecordDetailsDialog } from "@/features/medical-reports/components/records/RecordDetailsDialog";
 import { cn } from "@/lib/utils";
 
 interface AppointmentDetailsDialogProps {
@@ -60,8 +66,17 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
   isConfirming = false,
 }) => {
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<MedicalReport | null>(null);
+  const [downloadingReportId, setDownloadingReportId] = useState<string | null>(null);
+
+  const { data: bookingReports = [] } = useBookingMedicalReports(
+    open && appointment ? appointment.id : null
+  );
 
   if (!appointment) return null;
+
+  const reports: MedicalReport[] =
+    bookingReports.length > 0 ? bookingReports : appointment.reports || [];
 
   const counterpartName = isDoctorView
     ? appointment.patientName
@@ -77,7 +92,8 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
   };
 
   return (
-    <Dialog
+    <>
+      <Dialog
       open={open}
       onOpenChange={(val) => {
         setConfirmCancel(false);
@@ -172,6 +188,86 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
               </p>
             </div>
           )}
+
+          {/* Medical Reports Section */}
+          <div className="space-y-2 rounded-md border border-border p-2.5">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <FileText className="h-3 w-3 text-primary" />
+                Medical Reports &amp; Documents
+              </span>
+              <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                {reports.length} report{reports.length === 1 ? "" : "s"}
+              </span>
+            </div>
+
+            {reports.length === 0 ? (
+              <p className="text-[11px] text-muted-foreground italic">
+                {isDoctorView
+                  ? "No medical reports attached to this visit."
+                  : "No medical reports uploaded for this visit."}
+              </p>
+            ) : (
+              <div className="space-y-1.5 pt-1">
+                {reports.map((report) => (
+                  <div
+                    key={report.id}
+                    className="flex items-center justify-between gap-2 rounded border border-border bg-card p-2 text-xs hover:bg-muted/30"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />
+                      <span className="truncate font-medium text-foreground">
+                        {report.fileName || "Medical Document"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedReport(report)}
+                        className="h-6 px-2 text-[11px] font-medium gap-1"
+                      >
+                        <Eye className="h-3 w-3" />
+                        <span>View</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={downloadingReportId === report.id}
+                        onClick={async () => {
+                          setDownloadingReportId(report.id);
+                          try {
+                            const blob = await fetchReportBlob(report.id, "download");
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = report.fileName || "medical-report";
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            setTimeout(() => URL.revokeObjectURL(url), 1000);
+                          } catch {
+                            window.location.href = getReportFileUrl(report.id, "download");
+                          } finally {
+                            setDownloadingReportId(null);
+                          }
+                        }}
+                        className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                        title="Download report"
+                      >
+                        {downloadingReportId === report.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Download className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Cancellation prompt */}
           {confirmCancel && (
@@ -297,6 +393,12 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <RecordDetailsDialog
+      report={selectedReport}
+      onOpenChange={(val) => !val && setSelectedReport(null)}
+    />
+  </>
   );
 };
 

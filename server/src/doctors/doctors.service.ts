@@ -443,6 +443,7 @@ export class DoctorService {
           lastCondition: b.notes || 'Routine Consultation',
           consultationCount: 1,
           reportsCount: (b.patient as any).medicalReports?.length || 0,
+          medicalReports: (b.patient as any).medicalReports || [],
         });
       } else {
         patientMap.get(pid).consultationCount += 1;

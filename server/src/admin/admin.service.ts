@@ -85,7 +85,19 @@ export class AdminService {
       throw new NotFoundException(`Doctor with ID "${doctorId}" not found`);
     }
 
-    return this.repo.deleteDoctor(doctorId);
+    if (doctor.user?.image) {
+      await this.cloudinaryService.deleteFile(doctor.user.image).catch(() => undefined);
+    }
+
+    if (doctor.documents?.length) {
+      await Promise.allSettled(
+        doctor.documents.map((doc) =>
+          doc.fileUrl ? this.cloudinaryService.deleteFile(doc.fileUrl) : Promise.resolve(),
+        ),
+      );
+    }
+
+    return this.repo.deleteDoctor(doctorId, doctor.userId);
   }
 
   async approveDoctor(doctorId: string, adminUserId: string) {
@@ -283,10 +295,22 @@ export class AdminService {
   }
 
   async deletePatient(patientId: string) {
-    const patient = await this.repo.findPatientWithUser(patientId);
+    const patient = await this.repo.findPatientById(patientId);
 
     if (!patient) {
       throw new NotFoundException(`Patient with ID "${patientId}" not found`);
+    }
+
+    if (patient.user?.image) {
+      await this.cloudinaryService.deleteFile(patient.user.image).catch(() => undefined);
+    }
+
+    if (patient.medicalReports?.length) {
+      await Promise.allSettled(
+        patient.medicalReports.map((r) =>
+          r.fileUrl ? this.cloudinaryService.deleteFile(r.fileUrl) : Promise.resolve(),
+        ),
+      );
     }
 
     return this.repo.deletePatient(patientId, patient.userId);

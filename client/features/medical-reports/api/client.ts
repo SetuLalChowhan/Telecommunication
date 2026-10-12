@@ -40,3 +40,30 @@ export async function deleteMedicalReport(
 ): Promise<MedicalReport> {
   return http.delete<MedicalReport>(`/medical-reports/${reportId}`);
 }
+
+/** Fetch all medical reports for a patient (authorized doctor or admin). */
+export async function fetchReportsByPatient(
+  patientId: string
+): Promise<MedicalReport[]> {
+  return http.get<MedicalReport[]>(`/medical-reports/patient/${patientId}`);
+}
+
+/** Fetch all medical reports linked to a booking (doctor, patient, or admin). */
+export async function fetchReportsByBooking(
+  bookingId: string
+): Promise<MedicalReport[]> {
+  return http.get<MedicalReport[]>(`/medical-reports/booking/${bookingId}`);
+}
+
+/** Fetch report file as an authenticated Blob (works cross-origin and with Bearer). */
+export async function fetchReportBlob(
+  reportId: string,
+  action: "view" | "download" = "view"
+): Promise<Blob> {
+  const { apiClient } = await import("@/lib/api/client");
+  const res = await apiClient.get(`/medical-reports/${reportId}/file`, {
+    params: { action },
+    responseType: "blob",
+  });
+  return res.data as Blob;
+}

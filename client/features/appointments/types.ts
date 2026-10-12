@@ -5,6 +5,8 @@
  * status tabs are never derived from client-side filtering logic.
  */
 
+import type { MedicalReport } from "@/features/medical-reports/types";
+
 export type BookingStatusValue =
   | "PENDING"
   | "CONFIRMED"
@@ -74,6 +76,8 @@ export interface DashboardAppointment {
   fee: number;
   notes?: string;
   isToday?: boolean;
+  patientId?: string;
+  reports?: MedicalReport[];
 }
 
 /**
@@ -92,6 +96,8 @@ export interface DoctorScheduleItem {
   symptoms: string;
   meetLink?: string;
   fee: number;
+  patientId?: string;
+  reports?: MedicalReport[];
 }
 
 /**

@@ -62,4 +62,6 @@ export const medicalReportKeys = {
     ] as const,
   byBooking: (bookingId: string) =>
     [...medicalReportKeys.all, "booking", bookingId] as const,
+  byPatient: (patientId: string) =>
+    [...medicalReportKeys.all, "patient", patientId] as const,
 };

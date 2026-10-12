@@ -75,6 +75,8 @@ function adaptBookingToScheduleItem(booking: DoctorDashboardBooking): DoctorSche
     symptoms: booking.notes || "General Consultation",
     fee: 0,
     meetLink: booking.meetLink || undefined,
+    patientId: booking.patientId,
+    reports: (booking as any).reports || [],
   };
 }
 
@@ -355,6 +357,8 @@ export function DoctorAppointmentsClient({
                                 symptoms: item.symptoms,
                                 fee: item.fee,
                                 meetLink: item.meetLink,
+                                patientId: item.patientId,
+                                reports: item.reports,
                               })
                             }
                             className="h-7 rounded-md px-2.5 text-xs font-medium"
