@@ -57,7 +57,21 @@ export async function HydrationProvider({
   );
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <HydrationBoundary
+      state={dehydrate(queryClient, {
+        shouldDehydrateQuery: (query) => {
+          // Never dehydrate null auth profile to avoid wiping out active client sessions
+          if (
+            Array.isArray(query.queryKey) &&
+            query.queryKey[0] === "auth" &&
+            query.state.data == null
+          ) {
+            return false;
+          }
+          return query.state.status === "success";
+        },
+      })}
+    >
       {children}
     </HydrationBoundary>
   );

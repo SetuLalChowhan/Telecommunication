@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  authClient,
   signIn,
   signUp,
   signOut,
@@ -36,11 +37,34 @@ export function getRoleDashboardRoute(role?: Role | string | null, isVerified?: 
 }
 
 /**
+ * Sync token to localStorage, document.cookie, and axios default headers
+ */
+export function setClientAuthToken(token: string) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("auth_token", token);
+    document.cookie = `auth_token=${encodeURIComponent(token)}; path=/; max-age=2592000; SameSite=Lax;`;
+  }
+  if (token) {
+    apiClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  }
+}
+
+/**
+ * Remove token from localStorage, document.cookie, and axios default headers
+ */
+export function clearClientAuthToken() {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("auth_token");
+    document.cookie = "auth_token=; path=/; max-age=0; SameSite=Lax;";
+  }
+  delete apiClient.defaults.headers.common["Authorization"];
+}
+
+/**
  * useAuth Hook
  *
- * The single authentication hook for the app. Better-Auth's HTTP-only session
- * is the sole source of truth — there is no second (localStorage) auth cache to
- * drift out of sync.
+ * The single unified authentication hook for the app.
+ * Resolves session from backend /users/me and better-auth, keeping both in sync.
  */
 export const useAuth = () => {
   const router = useRouter();
@@ -49,9 +73,7 @@ export const useAuth = () => {
   // 1. Session & current user resolution
   const { data: session, isPending: isSessionLoading } = useSession();
 
-  // Fetch the full backend profile. The query key matches `authProfilePrefetch`
-  // in `../api/server`, so dashboard pages hydrate this entry on the server
-  // and public pages (like Home) instantly resolve the active user from cache or backend.
+  // Fetch the full backend profile.
   const { data: profileUser, isLoading: isProfileLoading } = useQuery<User | null>({
     queryKey: authKeys.profile(),
     queryFn: async () => {
@@ -76,7 +98,25 @@ export const useAuth = () => {
   const user = profileUser || (session?.user as unknown as User) || null;
   const isAuthenticated = Boolean(user);
   const role = (user?.role as Role) || "PATIENT";
-  const isAuthLoading = !user && (isProfileLoading || isSessionLoading);
+
+  // Prevent flash of signed-out state if token exists in localStorage but query is loading
+  const hasLocalToken =
+    typeof window !== "undefined" && Boolean(localStorage.getItem("auth_token"));
+  const isAuthLoading =
+    (!user && (isProfileLoading || isSessionLoading)) ||
+    (!user && hasLocalToken && isProfileLoading);
+
+  // Sync state across multiple tabs
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "auth_token") {
+        queryClient.invalidateQueries({ queryKey: authKeys.all });
+        authClient.getSession?.().catch(() => undefined);
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, [queryClient]);
 
   // 2. Auth mutations
 
@@ -89,22 +129,34 @@ export const useAuth = () => {
       }
       return res.data;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
       toast.success("Welcome back! Signed in successfully.");
-      const authPayload = data as unknown as { user?: User; data?: { user?: User; token?: string }; token?: string; session?: { token?: string } };
+      const authPayload = data as unknown as {
+        user?: User;
+        data?: { user?: User; token?: string };
+        token?: string;
+        session?: { token?: string };
+      };
       const authUser = authPayload?.user || authPayload?.data?.user;
-      const authToken = authPayload?.token || authPayload?.data?.token || authPayload?.session?.token;
-      if (typeof window !== "undefined" && authToken) {
-        localStorage.setItem("auth_token", authToken);
+      const authToken =
+        authPayload?.token ||
+        authPayload?.data?.token ||
+        authPayload?.session?.token;
+
+      if (authToken) {
+        setClientAuthToken(authToken);
       }
       if (authUser) {
         queryClient.setQueryData(authKeys.profile(), authUser);
       }
-      queryClient.invalidateQueries({ queryKey: authKeys.all });
+
+      // Re-sync better-auth session in background
+      authClient.getSession?.().catch(() => undefined);
+
+      await queryClient.invalidateQueries({ queryKey: authKeys.all });
       const userRole = authUser?.role || role;
       const destination = variables.redirectTo || getRoleDashboardRoute(userRole);
       router.push(destination);
-      router.refresh();
     },
     onError: (err: Error) => {
       toast.error(err.message || "Failed to sign in");
@@ -143,15 +195,11 @@ export const useAuth = () => {
       await signOut();
     },
     onSuccess: () => {
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("auth_token");
-      }
+      clearClientAuthToken();
       toast.success("Signed out successfully");
-      // Drop cached profile and user data immediately
       queryClient.setQueryData(authKeys.profile(), null);
       queryClient.clear();
       router.push("/login");
-      router.refresh();
     },
     onError: (err: Error) => {
       toast.error(err.message || "Failed to log out");
@@ -244,21 +292,31 @@ export const useAuth = () => {
       });
       return res.data;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast.success("Welcome! Signed in with Google.");
-      const authPayload = data as unknown as { user?: User; data?: { user?: User; token?: string }; token?: string; session?: { token?: string } };
+      const authPayload = data as unknown as {
+        user?: User;
+        data?: { user?: User; token?: string };
+        token?: string;
+        session?: { token?: string };
+      };
       const authUser = authPayload?.user || authPayload?.data?.user;
-      const authToken = authPayload?.token || authPayload?.data?.token || authPayload?.session?.token;
-      if (typeof window !== "undefined" && authToken) {
-        localStorage.setItem("auth_token", authToken);
+      const authToken =
+        authPayload?.token ||
+        authPayload?.data?.token ||
+        authPayload?.session?.token;
+
+      if (authToken) {
+        setClientAuthToken(authToken);
       }
       if (authUser) {
         queryClient.setQueryData(authKeys.profile(), authUser);
       }
-      queryClient.invalidateQueries({ queryKey: authKeys.all });
+
+      authClient.getSession?.().catch(() => undefined);
+      await queryClient.invalidateQueries({ queryKey: authKeys.all });
       const userRole = authUser?.role || role;
       router.push(getRoleDashboardRoute(userRole));
-      router.refresh();
     },
     onError: (err: Error) => {
       toast.error(err.message || "Google sign-in failed");

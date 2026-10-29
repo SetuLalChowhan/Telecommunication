@@ -26,10 +26,8 @@ export const API_BASE_URL =
  * The one and only browser HTTP client.
  *
  * - Sends Better Auth session cookies cross-origin (`withCredentials`).
+ * - Sends Bearer token via Authorization header from localStorage.
  * - Normalizes every failure into a single `ApiError`.
- *
- * No global timeout is set on purpose: multipart uploads (documents, reports)
- * can legitimately take longer than a short default would allow.
  */
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -38,6 +36,13 @@ export const apiClient: AxiosInstance = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+if (typeof window !== 'undefined') {
+  const initialToken = localStorage.getItem('auth_token');
+  if (initialToken) {
+    apiClient.defaults.headers.common['Authorization'] = `Bearer ${initialToken}`;
+  }
+}
 
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -62,13 +67,20 @@ apiClient.interceptors.response.use(
         response.data?.session?.token;
       if (authToken && typeof authToken === 'string') {
         localStorage.setItem('auth_token', authToken);
+        document.cookie = `auth_token=${encodeURIComponent(authToken)}; path=/; max-age=2592000; SameSite=Lax;`;
+        apiClient.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
       }
     }
     return response;
   },
   (error: AxiosError) => {
     if (error.response?.status === 401 && typeof window !== 'undefined') {
-      // If 401 Unauthorized, we keep or clear invalid token
+      // If unauthorized on users/me, clear invalid session tokens
+      if (error.config?.url?.includes('/users/me')) {
+        localStorage.removeItem('auth_token');
+        document.cookie = 'auth_token=; path=/; max-age=0; SameSite=Lax;';
+        delete apiClient.defaults.headers.common['Authorization'];
+      }
     }
     return Promise.reject(toApiError(error));
   },

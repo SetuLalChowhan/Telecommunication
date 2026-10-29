@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -28,6 +29,13 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const LoginForm: React.FC = () => {
+  const searchParams = useSearchParams();
+  const redirectTo =
+    searchParams?.get("redirectTo") ||
+    searchParams?.get("redirect") ||
+    searchParams?.get("callbackURL") ||
+    undefined;
+
   const { login, loginMutation } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const isLoading = loginMutation.isPending;
@@ -46,7 +54,7 @@ export const LoginForm: React.FC = () => {
   });
 
   const onSubmit = (data: LoginFormValues) => {
-    login({ email: data.email, password: data.password });
+    login({ email: data.email, password: data.password }, redirectTo);
   };
 
   return (

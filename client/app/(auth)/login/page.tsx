@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import type { Metadata } from "next";
 import { LoginForm } from "@/features/auth/components/LoginForm";
 
@@ -8,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function LoginPage() {
-  return <LoginForm />;
+  return (
+    <Suspense fallback={<div className="min-h-screen w-full bg-background" />}>
+      <LoginForm />
+    </Suspense>
+  );
 }

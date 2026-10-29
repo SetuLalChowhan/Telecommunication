@@ -66,6 +66,16 @@ export async function serverFetch<T>(
       headers.set('cookie', cookieHeader);
     }
 
+    try {
+      const cookieStore = await cookies();
+      const authToken = cookieStore.get('auth_token')?.value;
+      if (authToken && !headers.has('authorization')) {
+        headers.set('authorization', `Bearer ${authToken}`);
+      }
+    } catch {
+      // Cookies not accessible outside of active request
+    }
+
     response = await fetch(`${API_BASE_URL}${path}`, {
       ...fetchOptions,
       headers,
@@ -113,8 +123,8 @@ export async function serverFetch<T>(
  * Envelope-unwrapping server helpers, mirroring the browser `http` client.
  *
  * Feature server modules should use these so `{ success, data, meta }` is
-trapped in exactly one place, and never forward cookies by hand —
-`serverFetch` already does it.
+ * trapped in exactly one place, and never forward cookies by hand —
+ * `serverFetch` already does it.
  */
 export async function serverGet<T>(
   endpoint: string,
