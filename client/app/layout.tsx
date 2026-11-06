@@ -3,6 +3,7 @@ import { Inter, Source_Serif_4, Noto_Sans_Bengali } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers";
 import { baseMetadata, siteJsonLd } from "@/lib/seo";
+import { MinaAssistant } from "@/components/ai-assistant/MinaAssistant";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -55,7 +56,10 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd()) }}
         />
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <MinaAssistant />
+        </Providers>
       </body>
     </html>
   );
