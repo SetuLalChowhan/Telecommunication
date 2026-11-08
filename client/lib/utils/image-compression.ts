@@ -99,3 +99,4 @@ export async function compressImageIfNeeded(
     img.src = url;
   });
 }
+
