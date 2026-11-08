@@ -69,10 +69,18 @@ export function toApiError(err: unknown): ApiError {
     }
 
     if (!err.response) {
-      return new ApiError('Network error. Check your connection.', {
-        kind: 'network',
-        code: 'NETWORK',
-      });
+      const isNetworkAborted = err.code === 'ERR_NETWORK' || err.message === 'Network Error';
+      const detailMsg =
+        err.message && !isNetworkAborted && err.message !== 'Error'
+          ? ` (${err.message})`
+          : '';
+      return new ApiError(
+        `Unable to reach the server. Please check your connection or try again${detailMsg}.`,
+        {
+          kind: 'network',
+          code: err.code || 'NETWORK',
+        },
+      );
     }
 
     const data = err.response.data as

@@ -60,12 +60,13 @@ export const auth = betterAuth({
     process.env.BETTER_AUTH_URL ||
     (process.env.NODE_ENV === 'production'
       ? 'https://telecommunication-beta.vercel.app'
-      : 'http://localhost:5000'),
+      : 'http://localhost:4000'),
 
   trustedOrigins: (() => {
     const origins = parseTrustedOrigins(process.env.TRUSTED_ORIGINS);
     const defaults = [
       'http://localhost:3000',
+      'http://localhost:4000',
       'http://localhost:5173',
       'http://localhost:5000',
       'https://telecommunication-sy4h.vercel.app',

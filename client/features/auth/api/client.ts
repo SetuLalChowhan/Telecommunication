@@ -6,13 +6,13 @@ import { env } from "@/lib/config/env";
  */
 export const authClient = createAuthClient({
   baseURL:
-    process.env.NEXT_PRIVATE_BETTER_AUTH_URL ||
-    process.env.NEXT_PRIVATE_API_URL ||
     process.env.NEXT_PUBLIC_BETTER_AUTH_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
-    env.NEXT_PRIVATE_BETTER_AUTH_URL ||
+    process.env.NEXT_PRIVATE_BETTER_AUTH_URL ||
+    process.env.NEXT_PRIVATE_API_URL ||
     env.NEXT_PUBLIC_BETTER_AUTH_URL ||
-    "http://localhost:5000",
+    env.NEXT_PUBLIC_API_URL ||
+    "http://localhost:4000",
   fetchOptions: {
     credentials: "include",
     auth: {

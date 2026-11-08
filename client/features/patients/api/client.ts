@@ -39,12 +39,7 @@ export async function fetchPatientProfile(): Promise<PatientProfileData> {
 export async function updatePatientProfile(
   payload: FormData | UpdatePatientProfilePayload
 ): Promise<PatientProfileData> {
-  const headers =
-    payload instanceof FormData
-      ? { "Content-Type": "multipart/form-data" }
-      : undefined;
-
-  return http.patch<PatientProfileData>("/patients/me", payload, { headers });
+  return http.patch<PatientProfileData>("/patients/me", payload);
 }
 
 /** Fetch concrete available slots for a doctor on a specific date (YYYY-MM-DD). */

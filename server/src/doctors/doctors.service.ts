@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { DocumentType } from '@prisma/client';
@@ -24,6 +25,8 @@ import { CloudinaryService } from '../common/cloudinary/cloudinary.service.js';
 
 @Injectable()
 export class DoctorService {
+  private readonly logger = new Logger(DoctorService.name);
+
   constructor(
     private readonly repo: DoctorRepository,
     private readonly cloudinaryService: CloudinaryService,
@@ -405,13 +408,25 @@ export class DoctorService {
   ) {
     const profile = await this.getOwnProfileOrThrow(userId);
 
-    const uploadRes = await this.cloudinaryService.uploadFile(
-      file,
-      'telehealth/documents',
-      { resourceType: 'auto' },
-    );
+    try {
+      const uploadRes = await this.cloudinaryService.uploadFile(
+        file,
+        'telehealth/documents',
+        { resourceType: 'auto' },
+      );
 
-    return this.repo.createDocument(profile.id, docType, uploadRes.secureUrl);
+      return await this.repo.createDocument(profile.id, docType, uploadRes.secureUrl);
+    } catch (error: any) {
+      this.logger.error(
+        `Document upload failed for doctor ${profile.id}: ${error?.message || error}`,
+        error?.stack,
+      );
+      throw new BadRequestException(
+        error?.message
+          ? `Document upload failed: ${error.message}`
+          : 'Failed to process document upload. Please try again with a valid file.',
+      );
+    }
   }
 
   // -- Patients --------------------------------------------------------------

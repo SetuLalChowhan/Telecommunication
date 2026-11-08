@@ -29,9 +29,7 @@ export async function fetchMyMedicalReports(
 export async function uploadMedicalReport(
   formData: FormData
 ): Promise<MedicalReport> {
-  return http.post<MedicalReport>("/medical-reports", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  return http.post<MedicalReport>("/medical-reports", formData);
 }
 
 /** Delete a medical report by id. */

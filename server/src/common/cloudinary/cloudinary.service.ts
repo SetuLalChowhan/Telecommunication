@@ -49,7 +49,19 @@ export class CloudinaryService {
     folder: string = 'telehealth/general',
     options?: CloudinaryUploadOptions,
   ): Promise<CloudinaryUploadResult> {
+    if (!file || !file.buffer) {
+      throw new Error('File buffer is empty or missing.');
+    }
+
     return new Promise((resolve, reject) => {
+      let isSettled = false;
+      const timeoutTimer = setTimeout(() => {
+        if (!isSettled) {
+          isSettled = true;
+          reject(new Error('Cloudinary upload timed out after 45 seconds.'));
+        }
+      }, 45000);
+
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder,
@@ -57,6 +69,10 @@ export class CloudinaryService {
           transformation: options?.transformation,
         },
         (error: UploadApiErrorResponse | undefined, result: UploadApiResponse | undefined) => {
+          if (isSettled) return;
+          isSettled = true;
+          clearTimeout(timeoutTimer);
+
           if (error) {
             this.logger.error(`Cloudinary upload failed: ${error.message}`, error);
             return reject(error);
@@ -75,6 +91,13 @@ export class CloudinaryService {
       );
 
       const bufferStream = Readable.from(file.buffer);
+      bufferStream.on('error', (err) => {
+        if (!isSettled) {
+          isSettled = true;
+          clearTimeout(timeoutTimer);
+          reject(err);
+        }
+      });
       bufferStream.pipe(uploadStream);
     });
   }

@@ -64,8 +64,25 @@ export const DoctorVerificationForm: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file || !activeUploadType) return;
 
+    // Validate file extension and MIME type
+    const allowedExtensions = [".pdf", ".jpg", ".jpeg", ".png"];
+    const allowedMimes = ["application/pdf", "image/jpeg", "image/png", "image/pjpeg"];
+    const ext = file.name.includes(".")
+      ? file.name.slice(file.name.lastIndexOf(".")).toLowerCase()
+      : "";
+
+    if (!allowedExtensions.includes(ext) && !allowedMimes.includes(file.type.toLowerCase())) {
+      toast.error("Invalid file format. Only PDF, JPG, and PNG documents are allowed.");
+      return;
+    }
+
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("File is too large. Maximum size is 10MB.");
+      toast.error("File is too large. Maximum allowed size is 10MB.");
+      return;
+    }
+
+    if (file.size === 0) {
+      toast.error("The selected file is empty. Please choose a valid document.");
       return;
     }
 
@@ -85,9 +102,12 @@ export const DoctorVerificationForm: React.FC = () => {
         },
       }));
     } catch (err: any) {
-      const errorMsg =
-        err?.response?.data?.message || err?.message || "Failed to upload document";
-      toast.error(errorMsg);
+      const serverMsg =
+        err?.details?.message ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to upload document. Please check your connection and try again.";
+      toast.error(typeof serverMsg === "string" ? serverMsg : JSON.stringify(serverMsg));
     } finally {
       setActiveUploadType(null);
     }

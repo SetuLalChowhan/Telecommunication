@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -24,7 +25,11 @@ import { Roles } from '../auth/decorators/roles.decorator.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { CurrentUser } from '../common/decorator/current-user.decorator.js';
 import { ResponseMessage } from '../common/decorator/response-message.decorator.js';
-import { doctorDocumentUploadOptions, avatarUploadOptions } from '../common/utils/file-upload.util.js';
+import {
+  doctorDocumentUploadOptions,
+  avatarUploadOptions,
+  assertFileSignature,
+} from '../common/utils/file-upload.util.js';
 
 @Controller('doctors')
 export class DoctorController {
@@ -116,10 +121,34 @@ export class DoctorController {
   @ResponseMessage('Verification document uploaded successfully')
   uploadDocument(
     @CurrentUser('id') userId: string,
-    @Body('docType') docType: DocumentType,
+    @Body('docType') docType: string,
+    @Body('type') legacyType: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.doctorService.uploadDocument(userId, docType, file);
+    if (!file) {
+      throw new BadRequestException('A document file is required. Please select a valid PDF, JPG, or PNG under 10MB.');
+    }
+
+    assertFileSignature(file, ['image', 'pdf']);
+
+    const rawType = (docType || legacyType || '').trim().toUpperCase();
+    let normalizedType: DocumentType;
+
+    if (rawType === 'LICENSE' || rawType === 'BMDC_CERTIFICATE' || rawType === 'MEDICAL_LICENSE') {
+      normalizedType = DocumentType.LICENSE;
+    } else if (rawType === 'DEGREE_CERTIFICATE') {
+      normalizedType = DocumentType.DEGREE_CERTIFICATE;
+    } else if (rawType === 'NATIONAL_ID' || rawType === 'PASSPORT') {
+      normalizedType = DocumentType.NATIONAL_ID;
+    } else if (rawType === 'OTHER') {
+      normalizedType = DocumentType.OTHER;
+    } else {
+      throw new BadRequestException(
+        `Invalid document type "${rawType || 'undefined'}". Allowed types: LICENSE, DEGREE_CERTIFICATE, NATIONAL_ID, OTHER.`,
+      );
+    }
+
+    return this.doctorService.uploadDocument(userId, normalizedType, file);
   }
 
   @Get()

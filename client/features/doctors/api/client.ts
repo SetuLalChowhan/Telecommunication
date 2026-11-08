@@ -82,11 +82,7 @@ export function fetchMyDoctorProfile(): Promise<DoctorProfile> {
 export function updateMyDoctorProfile(
   data: FormData | UpdateDoctorProfileInput
 ): Promise<DoctorProfile> {
-  const headers =
-    data instanceof FormData
-      ? { "Content-Type": "multipart/form-data" }
-      : undefined;
-  return http.patch<DoctorProfile>("/doctors/me", data, { headers });
+  return http.patch<DoctorProfile>("/doctors/me", data);
 }
 
 /**
@@ -211,7 +207,5 @@ export function connectGoogle(
 }
 
 export function uploadDoctorDocument(formData: FormData) {
-  return http.post<{ message?: string }>("/doctors/me/documents", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  return http.post<{ message?: string }>("/doctors/me/documents", formData);
 }

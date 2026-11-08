@@ -20,7 +20,7 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
   isVerified,
   onRefresh,
 }) => {
-  const [docType, setDocType] = useState("BMDC_CERTIFICATE");
+  const [docType, setDocType] = useState("LICENSE");
   const [docFile, setDocFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -32,11 +32,25 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
       return;
     }
 
+    if (docFile.size > 10 * 1024 * 1024) {
+      toast.error("File is too large. Maximum size is 10MB.");
+      return;
+    }
+
+    const allowedExtensions = [".pdf", ".jpg", ".jpeg", ".png"];
+    const ext = docFile.name.includes(".")
+      ? docFile.name.slice(docFile.name.lastIndexOf(".")).toLowerCase()
+      : "";
+    if (!allowedExtensions.includes(ext) && !docFile.type.match(/^image\/(jpeg|png)|application\/pdf$/)) {
+      toast.error("Invalid file format. Allowed formats: PDF, JPG, PNG.");
+      return;
+    }
+
     setIsUploading(true);
     try {
       const data = new FormData();
       data.append("file", docFile);
-      data.append("type", docType);
+      data.append("docType", docType);
 
       await uploadDoctorDocument(data);
 
@@ -44,8 +58,10 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
       setDocFile(null);
       if (fileRef.current) fileRef.current.value = "";
       onRefresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to upload document");
+    } catch (err: any) {
+      const errorMsg =
+        err?.response?.data?.message || err?.message || "Failed to upload document";
+      toast.error(typeof errorMsg === "string" ? errorMsg : JSON.stringify(errorMsg));
     } finally {
       setIsUploading(false);
     }
@@ -92,12 +108,16 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-foreground">Document Type</Label>
-              <Input
+              <select
                 value={docType}
                 onChange={(e) => setDocType(e.target.value)}
-                placeholder="e.g. BMDC_CERTIFICATE"
-                className="h-10 rounded-xl text-sm"
-              />
+                className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="LICENSE">Medical License (BMDC Registration)</option>
+                <option value="DEGREE_CERTIFICATE">Degree Certificate (MBBS / MD / Spec.)</option>
+                <option value="NATIONAL_ID">National ID / Passport</option>
+                <option value="OTHER">Other Credentials / Certifications</option>
+              </select>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-foreground">Document File (PDF/JPG/PNG)</Label>

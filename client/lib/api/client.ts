@@ -16,11 +16,11 @@ import {
  * The single canonical API base URL for browser requests.
  */
 export const API_BASE_URL =
-  process.env.NEXT_PRIVATE_API_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
-  env.NEXT_PRIVATE_API_URL ||
+  process.env.NEXT_PRIVATE_API_URL ||
   env.NEXT_PUBLIC_API_URL ||
-  'http://localhost:5000';
+  env.NEXT_PRIVATE_API_URL ||
+  'http://localhost:4000';
 
 /**
  * The one and only browser HTTP client.
@@ -46,6 +46,14 @@ if (typeof window !== 'undefined') {
 
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // If request payload is FormData, remove 'Content-Type' so the browser / Axios
+    // automatically generates multipart/form-data with the correct boundary parameter.
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      if (config.headers) {
+        delete config.headers['Content-Type'];
+      }
+    }
+
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('auth_token');
       if (token && !config.headers.Authorization) {
