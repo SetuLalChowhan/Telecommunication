@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "react-toastify";
 import { uploadDoctorDocument } from "@/features/doctors/api/client";
+import { compressImageIfNeeded } from "@/lib/utils/image-compression";
 import type { DoctorDocument } from "@/features/doctors/types";
 
 interface DoctorDocumentsTabProps {
@@ -32,11 +33,6 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
       return;
     }
 
-    if (docFile.size > 10 * 1024 * 1024) {
-      toast.error("File is too large. Maximum size is 10MB.");
-      return;
-    }
-
     const allowedExtensions = [".pdf", ".jpg", ".jpeg", ".png"];
     const ext = docFile.name.includes(".")
       ? docFile.name.slice(docFile.name.lastIndexOf(".")).toLowerCase()
@@ -46,10 +42,39 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
       return;
     }
 
+    const isPdf = docFile.type === "application/pdf" || ext === ".pdf";
+
+    // Enforce 4MB limit for PDFs on Vercel
+    if (isPdf && docFile.size > 4 * 1024 * 1024) {
+      toast.error(
+        `PDF document is too large (${(docFile.size / (1024 * 1024)).toFixed(1)} MB). Server upload limit is 4MB. Please compress your PDF before uploading.`
+      );
+      return;
+    }
+
     setIsUploading(true);
     try {
+      let uploadFile = docFile;
+
+      // Automatically optimize images in browser so large photos shrink safely below 1MB
+      if (!isPdf && docFile.type.startsWith("image/")) {
+        try {
+          uploadFile = await compressImageIfNeeded(docFile);
+        } catch (e) {
+          console.warn("Image compression skipped:", e);
+        }
+      }
+
+      if (uploadFile.size > 4.2 * 1024 * 1024) {
+        toast.error(
+          `File is too large (${(uploadFile.size / (1024 * 1024)).toFixed(1)} MB). Maximum allowed upload size is 4MB.`
+        );
+        setIsUploading(false);
+        return;
+      }
+
       const data = new FormData();
-      data.append("file", docFile);
+      data.append("file", uploadFile);
       data.append("docType", docType);
 
       await uploadDoctorDocument(data);
@@ -60,7 +85,9 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
       onRefresh();
     } catch (err: any) {
       const errorMsg =
-        err?.response?.data?.message || err?.message || "Failed to upload document";
+        err?.status === 413
+          ? "File is too large for the server (limit: 4MB). Please optimize the document and try again."
+          : err?.response?.data?.message || err?.message || "Failed to upload document";
       toast.error(typeof errorMsg === "string" ? errorMsg : JSON.stringify(errorMsg));
     } finally {
       setIsUploading(false);

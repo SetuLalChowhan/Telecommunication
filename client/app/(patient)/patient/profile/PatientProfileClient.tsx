@@ -16,6 +16,7 @@ import {
 } from "@/features/patients/components/profile/PatientPersonalInfoFields";
 import { PatientEmergencyContactFields } from "@/features/patients/components/profile/PatientEmergencyContactFields";
 import { PageHeader } from "@/components/layout";
+import { compressImageIfNeeded } from "@/lib/utils/image-compression";
 
 export function PatientProfileClient() {
   const { data: profile, isLoading } = usePatientProfile();
@@ -66,9 +67,15 @@ export function PatientProfileClient() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleAvatarSelect = (file: File) => {
-    setAvatarFile(file);
-    setAvatarPreview(URL.createObjectURL(file));
+  const handleAvatarSelect = async (file: File) => {
+    try {
+      const optimized = await compressImageIfNeeded(file, 1.5 * 1024 * 1024, 1024);
+      setAvatarFile(optimized);
+      setAvatarPreview(URL.createObjectURL(optimized));
+    } catch {
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

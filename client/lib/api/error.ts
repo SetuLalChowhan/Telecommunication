@@ -75,10 +75,21 @@ export function toApiError(err: unknown): ApiError {
           ? ` (${err.message})`
           : '';
       return new ApiError(
-        `Unable to reach the server. Please check your connection or try again${detailMsg}.`,
+        `Unable to reach the server. If uploading a file, please ensure it is under 4MB${detailMsg}.`,
         {
           kind: 'network',
           code: err.code || 'NETWORK',
+        },
+      );
+    }
+
+    if (err.response.status === 413) {
+      return new ApiError(
+        'The uploaded file exceeds the server limit (4MB). Please compress the file before uploading.',
+        {
+          status: 413,
+          code: 'PAYLOAD_TOO_LARGE',
+          kind: 'http',
         },
       );
     }

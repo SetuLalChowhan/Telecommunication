@@ -28,8 +28,9 @@ import { usePatientBookings } from "@/features/patients/api/queries";
 import { useUploadMedicalReport } from "@/features/medical-reports/api/queries";
 import { formatRecordDate, getFileKind } from "@/features/medical-reports/utils/record-meta";
 import { toast } from "react-toastify";
+import { compressImageIfNeeded } from "@/lib/utils/image-compression";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_FILE_SIZE = 4.2 * 1024 * 1024; // Safe ceiling under Vercel's 4.5MB limit
 
 const uploadReportSchema = z.object({
   fileName: z.string().min(2, "Document title must be at least 2 characters"),
@@ -67,13 +68,30 @@ export function UploadReportModal({ open, onOpenChange }: UploadReportModalProps
     },
   });
 
-  const handleFile = (file: File) => {
-    if (file.size > MAX_FILE_SIZE) {
-      toast.error("File size exceeds the 10 MB limit");
+  const handleFile = async (file: File) => {
+    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+
+    if (isPdf && file.size > 4 * 1024 * 1024) {
+      toast.error("PDF size exceeds the 4 MB limit for server upload. Please optimize your PDF.");
       return;
     }
-    setSelectedFile(file);
-    const cleanName = file.name.replace(/\.[^/.]+$/, "");
+
+    let processedFile = file;
+    if (!isPdf && file.type.startsWith("image/")) {
+      try {
+        processedFile = await compressImageIfNeeded(file);
+      } catch (err) {
+        console.warn("Image compression skipped:", err);
+      }
+    }
+
+    if (processedFile.size > MAX_FILE_SIZE) {
+      toast.error("File size exceeds the 4 MB limit");
+      return;
+    }
+
+    setSelectedFile(processedFile);
+    const cleanName = processedFile.name.replace(/\.[^/.]+$/, "");
     setValue("fileName", cleanName, { shouldValidate: true });
   };
 

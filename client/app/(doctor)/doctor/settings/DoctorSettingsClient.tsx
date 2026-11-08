@@ -15,6 +15,7 @@ import { DoctorProfileTab, DoctorProfileFormData } from "@/features/doctors/comp
 import { DoctorGoogleTab } from "@/features/doctors/components/settings/DoctorGoogleTab";
 import { DoctorDocumentsTab } from "@/features/doctors/components/settings/DoctorDocumentsTab";
 import { PageHeader } from "@/components/layout";
+import { compressImageIfNeeded } from "@/lib/utils/image-compression";
 
 export function DoctorSettingsClient() {
   const router = useRouter();
@@ -83,9 +84,15 @@ export function DoctorSettingsClient() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleAvatarSelect = (file: File) => {
-    setAvatarFile(file);
-    setAvatarPreview(URL.createObjectURL(file));
+  const handleAvatarSelect = async (file: File) => {
+    try {
+      const optimized = await compressImageIfNeeded(file, 1.5 * 1024 * 1024, 1024);
+      setAvatarFile(optimized);
+      setAvatarPreview(URL.createObjectURL(optimized));
+    } catch {
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
   };
 
   const handleSubmitProfile = async (e: React.FormEvent) => {

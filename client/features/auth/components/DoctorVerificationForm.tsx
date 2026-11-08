@@ -7,6 +7,7 @@ import BrandLogo from "@/components/common/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { useUploadDoctorDocument } from "@/features/doctors/api/queries";
 import { toast } from "react-toastify";
+import { compressImageIfNeeded } from "@/lib/utils/image-compression";
 
 interface DocumentRequirement {
   type: "LICENSE" | "DEGREE_CERTIFICATE" | "NATIONAL_ID" | "OTHER";
@@ -61,7 +62,7 @@ export const DoctorVerificationForm: React.FC = () => {
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    let file = e.target.files?.[0];
     if (!file || !activeUploadType) return;
 
     // Validate file extension and MIME type
@@ -76,13 +77,34 @@ export const DoctorVerificationForm: React.FC = () => {
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("File is too large. Maximum allowed size is 10MB.");
+    if (file.size === 0) {
+      toast.error("The selected file is empty. Please choose a valid document.");
       return;
     }
 
-    if (file.size === 0) {
-      toast.error("The selected file is empty. Please choose a valid document.");
+    const isPdf = file.type === "application/pdf" || ext === ".pdf";
+
+    // For PDFs: Vercel serverless functions enforce a strict 4.5MB request limit
+    if (isPdf && file.size > 4 * 1024 * 1024) {
+      toast.error(
+        `PDF document is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). Server upload limit is 4MB. Please compress your PDF before uploading.`
+      );
+      return;
+    }
+
+    // For Images: Automatically optimize/compress in browser so 4MB+ photos shrink safely below 1MB
+    if (!isPdf && file.type.startsWith("image/")) {
+      try {
+        file = await compressImageIfNeeded(file);
+      } catch (e) {
+        console.warn("Image compression skipped:", e);
+      }
+    }
+
+    if (file.size > 4.2 * 1024 * 1024) {
+      toast.error(
+        `File is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). Maximum allowed upload size is 4MB.`
+      );
       return;
     }
 
@@ -103,10 +125,12 @@ export const DoctorVerificationForm: React.FC = () => {
       }));
     } catch (err: any) {
       const serverMsg =
-        err?.details?.message ||
-        err?.response?.data?.message ||
-        err?.message ||
-        "Failed to upload document. Please check your connection and try again.";
+        err?.status === 413
+          ? "File is too large for the server (limit: 4MB). Please optimize the document and try again."
+          : err?.details?.message ||
+            err?.response?.data?.message ||
+            err?.message ||
+            "Failed to upload document. Please check your connection and try again.";
       toast.error(typeof serverMsg === "string" ? serverMsg : JSON.stringify(serverMsg));
     } finally {
       setActiveUploadType(null);

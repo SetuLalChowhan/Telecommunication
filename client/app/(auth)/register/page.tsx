@@ -23,9 +23,9 @@ export default function RegisterPage() {
       <div className="space-y-5">
         <RoleSelectorTabs role={role} onChange={setRole} />
 
-        <GoogleAuthButton label="Sign up with Google" />
+        {/* <GoogleAuthButton label="Sign up with Google" /> */}
 
-        <AuthDivider text="Or register with email" />
+        {/* <AuthDivider text="Or register with email" /> */}
 
         <RegisterForm role={role} />
 
