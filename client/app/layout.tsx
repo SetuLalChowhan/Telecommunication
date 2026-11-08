@@ -58,7 +58,7 @@ export default function RootLayout({
         />
         <Providers>
           {children}
-          {/* <MinaAssistant /> */}
+          <MinaAssistant />
         </Providers>
       </body>
     </html>
