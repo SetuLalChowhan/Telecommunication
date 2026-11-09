@@ -21,10 +21,12 @@ import {
   confirmDoctorBooking,
   completeDoctorBooking,
   cancelDoctorBooking,
+  rescheduleDoctorBooking,
   fetchDoctorScheduleSlots,
   createDoctorScheduleSlot,
   updateDoctorScheduleSlot,
   deleteDoctorScheduleSlot,
+  toggleAvailabilityVisibility,
   fetchDoctorDaysOff,
   createDoctorDayOff,
   deleteDoctorDayOff,
@@ -202,7 +204,8 @@ export function useDoctorDashboard() {
   return useQuery({
     queryKey: doctorKeys.dashboard(),
     queryFn: fetchDoctorDashboard,
-    staleTime: CACHE.private.client.staleTime,
+    staleTime: 10_000,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -296,6 +299,39 @@ export function useCancelDoctorBooking() {
 }
 
 /**
+ * Hook to reschedule an existing appointment to a new slot
+ */
+export function useRescheduleDoctorBooking() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      bookingId,
+      newSlotStart,
+      newSlotEnd,
+      reason,
+    }: {
+      bookingId: string;
+      newSlotStart: string;
+      newSlotEnd: string;
+      reason?: string;
+    }) => rescheduleDoctorBooking(bookingId, { newSlotStart, newSlotEnd, reason }),
+    onSuccess: () => {
+      toast.success("Appointment rescheduled successfully");
+      queryClient.invalidateQueries({ queryKey: doctorKeys.dashboard() });
+      queryClient.invalidateQueries({ queryKey: doctorKeys.myBookingsRoot() });
+      queryClient.invalidateQueries({ queryKey: patientKeys.all });
+      queryClient.invalidateQueries({ queryKey: appointmentKeys.summary() });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["appointments", "slots"] });
+    },
+    onError: (error: unknown) => {
+      toast.error(getMutationErrorMessage(error, "Failed to reschedule appointment"));
+    },
+  });
+}
+
+/**
  * Hook to query doctor's weekly recurring availability schedule
  */
 export function useMyDoctorSchedule() {
@@ -354,6 +390,22 @@ export function useDeleteAvailabilitySlot() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: doctorKeys.mySchedule() });
       queryClient.invalidateQueries({ queryKey: doctorKeys.dashboard() });
+    },
+  });
+}
+
+/**
+ * Hook to toggle doctor's public booking availability visibility
+ */
+export function useToggleAvailabilityVisibility() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (isVisible: boolean) => toggleAvailabilityVisibility(isVisible),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: doctorKeys.mySchedule() });
+      queryClient.invalidateQueries({ queryKey: doctorKeys.dashboard() });
+      queryClient.invalidateQueries({ queryKey: doctorKeys.me() });
     },
   });
 }

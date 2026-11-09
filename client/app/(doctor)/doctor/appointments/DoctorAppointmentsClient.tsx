@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Loader2, Calendar, Video, CheckCircle2, User, Phone, FileText } from "lucide-react";
+import { Loader2, Calendar, Video, CheckCircle2, User, Phone, FileText, RefreshCw } from "lucide-react";
 import {
   useDoctorBookings,
   useConfirmDoctorBooking,
   useCompleteDoctorBooking,
   useCancelDoctorBooking,
 } from "@/features/doctors/api/queries";
+import { useAuth } from "@/features/auth/api/queries";
+import { DoctorRescheduleDialog } from "@/features/appointments/components/doctor/DoctorRescheduleDialog";
 import { DoctorScheduleItem, DashboardAppointment } from "@/features/appointments/types";
 import { DoctorDashboardBooking } from "@/features/doctors/types";
 import { MAX_PAGE_SIZE } from "@/lib/api/types";
@@ -94,6 +96,11 @@ export function DoctorAppointmentsClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAppointment, setSelectedAppointment] = useState<DashboardAppointment | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [rescheduleAppt, setRescheduleAppt] = useState<DoctorScheduleItem | null>(null);
+  const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
+
+  const { user } = useAuth();
+  const doctorId = user?.doctorProfile?.id || "";
 
   // The active tab is sent to the backend — no client-side status filtering.
   const bookingStatus = filter === "ALL" ? undefined : filter;
@@ -298,8 +305,12 @@ export function DoctorAppointmentsClient({
                           className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded border uppercase ${
                             item.status === "CONFIRMED"
                               ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-400"
+                              : item.status === "RESCHEDULED"
+                              ? "bg-blue-500/10 text-blue-700 border-blue-500/30 dark:text-blue-400"
                               : item.status === "PENDING"
                               ? "bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-400"
+                              : item.status === "CANCELLED"
+                              ? "bg-destructive/10 text-destructive border-destructive/30"
                               : "bg-muted text-muted-foreground border-border"
                           }`}
                         >
@@ -310,6 +321,21 @@ export function DoctorAppointmentsClient({
                       {/* Action Buttons */}
                       <TableCell className="px-4 py-2.5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          {(item.status === "PENDING" || item.status === "CONFIRMED" || item.status === "RESCHEDULED") && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setRescheduleAppt(item);
+                                setIsRescheduleOpen(true);
+                              }}
+                              className="h-7 rounded-md px-2.5 text-xs font-semibold gap-1 text-primary border-primary/30 hover:bg-primary/10"
+                            >
+                              <RefreshCw className="h-3 w-3" />
+                              <span>Reschedule</span>
+                            </Button>
+                          )}
+
                           {item.status === "PENDING" && (
                             <Button
                               size="sm"
@@ -442,6 +468,20 @@ export function DoctorAppointmentsClient({
                       {item.time}
                     </span>
                     <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                      {(item.status === "PENDING" || item.status === "CONFIRMED" || item.status === "RESCHEDULED") && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setRescheduleAppt(item);
+                            setIsRescheduleOpen(true);
+                          }}
+                          className="h-7 rounded-md px-2 text-xs font-semibold gap-1 text-primary border-primary/30"
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                          <span>Reschedule</span>
+                        </Button>
+                      )}
                       {item.status === "PENDING" && (
                         <Button
                           size="sm"
@@ -520,10 +560,29 @@ export function DoctorAppointmentsClient({
           onCancelAppointment={handleCancel}
           onConfirmAppointment={handleConfirm}
           onCompleteAppointment={handleComplete}
+          onRescheduleAppointment={(appt) => {
+            const found = allScheduleItems.find((s) => s.id === appt.id);
+            if (found) {
+              setRescheduleAppt(found);
+              setIsRescheduleOpen(true);
+            }
+          }}
           isDoctorView={true}
           isCancelling={cancelMutation.isPending}
           isConfirming={actionLoadingId === selectedAppointment?.id && confirmMutation.isPending}
           isCompleting={actionLoadingId === selectedAppointment?.id && completeMutation.isPending}
+        />
+      )}
+
+      {rescheduleAppt && (
+        <DoctorRescheduleDialog
+          open={isRescheduleOpen}
+          onOpenChange={(open) => {
+            setIsRescheduleOpen(open);
+            if (!open) setRescheduleAppt(null);
+          }}
+          appointment={rescheduleAppt}
+          doctorId={doctorId}
         />
       )}
     </div>

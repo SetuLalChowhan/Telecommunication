@@ -1,5 +1,5 @@
 import React from "react";
-import { Video, ShieldCheck, FileText, ArrowRight, Loader2, LogIn, Phone } from "lucide-react";
+import { Video, ShieldCheck, FileText, ArrowRight, Loader2, LogIn, Phone, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -105,17 +105,18 @@ export const BookingFeeSummary: React.FC<BookingFeeSummaryProps> = ({
         <Button
           onClick={onSubmit}
           disabled={!selectedSlot || isSubmitting}
-          className="w-full h-11 rounded-lg font-semibold gap-2"
+          className="w-full h-11 rounded-lg font-semibold gap-2 bg-primary hover:bg-primary-dark text-white cursor-pointer shadow-sm"
         >
           {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Confirming booking...</span>
+              <span>Proceeding...</span>
             </>
           ) : (
             <>
-              <span>Confirm & book appointment</span>
-              <ArrowRight className="h-4 w-4" />
+              <CreditCard className="h-4 w-4" />
+              <span>Pay Now (BDT {fee.toLocaleString()})</span>
+              <ArrowRight className="h-3.5 w-3.5 ml-auto" />
             </>
           )}
         </Button>

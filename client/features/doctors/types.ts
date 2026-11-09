@@ -70,6 +70,7 @@ export interface DoctorProfile {
   experienceYears?: number;
   fee: number;
   verified: boolean;
+  isAvailabilityVisible?: boolean;
   rating?: number;
   totalReviews?: number;
   totalPatientsConsulted?: number;
@@ -83,6 +84,7 @@ export interface DoctorProfile {
   specialties: DoctorSpecialty[];
   qualifications?: DoctorQualification[];
   availabilities?: DoctorAvailability[];
+  daysOff?: DoctorDayOff[];
   reviews?: DoctorReview[];
   documents?: DoctorDocument[];
 }
@@ -193,6 +195,7 @@ export interface DoctorDashboardData {
   todaySchedule: DoctorDashboardBooking[];
   activeDaysCount: number;
   verified: boolean;
+  isAvailabilityVisible?: boolean;
 }
 
 /**

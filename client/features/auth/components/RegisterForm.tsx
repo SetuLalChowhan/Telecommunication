@@ -112,7 +112,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ role }) => {
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label className="text-xs font-semibold text-foreground">First Name</Label>
+          <Label className="text-xs font-semibold text-foreground">
+            First Name <span className="text-destructive">*</span>
+          </Label>
           <Input
             {...register("firstName")}
             disabled={isLoading}
@@ -125,7 +127,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ role }) => {
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs font-semibold text-foreground">Last Name</Label>
+          <Label className="text-xs font-semibold text-foreground">
+            Last Name <span className="text-destructive">*</span>
+          </Label>
           <Input
             {...register("lastName")}
             disabled={isLoading}
@@ -140,7 +144,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ role }) => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label className="text-xs font-semibold text-foreground">Email Address</Label>
+          <Label className="text-xs font-semibold text-foreground">
+            Email Address <span className="text-destructive">*</span>
+          </Label>
           <Input
             type="email"
             {...register("email")}
@@ -154,7 +160,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ role }) => {
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs font-semibold text-foreground">Phone Number</Label>
+          <Label className="text-xs font-semibold text-foreground">
+            Phone Number <span className="text-destructive">*</span>
+          </Label>
           <Input
             type="tel"
             {...register("phone")}
@@ -169,7 +177,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ role }) => {
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-xs font-semibold text-foreground">Password</Label>
+        <Label className="text-xs font-semibold text-foreground">
+          Password <span className="text-destructive">*</span>
+        </Label>
         <div className="relative">
           <Input
             type={showPassword ? "text" : "password"}
@@ -199,7 +209,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ role }) => {
       )}
 
       <div className="space-y-1.5">
-        <Label className="text-xs font-semibold text-foreground">Confirm Password</Label>
+        <Label className="text-xs font-semibold text-foreground">
+          Confirm Password <span className="text-destructive">*</span>
+        </Label>
         <div className="relative">
           <Input
             type={showConfirmPassword ? "text" : "password"}

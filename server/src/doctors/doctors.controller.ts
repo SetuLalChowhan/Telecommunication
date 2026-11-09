@@ -114,6 +114,17 @@ export class DoctorController {
     return this.doctorService.deleteAvailability(userId, availabilityId);
   }
 
+  @Patch('me/availability-visibility')
+  @Roles('DOCTOR')
+  @UseGuards(RolesGuard)
+  @ResponseMessage('Availability visibility updated successfully')
+  toggleAvailabilityVisibility(
+    @CurrentUser('id') userId: string,
+    @Body('isVisible') isVisible: boolean,
+  ) {
+    return this.doctorService.toggleAvailabilityVisibility(userId, Boolean(isVisible));
+  }
+
   @Post('me/documents')
   @Roles('DOCTOR')
   @UseGuards(RolesGuard)

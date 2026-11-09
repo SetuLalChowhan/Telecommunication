@@ -89,7 +89,7 @@ export const ForgotPasswordForm: React.FC = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
           <div className="flex flex-col gap-2 sm:gap-2.5">
             <Label htmlFor="email" className="text-sm sm:text-base font-semibold text-foreground">
-              Email address
+              Email address <span className="text-destructive">*</span>
             </Label>
             <div>
               <Input

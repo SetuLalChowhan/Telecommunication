@@ -46,6 +46,15 @@ describe('AppointmentsService - Booking Transitions Characterization', () => {
       findActiveBookingsForDate: vi.fn().mockResolvedValue([]),
       findConflictInTx: vi.fn().mockResolvedValue(null),
       createBookingInTx: vi.fn(),
+      cancelBookingInTx: vi.fn().mockImplementation((tx, bookingId, actorRole) =>
+        Promise.resolve({
+          id: bookingId,
+          status: 'CANCELLED',
+          patient: { userId: 'patient-user-1' },
+          doctor: { userId: 'doc-user-1' },
+        })
+      ),
+      rescheduleBookingInTx: vi.fn(),
       acquireAdvisoryLock: vi.fn().mockResolvedValue(undefined),
       findBookings: vi.fn(),
       findBookingById: vi.fn(),

@@ -187,6 +187,8 @@ export interface CreateBookingInput {
   slotEnd: string;
   notes?: string;
   phone?: string;
+  paymentMethod?: string;
+  transactionId?: string;
 }
 
 export const patientKeys = {

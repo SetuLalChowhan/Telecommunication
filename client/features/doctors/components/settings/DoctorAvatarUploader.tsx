@@ -32,24 +32,27 @@ export const DoctorAvatarUploader: React.FC<DoctorAvatarUploaderProps> = ({
     }
   };
 
-  const displayImage = previewUrl || currentImageUrl;
+  const [imgSrc, setImgSrc] = React.useState<string>(
+    previewUrl || currentImageUrl || "/images/doctor-placeholder.jpg"
+  );
+
+  React.useEffect(() => {
+    setImgSrc(previewUrl || currentImageUrl || "/images/doctor-placeholder.jpg");
+  }, [previewUrl, currentImageUrl]);
 
   return (
     <div className="panel flex flex-col items-center gap-4 p-4 sm:flex-row">
       <div className="group relative">
         <div className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
-          {displayImage ? (
-            <Image
-              src={displayImage}
-              alt={doctorName || "Doctor Profile"}
-              fill
-              className="object-cover"
-              sizes="96px"
-              unoptimized={Boolean(previewUrl)}
-            />
-          ) : (
-            <User className="h-10 w-10 text-muted-foreground/60" />
-          )}
+          <Image
+            src={imgSrc}
+            alt={doctorName || "Doctor Profile"}
+            fill
+            className="object-cover"
+            sizes="96px"
+            unoptimized={Boolean(previewUrl)}
+            onError={() => setImgSrc("/images/doctor-placeholder.jpg")}
+          />
         </div>
 
         <button

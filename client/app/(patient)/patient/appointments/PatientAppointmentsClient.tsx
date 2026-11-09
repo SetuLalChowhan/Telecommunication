@@ -2,10 +2,11 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { Loader2, Calendar, Video, Plus, Phone, FileText } from "lucide-react";
+import { Loader2, Calendar, Video, Plus, Phone, FileText, Star } from "lucide-react";
 import { DashboardAppointment } from "@/features/appointments/types";
 import { AppointmentDetailsDialog, TablePagination } from "@/features/appointments/components";
 import { UploadReportModal } from "@/features/medical-reports";
+import { RateDoctorDialog } from "@/features/reviews/components/RateDoctorDialog";
 import {
   useBookingSummary,
   normalizeStatusFilter,
@@ -50,6 +51,8 @@ export function PatientAppointmentsClient({
   const [selectedAppt, setSelectedAppt] = useState<DashboardAppointment | null>(null);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [uploadBookingId, setUploadBookingId] = useState<string | null>(null);
+  const [ratingAppt, setRatingAppt] = useState<DashboardAppointment | null>(null);
+  const [isRatingOpen, setIsRatingOpen] = useState(false);
 
   const handleOpenUpload = (bookingId: string) => {
     setUploadBookingId(bookingId);
@@ -227,8 +230,12 @@ export function PatientAppointmentsClient({
                           className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded border uppercase ${
                             appt.status === "CONFIRMED"
                               ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-400"
+                              : appt.status === "RESCHEDULED"
+                              ? "bg-blue-500/10 text-blue-700 border-blue-500/30 dark:text-blue-400"
                               : appt.status === "PENDING"
                               ? "bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-400"
+                              : appt.status === "CANCELLED"
+                              ? "bg-destructive/10 text-destructive border-destructive/30"
                               : "bg-muted text-muted-foreground border-border"
                           }`}
                         >
@@ -244,6 +251,20 @@ export function PatientAppointmentsClient({
                       {/* Actions */}
                       <TableCell className="px-4 py-2.5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          {appt.status === "COMPLETED" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setRatingAppt(appt);
+                                setIsRatingOpen(true);
+                              }}
+                              className="h-7 rounded-md px-2.5 text-xs font-semibold gap-1 text-amber-600 hover:text-amber-700 border-amber-500/30 hover:bg-amber-500/10"
+                            >
+                              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                              <span>Rate Doctor</span>
+                            </Button>
+                          )}
                           {appt.meetLink && appt.status === "CONFIRMED" && (
                             <a
                               href={appt.meetLink}
@@ -418,6 +439,20 @@ export function PatientAppointmentsClient({
         onOpenChange={setUploadModalOpen}
         defaultBookingId={uploadBookingId || undefined}
       />
+
+      {ratingAppt && (
+        <RateDoctorDialog
+          open={isRatingOpen}
+          onOpenChange={(open) => {
+            setIsRatingOpen(open);
+            if (!open) setRatingAppt(null);
+          }}
+          bookingId={ratingAppt.id}
+          doctorName={ratingAppt.doctorName}
+          doctorSpecialty={ratingAppt.doctorSpecialty}
+          doctorAvatar={ratingAppt.doctorAvatar}
+        />
+      )}
     </div>
   );
 }

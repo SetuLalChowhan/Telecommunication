@@ -13,6 +13,7 @@ model DoctorProfile {
   verifiedAt          DateTime?
   verifiedById        String?
   rating              Float     @default(0)
+  isAvailabilityVisible Boolean @default(true)
   bookings            Booking[]
   totalReviews        Int       @default(0)
   createdAt           DateTime  @default(now())

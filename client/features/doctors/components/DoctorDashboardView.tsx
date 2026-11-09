@@ -81,7 +81,9 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
   const confirmMutation = useConfirmDoctorBooking();
   const completeMutation = useCompleteDoctorBooking();
 
-  const isDoctorVerified = Boolean(isVerified || dashboardData?.verified);
+  const isDoctorVerified = Boolean(
+    dashboardData?.verified !== undefined ? dashboardData.verified : isVerified
+  );
   const isGoogleConnected = googleStatus?.isConnected ?? false;
 
   const handleConfirmAppointment = (id: string) => {
@@ -135,7 +137,7 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
         }
       />
 
-      {!isDoctorVerified && (
+      {!isLoading && !isDoctorVerified && (
         <div className="flex flex-col gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2.5">
             <ShieldAlert className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />

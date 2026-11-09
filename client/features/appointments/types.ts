@@ -70,7 +70,7 @@ export interface DashboardAppointment {
   dateFormatted: string;
   timeFormatted: string;
   consultationType: "Video Consultation" | "In-Person Consultation" | "Audio Consultation";
-  status: "CONFIRMED" | "PENDING" | "COMPLETED" | "CANCELLED";
+  status: "CONFIRMED" | "PENDING" | "COMPLETED" | "CANCELLED" | "RESCHEDULED";
   meetLink?: string;
   symptoms?: string;
   fee: number;
@@ -92,7 +92,7 @@ export interface DoctorScheduleItem {
   patientAvatar: string;
   patientPhone?: string;
   consultationType: string;
-  status: "CONFIRMED" | "PENDING" | "COMPLETED" | "CANCELLED";
+  status: "CONFIRMED" | "PENDING" | "COMPLETED" | "CANCELLED" | "RESCHEDULED";
   symptoms: string;
   meetLink?: string;
   fee: number;

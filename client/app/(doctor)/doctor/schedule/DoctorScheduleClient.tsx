@@ -1,10 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { AvailabilitySlot } from "@/features/doctors/types";
 import { DoctorAvailabilityTable, DoctorDaysOffCalendar, DayOffItem } from "@/features/doctors";
 import { AddWeeklySlotDialog, EditWeeklySlotDialog } from "@/features/appointments/components";
 import {
+  useDoctorDashboard,
+  useToggleAvailabilityVisibility,
   useMyDoctorSchedule,
   useCreateAvailabilitySlot,
   useUpdateAvailabilitySlot,
@@ -53,6 +57,25 @@ export function DoctorScheduleClient() {
 
   const { data: rawSlots = [], isLoading: isSlotsLoading } = useMyDoctorSchedule();
   const { data: rawDaysOff = [], isLoading: isDaysOffLoading } = useMyDoctorDaysOff();
+  const { data: dashboardData } = useDoctorDashboard();
+  const toggleVisibilityMutation = useToggleAvailabilityVisibility();
+
+  const isVisibilityEnabled = dashboardData?.isAvailabilityVisible ?? true;
+
+  const handleToggleVisibility = (nextValue: boolean) => {
+    toggleVisibilityMutation.mutate(nextValue, {
+      onSuccess: () => {
+        toast.success(
+          nextValue
+            ? "Your availability is now visible to patients for bookings."
+            : "Your availability is now hidden from patients. Existing bookings are kept."
+        );
+      },
+      onError: (err: any) => {
+        toast.error(err?.message || "Failed to update visibility");
+      },
+    });
+  };
 
   const createSlotMutation = useCreateAvailabilitySlot();
   const updateSlotMutation = useUpdateAvailabilitySlot();
@@ -202,6 +225,57 @@ export function DoctorScheduleClient() {
         title="Availability &amp; leaves"
         description="Configure regular consultation hours and manage planned leaves."
       />
+
+      {/* 0. Visibility Control Panel */}
+      <div className="rounded-xl border border-border bg-card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+              isVisibilityEnabled
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {isVisibilityEnabled ? (
+              <Eye className="h-5 w-5" />
+            ) : (
+              <EyeOff className="h-5 w-5" />
+            )}
+          </div>
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-foreground">
+                Public Booking Visibility
+              </h3>
+              <span
+                className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold border ${
+                  isVisibilityEnabled
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                }`}
+              >
+                {isVisibilityEnabled ? "Visible to Patients" : "Hidden from Patients"}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {isVisibilityEnabled
+                ? "Patients can view your available calendar dates and book consultations. Toggle off to temporarily pause new bookings without losing your schedule."
+                : "Your schedule is currently hidden. Patients cannot see or book appointment slots. Existing bookings remain active."}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 sm:shrink-0 self-end sm:self-center">
+          <span className="text-xs font-semibold text-foreground">
+            {isVisibilityEnabled ? "Active" : "Paused"}
+          </span>
+          <Switch
+            checked={isVisibilityEnabled}
+            disabled={toggleVisibilityMutation.isPending}
+            onCheckedChange={(checked) => handleToggleVisibility(checked)}
+          />
+        </div>
+      </div>
 
       {/* 1. Weekly Consultation Schedule Table */}
       <DoctorAvailabilityTable

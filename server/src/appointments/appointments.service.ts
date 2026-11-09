@@ -11,6 +11,7 @@ import { AppointmentsRepository } from './appointments.repository.js';
 import { CreateBookingDto } from './dto/create-booking.dto.js';
 import { SlotQueryDto } from './dto/slot-query.dto.js';
 import { BookingQueryDto } from './dto/booking-query.dto.js';
+import { RescheduleBookingDto } from './dto/reschedule-booking.dto.js';
 import { createPaginationMeta } from '../common/pagination/pagination.utils.js';
 import { GoogleService } from '../google/google.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
@@ -185,6 +186,16 @@ export class AppointmentsService {
     const doctor = await this.repo.findVerifiedDoctor(doctorId);
     if (!doctor) throw new NotFoundException('Doctor not found or not verified');
 
+    if ((doctor as any).isAvailabilityVisible === false) {
+      return {
+        date,
+        isDayOff: true,
+        isHidden: true,
+        reason: 'Doctor has paused online booking availability',
+        slots: [],
+      };
+    }
+
     const targetDate = new Date(`${date}T12:00:00.000Z`);
     if (isNaN(targetDate.getTime())) {
       throw new BadRequestException('Invalid date format. Expected YYYY-MM-DD');
@@ -235,6 +246,10 @@ export class AppointmentsService {
       throw new NotFoundException('Doctor not found or not verified');
     }
 
+    if ((doctor as any).isAvailabilityVisible === false) {
+      throw new BadRequestException('Doctor is currently not accepting new bookings');
+    }
+
     const slotStart = new Date(dto.slotStart);
     const slotEnd = new Date(dto.slotEnd);
 
@@ -267,6 +282,12 @@ export class AppointmentsService {
       );
     }
 
+    const paymentData = {
+      amount: Number(doctor.fee),
+      paymentMethod: dto.paymentMethod || 'SIMULATED',
+      transactionId: dto.transactionId,
+    };
+
     const booking = await this.repo.runTransaction(async (tx) => {
       await this.repo.acquireAdvisoryLock(tx, dto.doctorId);
 
@@ -284,6 +305,7 @@ export class AppointmentsService {
         slotStart,
         slotEnd,
         dto.notes,
+        paymentData,
       );
     });
 
@@ -487,12 +509,17 @@ export class AppointmentsService {
       throw new BadRequestException('Booking is already cancelled');
     }
 
-    const updated = await this.repo.updateBooking(bookingId, {
-      status: BookingStatus.CANCELLED,
+    const isDoctor = booking.doctor.userId === userId;
+    const actorRole = isDoctor ? 'DOCTOR' : (role === 'ADMIN' ? 'ADMIN' : 'PATIENT');
+    const refundStatus = (isDoctor || role === 'ADMIN') && (booking as any).payment?.status === 'PAID'
+      ? ('REFUND_PENDING' as const)
+      : undefined;
+
+    const updated = await this.repo.runTransaction(async (tx) => {
+      return this.repo.cancelBookingInTx(tx, bookingId, actorRole, refundStatus);
     });
 
     try {
-      const isDoctor = booking.doctor.userId === userId;
       const targetUserId = isDoctor
         ? booking.patient.userId
         : booking.doctor.userId;
@@ -504,11 +531,101 @@ export class AppointmentsService {
         userId: targetUserId,
         type: NotificationType.BOOKING_CANCELLED,
         title: 'Appointment Cancelled',
-        message: `${actorName} has cancelled the appointment scheduled for ${booking.slotStart.toLocaleDateString('en-US', { timeZone: 'Asia/Dhaka' })}.`,
+        message: `${actorName} has cancelled the appointment scheduled for ${booking.slotStart.toLocaleDateString('en-US', { timeZone: 'Asia/Dhaka' })}.${refundStatus ? ' A refund has been initiated to your account.' : ''}`,
         relatedBookingId: booking.id,
       });
     } catch (err) {
       this.logger.error('Failed to dispatch cancellation notification', err as Error);
+    }
+
+    return updated;
+  }
+
+  async rescheduleBooking(
+    bookingId: string,
+    userId: string,
+    role: string,
+    dto: RescheduleBookingDto,
+  ) {
+    const booking = await this.getBookingById(bookingId, userId, role);
+
+    if (role !== 'ADMIN' && booking.doctor.userId !== userId) {
+      throw new ForbiddenException(
+        'Only the assigned doctor or admin can reschedule this consultation',
+      );
+    }
+    if (booking.status === BookingStatus.COMPLETED) {
+      throw new BadRequestException('Cannot reschedule an already completed booking');
+    }
+    if (booking.status === BookingStatus.CANCELLED) {
+      throw new BadRequestException('Cannot reschedule a cancelled booking');
+    }
+
+    const slotStart = new Date(dto.newSlotStart);
+    const slotEnd = new Date(dto.newSlotEnd);
+
+    if (slotStart >= slotEnd) {
+      throw new BadRequestException('newSlotStart must be earlier than newSlotEnd');
+    }
+    if (slotStart < new Date()) {
+      throw new BadRequestException('Cannot reschedule an appointment into the past');
+    }
+
+    const { dateStr, dayOfWeek } = getLocalCalendarDate(slotStart);
+    const slotDateOnly = new Date(`${dateStr}T00:00:00.000Z`);
+    const dayOff = await this.repo.findDayOff(booking.doctorId, slotDateOnly);
+    if (dayOff) {
+      throw new ConflictException(
+        'Doctor is unavailable on this date: ' + (dayOff.reason || 'Day off'),
+      );
+    }
+
+    const schedules = await this.repo.findActiveSchedules(booking.doctorId, dayOfWeek);
+    if (schedules.length === 0) {
+      throw new BadRequestException('Doctor has no available schedule on this day');
+    }
+
+    if (!isValidSlotAgainstSchedules(slotStart, slotEnd, dateStr, schedules)) {
+      throw new BadRequestException(
+        "The requested slot does not match the doctor's predefined availability schedule",
+      );
+    }
+
+    const updated = await this.repo.runTransaction(async (tx) => {
+      await this.repo.acquireAdvisoryLock(tx, booking.doctorId);
+
+      const conflict = await this.repo.findConflictInTx(
+        tx,
+        booking.doctorId,
+        slotStart,
+        slotEnd,
+        booking.id,
+      );
+      if (conflict) {
+        throw new ConflictException(
+          'This time slot is no longer available. Please select another slot.',
+        );
+      }
+
+      return this.repo.rescheduleBookingInTx(tx, booking.id, slotStart, slotEnd);
+    });
+
+    try {
+      const slotTime = slotStart.toLocaleString('en-US', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+        timeZone: 'Asia/Dhaka',
+      });
+
+      await this.notificationsService.createNotification({
+        userId: booking.patient.userId,
+        type: NotificationType.GENERAL,
+        title: 'Appointment Rescheduled',
+        message: `Dr. ${booking.doctor.user?.name || 'Doctor'} has rescheduled your consultation to ${slotTime}.`,
+        relatedBookingId: booking.id,
+      });
+    } catch (err) {
+      this.logger.error('Failed to notify patient of rescheduling', err as Error);
     }
 
     return updated;

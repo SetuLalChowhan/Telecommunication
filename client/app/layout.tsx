@@ -56,7 +56,9 @@ export default function RootLayout({
         />
         <Providers>
           {children}
+          {/* AI Chatbot temporarily hidden for production readiness
           <MinaAssistant />
+          */}
         </Providers>
       </body>
     </html>

@@ -60,7 +60,6 @@ const patientGroups: NavGroup[] = [
     label: "Messages",
     items: [
       { label: "Inbox", path: "/patient/messages", icon: MessagesSquare, isLocked: true },
-      { label: "Notifications", path: "/patient/notifications", icon: Bell },
     ],
   },
   {
@@ -80,7 +79,7 @@ const doctorGroups: NavGroup[] = [
       { label: "Consultation queue", path: "/doctor/appointments", icon: CalendarDays },
       { label: "Patients", path: "/doctor/patients", icon: Users },
       { label: "Availability & leaves", path: "/doctor/schedule", icon: Clock },
-      { label: "Health articles", path: "/doctor/blogs", icon: BookOpen },
+      { label: "Health articles", path: "/doctor/blogs", icon: BookOpen, isLocked: true },
     ],
   },
   {

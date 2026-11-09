@@ -13,6 +13,7 @@ interface DocumentRequirement {
   type: "LICENSE" | "DEGREE_CERTIFICATE" | "NATIONAL_ID" | "OTHER";
   title: string;
   description: string;
+  example: string;
   badge: "Required" | "Optional";
 }
 
@@ -21,24 +22,28 @@ const REQUIRED_DOCUMENTS: DocumentRequirement[] = [
     type: "LICENSE",
     title: "Medical License",
     description: "BMDC registration certificate",
+    example: "Official BMDC permanent or provisional registration certificate showing valid BMDC number.",
     badge: "Required",
   },
   {
     type: "DEGREE_CERTIFICATE",
     title: "Degree Certificate",
     description: "MBBS, MD, or postgraduate qualification",
+    example: "MBBS / BDS graduation certificate or highest postgraduate medical degree diploma.",
     badge: "Required",
   },
   {
     type: "NATIONAL_ID",
     title: "National ID or Passport",
     description: "Government-issued photo identification",
+    example: "Clear photo or scan of Smart NID (front & back) or international passport biodata page.",
     badge: "Required",
   },
   {
     type: "OTHER",
     title: "Other Credentials",
     description: "Hospital appointment or specialized training",
+    example: "Hospital appointment letter, clinical fellowship, or specialty training certificate.",
     badge: "Optional",
   },
 ];
@@ -201,18 +206,18 @@ export const DoctorVerificationForm: React.FC = () => {
               return (
                 <div
                   key={doc.type}
-                  className="rounded-xl border border-border bg-card p-3.5 sm:p-4 flex flex-col justify-between gap-3 transition-all hover:border-primary/40"
+                  className="rounded-xl border border-border bg-card p-3.5 sm:p-4 flex flex-col justify-between gap-3.5 transition-all hover:border-primary/40"
                 >
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-sm sm:text-base font-semibold text-foreground leading-snug">
-                        {doc.title}
+                        {doc.title} {doc.badge === "Required" && <span className="text-destructive">*</span>}
                       </p>
 
                       <span
-                        className={`text-xs font-medium px-2.5 py-0.5 rounded-md shrink-0 ${
+                        className={`text-[11px] font-semibold px-2 py-0.5 rounded-md shrink-0 ${
                           doc.badge === "Required"
-                            ? "bg-primary/10 text-primary font-semibold"
+                            ? "bg-primary/10 text-primary"
                             : "bg-muted text-muted-foreground"
                         }`}
                       >
@@ -220,19 +225,28 @@ export const DoctorVerificationForm: React.FC = () => {
                       </span>
                     </div>
 
-                    <p className="text-xs sm:text-sm text-secondary-text leading-relaxed">
+                    <p className="text-xs font-medium text-foreground/90">
                       {doc.description}
                     </p>
+
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      {doc.example}
+                    </p>
+
+                    <div className="pt-1 flex items-center gap-2 text-[10px] text-muted-foreground font-mono">
+                      <span className="rounded bg-muted px-1.5 py-0.5 font-medium">Formats: PDF, JPG, PNG</span>
+                      <span className="rounded bg-muted px-1.5 py-0.5 font-medium">Max 4 MB</span>
+                    </div>
                   </div>
 
                   {uploadedFile ? (
-                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/40 border border-border text-xs text-foreground">
+                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-foreground">
                       <div className="flex items-center gap-2 truncate min-w-0 pr-2">
                         <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0 stroke-[2.5]" />
                         <span className="font-medium truncate text-foreground">
                           {uploadedFile.name}
                         </span>
-                        <span className="text-muted-foreground shrink-0">
+                        <span className="text-muted-foreground shrink-0 text-[11px]">
                           ({uploadedFile.size})
                         </span>
                       </div>
@@ -251,7 +265,7 @@ export const DoctorVerificationForm: React.FC = () => {
                       type="button"
                       disabled={isPending}
                       onClick={() => triggerFileSelect(doc.type)}
-                      className="w-full py-2 px-3 rounded-lg border border-dashed border-border hover:border-primary hover:bg-muted/40 text-secondary-text hover:text-primary text-xs font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
+                      className="w-full py-2.5 px-3 rounded-lg border border-dashed border-border hover:border-primary hover:bg-muted/40 text-secondary-text hover:text-primary text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
                     >
                       {isUploadingThis ? (
                         <>
