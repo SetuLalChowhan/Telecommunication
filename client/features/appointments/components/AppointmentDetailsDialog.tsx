@@ -156,9 +156,9 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
               {(isDoctorView ? appointment.patientPhone : appointment.doctorPhone) && (
                 <a
                   href={`tel:${isDoctorView ? appointment.patientPhone : appointment.doctorPhone}`}
-                  className="mt-1 inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary hover:text-primary-dark hover:underline transition-colors"
+                  className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 hover:underline transition-colors bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20"
                 >
-                  <Phone className="h-3 w-3 shrink-0" />
+                  <Phone className="h-3 w-3 shrink-0 text-emerald-600 dark:text-emerald-400" />
                   <span>{isDoctorView ? appointment.patientPhone : appointment.doctorPhone}</span>
                 </a>
               )}

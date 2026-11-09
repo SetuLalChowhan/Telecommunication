@@ -330,4 +330,3 @@ export const DoctorRescheduleDialog: React.FC<DoctorRescheduleDialogProps> = ({
     </Dialog>
   );
 };
-

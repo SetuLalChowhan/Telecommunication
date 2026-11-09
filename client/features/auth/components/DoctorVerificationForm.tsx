@@ -207,7 +207,7 @@ export const DoctorVerificationForm: React.FC = () => {
               return (
                 <div
                   key={doc.type}
-                  className="rounded-xl border border-border bg-card p-3.5 sm:p-4 flex flex-col justify-between gap-3.5 transition-all hover:border-primary/40 shadow-2xs"
+                  className="rounded-xl border border-border bg-card p-3.5 sm:p-4 flex flex-col justify-between gap-3.5 transition-all hover:border-primary/40 shadow-xs"
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-start justify-between gap-2">

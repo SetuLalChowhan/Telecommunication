@@ -44,17 +44,17 @@ export const RateDoctorDialog: React.FC<RateDoctorDialogProps> = ({
   doctorAvatar,
   onSuccess,
 }) => {
-  const [rating, setRating] = useState<number>(5);
+  const [rating, setRating] = useState<number>(0);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [comment, setComment] = useState("");
 
   const createReviewMutation = useCreateReview();
 
-  const activeRating = hoverRating ?? rating;
+  const activeRating = hoverRating || rating;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!rating) return;
+    if (!rating || rating < 1 || rating > 5) return;
 
     createReviewMutation.mutate(
       {
@@ -64,6 +64,8 @@ export const RateDoctorDialog: React.FC<RateDoctorDialogProps> = ({
       },
       {
         onSuccess: () => {
+          setRating(0);
+          setComment("");
           onOpenChange(false);
           onSuccess?.();
         },
@@ -104,60 +106,59 @@ export const RateDoctorDialog: React.FC<RateDoctorDialogProps> = ({
               </div>
             </div>
 
-          {/* Star Selection */}
-          <div className="space-y-2 text-center py-2">
-            <Label className="text-xs font-semibold text-foreground block">
-              How was your experience? <span className="text-destructive">*</span>
-            </Label>
-
-            <div className="flex items-center justify-center gap-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setRating(star)}
-                  onMouseEnter={() => setHoverRating(star)}
-                  onMouseLeave={() => setHoverRating(null)}
-                  className="p-1 rounded-md transition-transform hover:scale-115 focus:outline-none cursor-pointer"
-                  aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
-                >
-                  <Star
-                    className={`h-7 w-7 transition-colors ${
-                      star <= activeRating
-                        ? "fill-amber-400 text-amber-400"
-                        : "text-muted-foreground/30 hover:text-amber-300"
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
-
-            <p className="text-xs font-semibold text-primary h-4">
-              {RATING_LABELS[activeRating] || ""}
-            </p>
-          </div>
-
-          {/* Comment Field */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="review-comment" className="text-xs font-semibold text-foreground">
-                Written Feedback (Optional)
+            {/* Star Selection */}
+            <div className="space-y-2 text-center py-2">
+              <Label className="text-xs font-semibold text-foreground block">
+                How was your experience? <span className="text-destructive">*</span>
               </Label>
-              <span className="text-[10px] text-muted-foreground font-mono">
-                {comment.length}/500
-              </span>
-            </div>
-            <Textarea
-              id="review-comment"
-              rows={3}
-              maxLength={500}
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder="Tell others what you appreciated about the doctor or any helpful notes..."
-              className="rounded-lg text-xs resize-none"
-            />
-          </div>
 
+              <div className="flex items-center justify-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(null)}
+                    className="p-1 rounded-md transition-transform hover:scale-115 focus:outline-none cursor-pointer"
+                    aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
+                  >
+                    <Star
+                      className={`h-7 w-7 transition-colors ${
+                        star <= activeRating
+                          ? "fill-amber-400 text-amber-400"
+                          : "text-muted-foreground/30 hover:text-amber-300"
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+
+              <p className="text-xs font-semibold text-primary h-4">
+                {RATING_LABELS[activeRating] || ""}
+              </p>
+            </div>
+
+            {/* Comment Field */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="review-comment" className="text-xs font-semibold text-foreground">
+                  Written Feedback (Optional)
+                </Label>
+                <span className="text-[10px] text-muted-foreground font-mono">
+                  {comment.length}/500
+                </span>
+              </div>
+              <Textarea
+                id="review-comment"
+                rows={3}
+                maxLength={500}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Tell others what you appreciated about the doctor or any helpful notes..."
+                className="rounded-lg text-xs resize-none"
+              />
+            </div>
           </DialogBody>
 
           <DialogFooter className="px-6 py-4 bg-muted/30 border-t border-border flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2.5">
@@ -193,4 +194,3 @@ export const RateDoctorDialog: React.FC<RateDoctorDialogProps> = ({
     </Dialog>
   );
 };
-

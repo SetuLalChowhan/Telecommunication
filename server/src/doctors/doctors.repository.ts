@@ -410,10 +410,20 @@ export class DoctorRepository {
   }
 
   async listDocuments(doctorId: string) {
-    return this.prisma.doctorDocument.findMany({
+    const docs = await this.prisma.doctorDocument.findMany({
       where: { doctorId },
       orderBy: { uploadedAt: 'desc' },
     });
+    // Ensure at most one document per docType (maximum 4 total)
+    const seen = new Set<string>();
+    const deduplicated = [];
+    for (const doc of docs) {
+      if (!seen.has(doc.docType)) {
+        seen.add(doc.docType);
+        deduplicated.push(doc);
+      }
+    }
+    return deduplicated;
   }
 
   async findDocumentById(id: string) {

@@ -1,14 +1,36 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { ShieldCheck, FileCheck2, UploadCloud, FileText, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import {
+  ShieldCheck,
+  UploadCloud,
+  FileText,
+  CheckCircle2,
+  Loader2,
+  ExternalLink,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "react-toastify";
-import { uploadDoctorDocument } from "@/features/doctors/api/client";
+import { uploadDoctorDocument, deleteDoctorDocument } from "@/features/doctors/api/client";
 import { compressImageIfNeeded } from "@/lib/utils/image-compression";
 import type { DoctorDocument } from "@/features/doctors/types";
+
+const DOC_TYPE_OPTIONS = [
+  { value: "LICENSE", label: "Medical License (BMDC Registration)" },
+  { value: "DEGREE_CERTIFICATE", label: "Degree Certificate (MBBS / MD / Spec.)" },
+  { value: "NATIONAL_ID", label: "National ID / Passport" },
+  { value: "OTHER", label: "Other Credentials / Certifications" },
+];
+
+const DOC_TYPE_LABELS: Record<string, string> = {
+  LICENSE: "Medical License (BMDC Registration)",
+  DEGREE_CERTIFICATE: "Degree Certificate (MBBS / MD / Spec.)",
+  NATIONAL_ID: "National ID / Passport",
+  OTHER: "Other Credentials / Certifications",
+};
 
 interface DoctorDocumentsTabProps {
   documents: DoctorDocument[];
@@ -24,6 +46,7 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
   const [docType, setDocType] = useState("LICENSE");
   const [docFile, setDocFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = async (e: React.FormEvent) => {
@@ -79,7 +102,9 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
 
       await uploadDoctorDocument(data);
 
-      toast.success("Document uploaded successfully for review");
+      toast.success(
+        `${DOC_TYPE_LABELS[docType] || "Document"} uploaded successfully (replaced previous version)`
+      );
       setDocFile(null);
       if (fileRef.current) fileRef.current.value = "";
       onRefresh();
@@ -91,6 +116,19 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
       toast.error(typeof errorMsg === "string" ? errorMsg : JSON.stringify(errorMsg));
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleDelete = async (id: string, label: string) => {
+    setDeletingId(id);
+    try {
+      await deleteDoctorDocument(id);
+      toast.success(`${label} removed successfully`);
+      onRefresh();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to remove document");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -109,54 +147,40 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
               </p>
             </div>
           </div>
-
-          <span
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
-              isVerified
-                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-            }`}
-          >
-            {isVerified ? (
-              <>
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                <span>Verified Practitioner</span>
-              </>
-            ) : (
-              <>
-                <AlertCircle className="h-3.5 w-3.5" />
-                <span>Pending Verification</span>
-              </>
-            )}
-          </span>
+          {isVerified && (
+            <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Verified Practitioner
+            </span>
+          )}
         </div>
 
-        <form onSubmit={handleUpload} className="pt-4 border-t border-border/60 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-foreground">
+        <form onSubmit={handleUpload} className="space-y-4 border-t border-border pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="docType" className="text-xs font-semibold text-foreground">
                 Document Type <span className="text-destructive">*</span>
               </Label>
               <select
+                id="docType"
                 value={docType}
                 onChange={(e) => setDocType(e.target.value)}
-                className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/20"
+                className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground text-xs sm:text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 cursor-pointer"
               >
-                <option value="LICENSE">Medical License (BMDC Registration)</option>
-                <option value="DEGREE_CERTIFICATE">Degree Certificate (MBBS / MD / Spec.)</option>
-                <option value="NATIONAL_ID">National ID / Passport</option>
-                <option value="OTHER">Other Credentials / Certifications</option>
+                {DOC_TYPE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
               <p className="text-[11px] text-muted-foreground">
-                {docType === "LICENSE" && "Official BMDC permanent or provisional registration certificate."}
-                {docType === "DEGREE_CERTIFICATE" && "MBBS / BDS graduation certificate or postgraduate medical degree diploma."}
-                {docType === "NATIONAL_ID" && "Government-issued Smart NID (both sides) or passport info page."}
-                {docType === "OTHER" && "Specialized training, fellowship, or hospital appointment letter."}
+                Uploading a new document will automatically replace any existing upload for this section (maximum 4 documents total).
               </p>
             </div>
-            <div className="space-y-1.5">
+
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-xs font-semibold text-foreground">
+                <Label htmlFor="docFile" className="text-xs font-semibold text-foreground">
                   Document File <span className="text-destructive">*</span>
                 </Label>
                 <span className="text-[10px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
@@ -198,36 +222,86 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
 
       {documents.length > 0 && (
         <div className="panel space-y-3 p-4">
-          <h4 className="text-sm font-semibold text-foreground">Uploaded Documents</h4>
-          <div className="space-y-2">
-            {documents.map((doc) => (
-              <div
-                key={doc.id}
-                className="flex items-center justify-between p-3.5 rounded-xl bg-muted/40 border border-border/60 text-xs"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <FileText className="h-4 w-4 text-primary shrink-0" />
-                  <span className="font-semibold text-foreground truncate">{doc.type}</span>
-                  <span className="text-muted-foreground">
-                    Uploaded on {new Date(doc.uploadedAt).toLocaleDateString()}
-                  </span>
-                </div>
-                <span
-                  className={`px-2.5 py-0.5 rounded-md font-bold text-[11px] ${
-                    doc.status === "APPROVED"
-                      ? "bg-emerald-500/10 text-emerald-600"
-                      : doc.status === "REJECTED"
-                      ? "bg-red-500/10 text-red-600"
-                      : "bg-amber-500/10 text-amber-600"
-                  }`}
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold text-foreground">Uploaded Documents</h4>
+            <span className="text-xs text-muted-foreground font-medium">
+              {documents.length} of 4 maximum
+            </span>
+          </div>
+          <div className="space-y-2.5">
+            {documents.map((doc) => {
+              const docTypeKey = (doc as any).docType || doc.type || "";
+              const docTitle = DOC_TYPE_LABELS[docTypeKey] || docTypeKey || "Medical Credential";
+              const isDeleting = deletingId === doc.id;
+
+              return (
+                <div
+                  key={doc.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-card border border-border/80 text-xs shadow-xs"
                 >
-                  {doc.status}
-                </span>
-              </div>
-            ))}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <FileText className="h-4 w-4 shrink-0" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-foreground text-xs sm:text-sm truncate">
+                        {docTitle}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Uploaded on {new Date(doc.uploadedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] tracking-wide border ${
+                        doc.status === "APPROVED"
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+                          : doc.status === "REJECTED"
+                          ? "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/25"
+                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25"
+                      }`}
+                    >
+                      {doc.status}
+                    </span>
+
+                    {doc.fileUrl && (
+                      <a
+                        href={doc.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border hover:bg-muted text-foreground text-[11px] font-semibold transition-colors"
+                      >
+                        <span>View</span>
+                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                      </a>
+                    )}
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={isDeleting}
+                      onClick={() => handleDelete(doc.id, docTitle)}
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg cursor-pointer"
+                      title="Remove document"
+                    >
+                      {isDeleting ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-destructive" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
     </div>
   );
 };
+
+export default DoctorDocumentsTab;

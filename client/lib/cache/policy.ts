@@ -83,7 +83,7 @@ export const CACHE = {
   },
   profile: {
     server: { cache: "no-store" as const },
-    client: { staleTime: 5 * MINUTE },
+    client: { staleTime: 15 * SECOND },
   },
   notifications: {
     server: { cache: "no-store" as const },
