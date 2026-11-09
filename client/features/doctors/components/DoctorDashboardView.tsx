@@ -81,6 +81,7 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
   const confirmMutation = useConfirmDoctorBooking();
   const completeMutation = useCompleteDoctorBooking();
 
+  const isDoctorVerified = Boolean(isVerified || dashboardData?.verified);
   const isGoogleConnected = googleStatus?.isConnected ?? false;
 
   const handleConfirmAppointment = (id: string) => {
@@ -134,7 +135,7 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
         }
       />
 
-      {!isVerified && (
+      {!isDoctorVerified && (
         <div className="flex flex-col gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2.5">
             <ShieldAlert className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
@@ -155,7 +156,7 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
         </div>
       )}
 
-      {!isGoogleConnected && !isGoogleLoading && (
+      {isDoctorVerified && !isGoogleConnected && !isGoogleLoading && (
         <div className="flex flex-col gap-3 rounded-xl border border-primary/25 bg-primary/5 p-3.5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3 sm:items-center">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -163,10 +164,10 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
             </div>
             <div className="space-y-0.5">
               <p className="text-xs font-semibold text-foreground">
-                Connect Google Calendar &amp; Meet for Automated Consultations
+                Connect Google Meet for Instant Video Consultations
               </p>
               <p className="text-[11px] leading-relaxed text-muted-foreground">
-                Link your Google account to automatically generate video consultation links and synchronize appointments with <strong>Asia/Dhaka (+06:00)</strong> timezone.
+                Your profile is verified! Link your Google account to automatically generate video consultation links and synchronize appointments with <strong>Asia/Dhaka (+06:00)</strong> timezone.
               </p>
             </div>
           </div>
@@ -177,7 +178,7 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
               className="h-8 gap-1.5 rounded-lg px-3.5 text-xs font-semibold shadow-sm"
             >
               <Video className="h-3.5 w-3.5" />
-              <span>Connect Google</span>
+              <span>Connect Google Meet</span>
             </Button>
           </Link>
         </div>

@@ -2,9 +2,10 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { Loader2, Calendar, Video, Plus, Phone } from "lucide-react";
+import { Loader2, Calendar, Video, Plus, Phone, FileText } from "lucide-react";
 import { DashboardAppointment } from "@/features/appointments/types";
 import { AppointmentDetailsDialog, TablePagination } from "@/features/appointments/components";
+import { UploadReportModal } from "@/features/medical-reports";
 import {
   useBookingSummary,
   normalizeStatusFilter,
@@ -47,6 +48,13 @@ export function PatientAppointmentsClient({
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAppt, setSelectedAppt] = useState<DashboardAppointment | null>(null);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [uploadBookingId, setUploadBookingId] = useState<string | null>(null);
+
+  const handleOpenUpload = (bookingId: string) => {
+    setUploadBookingId(bookingId);
+    setUploadModalOpen(true);
+  };
 
   // The active tab is sent to the backend — no client-side status filtering.
   const bookingStatus = filter === "ALL" ? undefined : filter;
@@ -251,13 +259,32 @@ export function PatientAppointmentsClient({
                               </Button>
                             </a>
                           )}
+                          {appt.status !== "CANCELLED" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenUpload(appt.id)}
+                              className="h-7 rounded-md px-2.5 text-xs font-medium gap-1 text-primary hover:text-primary"
+                              title="Upload and attach medical report"
+                            >
+                              <FileText className="h-3 w-3" />
+                              <span>Add Report</span>
+                            </Button>
+                          )}
                           <Button
-                            variant="outline"
+                            variant={appt.reports && appt.reports.length > 0 ? "secondary" : "outline"}
                             size="sm"
                             onClick={() => setSelectedAppt(appt)}
-                            className="h-7 rounded-md px-2.5 text-xs font-medium"
+                            className="h-7 rounded-md px-2.5 text-xs font-medium gap-1"
                           >
-                            Details
+                            {appt.reports && appt.reports.length > 0 ? (
+                              <>
+                                <FileText className="h-3 w-3 text-primary" />
+                                <span className="font-semibold text-primary">Reports ({appt.reports.length})</span>
+                              </>
+                            ) : (
+                              <span>Details</span>
+                            )}
                           </Button>
                         </div>
                       </TableCell>
@@ -318,7 +345,7 @@ export function PatientAppointmentsClient({
                     <span className="font-medium text-foreground text-[11px]">
                       {appt.dateFormatted} · {appt.timeFormatted}
                     </span>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap justify-end">
                       {appt.meetLink && appt.status === "CONFIRMED" && (
                         <a
                           href={appt.meetLink}
@@ -327,20 +354,35 @@ export function PatientAppointmentsClient({
                         >
                           <Button
                             size="sm"
-                            className="h-7 rounded-md px-2.5 text-xs font-semibold gap-1"
+                            className="h-7 rounded-md px-2 text-xs font-semibold gap-1"
                           >
                             <Video className="h-3 w-3" />
                             <span>Join</span>
                           </Button>
                         </a>
                       )}
+                      {appt.status !== "CANCELLED" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenUpload(appt.id)}
+                          className="h-7 rounded-md px-2 text-xs font-medium gap-1 text-primary hover:text-primary"
+                        >
+                          <FileText className="h-3 w-3" />
+                          <span>Add Report</span>
+                        </Button>
+                      )}
                       <Button
-                        variant="outline"
+                        variant={appt.reports && appt.reports.length > 0 ? "secondary" : "outline"}
                         size="sm"
                         onClick={() => setSelectedAppt(appt)}
-                        className="h-7 rounded-md px-2.5 text-xs font-medium"
+                        className="h-7 rounded-md px-2.5 text-xs font-medium gap-1"
                       >
-                        Details
+                        {appt.reports && appt.reports.length > 0 ? (
+                          <span className="font-semibold text-primary">Reports ({appt.reports.length})</span>
+                        ) : (
+                          <span>Details</span>
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -370,6 +412,12 @@ export function PatientAppointmentsClient({
           isCancelling={cancelMutation.isPending}
         />
       )}
+
+      <UploadReportModal
+        open={uploadModalOpen}
+        onOpenChange={setUploadModalOpen}
+        defaultBookingId={uploadBookingId || undefined}
+      />
     </div>
   );
 }

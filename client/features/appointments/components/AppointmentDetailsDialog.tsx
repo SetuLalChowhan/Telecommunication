@@ -23,12 +23,14 @@ import {
   Phone,
   Eye,
   Download,
+  Plus,
 } from "lucide-react";
 import { DashboardAppointment } from "@/features/appointments/types";
 import { MedicalReport } from "@/features/medical-reports/types";
 import { useBookingMedicalReports } from "@/features/medical-reports/api/queries";
 import { fetchReportBlob, getReportFileUrl } from "@/features/medical-reports/api/client";
 import { RecordDetailsDialog } from "@/features/medical-reports/components/records/RecordDetailsDialog";
+import { UploadReportModal } from "@/features/medical-reports";
 import { cn } from "@/lib/utils";
 
 interface AppointmentDetailsDialogProps {
@@ -68,6 +70,7 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [selectedReport, setSelectedReport] = useState<MedicalReport | null>(null);
   const [downloadingReportId, setDownloadingReportId] = useState<string | null>(null);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
   const { data: bookingReports = [] } = useBookingMedicalReports(
     open && appointment ? appointment.id : null
@@ -196,17 +199,45 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
                 <FileText className="h-3 w-3 text-primary" />
                 Medical Reports &amp; Documents
               </span>
-              <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
-                {reports.length} report{reports.length === 1 ? "" : "s"}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                  {reports.length} report{reports.length === 1 ? "" : "s"}
+                </span>
+                {!isDoctorView && appointment.status !== "CANCELLED" && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setUploadModalOpen(true)}
+                    className="h-6 gap-1 px-2 text-[10px] font-semibold text-primary hover:text-primary"
+                  >
+                    <Plus className="h-2.5 w-2.5" />
+                    <span>Upload</span>
+                  </Button>
+                )}
+              </div>
             </div>
 
             {reports.length === 0 ? (
-              <p className="text-[11px] text-muted-foreground italic">
-                {isDoctorView
-                  ? "No medical reports attached to this visit."
-                  : "No medical reports uploaded for this visit."}
-              </p>
+              <div className="py-2 text-center space-y-1.5">
+                <p className="text-[11px] text-muted-foreground italic">
+                  {isDoctorView
+                    ? "No medical reports attached to this visit."
+                    : "No medical reports uploaded for this visit."}
+                </p>
+                {!isDoctorView && appointment.status !== "CANCELLED" && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setUploadModalOpen(true)}
+                    className="h-7 px-2.5 text-xs font-medium gap-1 text-primary mx-auto"
+                  >
+                    <Plus className="h-3 w-3" />
+                    <span>Attach medical report</span>
+                  </Button>
+                )}
+              </div>
             ) : (
               <div className="space-y-1.5 pt-1">
                 {reports.map((report) => (
@@ -397,6 +428,12 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
     <RecordDetailsDialog
       report={selectedReport}
       onOpenChange={(val) => !val && setSelectedReport(null)}
+    />
+
+    <UploadReportModal
+      open={uploadModalOpen}
+      onOpenChange={setUploadModalOpen}
+      defaultBookingId={appointment.id}
     />
   </>
   );

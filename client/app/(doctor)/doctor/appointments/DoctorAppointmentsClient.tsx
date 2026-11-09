@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Loader2, Calendar, Video, CheckCircle2, User, Phone } from "lucide-react";
+import { Loader2, Calendar, Video, CheckCircle2, User, Phone, FileText } from "lucide-react";
 import {
   useDoctorBookings,
   useConfirmDoctorBooking,
@@ -134,6 +134,29 @@ export function DoctorAppointmentsClient({
 
   const handleCancel = (id: string) => {
     cancelMutation.mutate(id, { onSuccess: closeDialog });
+  };
+
+  const handleOpenAppointmentDetails = (item: DoctorScheduleItem) => {
+    setSelectedAppointment({
+      id: item.id,
+      doctorName: "Dr. Specialist",
+      doctorSpecialty: "Specialist",
+      doctorAvatar: "/images/doctor-placeholder.jpg",
+      patientName: item.patientName,
+      patientAvatar: item.patientAvatar,
+      patientAge: item.patientAge,
+      patientGender: item.patientGender,
+      patientPhone: item.patientPhone,
+      dateFormatted: item.time.split(" · ")[0] || "Today",
+      timeFormatted: item.time.split(" · ")[1] || item.time,
+      status: item.status as any,
+      consultationType: "Video Consultation",
+      symptoms: item.symptoms,
+      fee: item.fee,
+      meetLink: item.meetLink,
+      patientId: item.patientId,
+      reports: item.reports,
+    });
   };
 
   const bookingsList = bookingsData?.data || [];
@@ -337,33 +360,26 @@ export function DoctorAppointmentsClient({
                           )}
 
                           <Button
-                            variant="outline"
+                            variant={item.reports && item.reports.length > 0 ? "secondary" : "outline"}
                             size="sm"
-                            onClick={() =>
-                              setSelectedAppointment({
-                                id: item.id,
-                                doctorName: "Dr. Specialist",
-                                doctorSpecialty: "Specialist",
-                                doctorAvatar: "/images/doctor-placeholder.jpg",
-                                patientName: item.patientName,
-                                patientAvatar: item.patientAvatar,
-                                patientAge: item.patientAge,
-                                patientGender: item.patientGender,
-                                patientPhone: item.patientPhone,
-                                dateFormatted: item.time.split(" · ")[0] || "Today",
-                                timeFormatted: item.time.split(" · ")[1] || item.time,
-                                status: item.status as any,
-                                consultationType: "Video Consultation",
-                                symptoms: item.symptoms,
-                                fee: item.fee,
-                                meetLink: item.meetLink,
-                                patientId: item.patientId,
-                                reports: item.reports,
-                              })
+                            onClick={() => handleOpenAppointmentDetails(item)}
+                            className="h-7 rounded-md px-2.5 text-xs font-medium gap-1"
+                            title={
+                              item.reports && item.reports.length > 0
+                                ? "View attached medical reports"
+                                : "View appointment details"
                             }
-                            className="h-7 rounded-md px-2.5 text-xs font-medium"
                           >
-                            Details
+                            {item.reports && item.reports.length > 0 ? (
+                              <>
+                                <FileText className="h-3 w-3 text-primary" />
+                                <span className="font-semibold text-primary">
+                                  Reports ({item.reports.length})
+                                </span>
+                              </>
+                            ) : (
+                              <span>Details</span>
+                            )}
                           </Button>
                         </div>
                       </TableCell>
@@ -425,7 +441,7 @@ export function DoctorAppointmentsClient({
                     <span className="font-medium text-foreground text-[11px]">
                       {item.time}
                     </span>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap justify-end">
                       {item.status === "PENDING" && (
                         <Button
                           size="sm"
@@ -464,6 +480,20 @@ export function DoctorAppointmentsClient({
                           </Button>
                         </a>
                       )}
+                      <Button
+                        variant={item.reports && item.reports.length > 0 ? "secondary" : "outline"}
+                        size="sm"
+                        onClick={() => handleOpenAppointmentDetails(item)}
+                        className="h-7 rounded-md px-2.5 text-xs font-medium gap-1"
+                      >
+                        {item.reports && item.reports.length > 0 ? (
+                          <span className="font-semibold text-primary">
+                            Reports ({item.reports.length})
+                          </span>
+                        ) : (
+                          <span>Details</span>
+                        )}
+                      </Button>
                     </div>
                   </div>
                 </div>

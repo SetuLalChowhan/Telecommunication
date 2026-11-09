@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Check, Eye, Pencil, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Table,
   TableBody,
@@ -48,11 +49,22 @@ export function DoctorsTable({
         {doctors.map((doctor) => (
           <TableRow key={doctor.id}>
             <TableCell>
-              <div className="flex flex-col">
-                <span className="text-xs font-semibold text-foreground">
-                  {doctor.user.name ?? "Unnamed doctor"}
-                </span>
-                <span className="text-xs text-muted-foreground">{doctor.user.email}</span>
+              <div className="flex items-center gap-2.5">
+                <Avatar className="h-8 w-8 shrink-0">
+                  <AvatarImage
+                    src={doctor.user.image || "/images/doctor-placeholder.jpg"}
+                    alt={doctor.user.name ?? "Doctor"}
+                  />
+                  <AvatarFallback className="text-[10px] font-bold">
+                    {(doctor.user.name || "Dr").slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-semibold text-foreground truncate">
+                    {doctor.user.name ?? "Unnamed doctor"}
+                  </span>
+                  <span className="text-xs text-muted-foreground truncate">{doctor.user.email}</span>
+                </div>
               </div>
             </TableCell>
             <TableCell>

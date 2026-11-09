@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { ArrowLeft, Check, ExternalLink, Loader2, Pencil, Trash2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
   CardContent,
@@ -141,17 +142,28 @@ const DoctorDetails = () => {
       <div className="space-y-3">
         <BackLink />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <h2 className="text-3xl font-extrabold tracking-tight text-foreground">
-                {doctor.user.name ?? "Unnamed doctor"}
-              </h2>
-              <DoctorStatusBadge verified={doctor.verified} />
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16 shrink-0 ring-1 ring-border">
+              <AvatarImage
+                src={doctor.user.image || "/images/doctor-placeholder.jpg"}
+                alt={doctor.user.name ?? "Doctor"}
+              />
+              <AvatarFallback className="text-base font-bold bg-muted">
+                {(doctor.user.name || "Dr").slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+                  {doctor.user.name ?? "Unnamed doctor"}
+                </h2>
+                <DoctorStatusBadge verified={doctor.verified} />
+              </div>
+              <p className="text-sm text-muted-foreground">{doctor.user.email}</p>
+              {doctor.user.phone && (
+                <p className="text-xs text-muted-foreground">{doctor.user.phone}</p>
+              )}
             </div>
-            <p className="text-sm text-muted-foreground">{doctor.user.email}</p>
-            {doctor.user.phone && (
-              <p className="text-xs text-muted-foreground">{doctor.user.phone}</p>
-            )}
           </div>
 
           <div className="flex items-center gap-2">

@@ -1,4 +1,5 @@
 import type { DashboardAppointment } from "@/features/appointments/types";
+import type { MedicalReport } from "@/features/medical-reports/types";
 import { formatDate, formatTime, relativeDayLabel } from "@/lib/time";
 
 /** Re-exported so patient components can import every row type from one place. */
@@ -227,7 +228,7 @@ export function mapBookingToAppointment(b: RawBooking): DashboardAppointment {
     doctorSpecialty: primarySpecialty,
     doctorAvatar:
       doctor?.user?.image ||
-      "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=400&q=80",
+      "/images/doctor-placeholder.jpg",
     doctorPhone: doctor?.user?.phone || undefined,
     patientName: b.patient?.user?.name || "You",
     patientAvatar: b.patient?.user?.image || undefined,
@@ -240,5 +241,7 @@ export function mapBookingToAppointment(b: RawBooking): DashboardAppointment {
     symptoms: b.symptoms || undefined,
     fee: Number(doctor?.fee || 0),
     isToday,
+    patientId: b.patientId,
+    reports: ((b.reports as any) || []) as MedicalReport[],
   };
 }

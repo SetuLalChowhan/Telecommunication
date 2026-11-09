@@ -15,6 +15,22 @@ export const USER_SELECT = {
   dateOfBirth: true,
   phone: true,
   role: true,
+  doctorProfile: {
+    select: {
+      id: true,
+      verified: true,
+      slug: true,
+      bmdcNumber: true,
+      designation: true,
+    },
+  },
+  patientProfile: {
+    select: {
+      id: true,
+      gender: true,
+      bloodGroup: true,
+    },
+  },
   createdAt: true,
   updatedAt: true,
 } as const;

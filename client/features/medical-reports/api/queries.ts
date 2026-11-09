@@ -16,6 +16,7 @@ import {
   medicalReportKeys,
 } from "../types";
 import { patientKeys } from "@/features/patients/types";
+import { doctorKeys } from "@/features/doctors/types";
 import { CACHE } from "@/lib/cache/policy";
 
 /**
@@ -41,6 +42,9 @@ export function useUploadMedicalReport() {
       toast.success("Medical report uploaded successfully");
       queryClient.invalidateQueries({ queryKey: medicalReportKeys.all });
       queryClient.invalidateQueries({ queryKey: patientKeys.all });
+      queryClient.invalidateQueries({ queryKey: doctorKeys.dashboard() });
+      queryClient.invalidateQueries({ queryKey: doctorKeys.myBookingsRoot() });
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
     },
     onError: (error: unknown) => {
       const err = error as {
@@ -68,6 +72,9 @@ export function useDeleteMedicalReport() {
       toast.success("Medical report deleted successfully");
       queryClient.invalidateQueries({ queryKey: medicalReportKeys.all });
       queryClient.invalidateQueries({ queryKey: patientKeys.all });
+      queryClient.invalidateQueries({ queryKey: doctorKeys.dashboard() });
+      queryClient.invalidateQueries({ queryKey: doctorKeys.myBookingsRoot() });
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
     },
     onError: (error: unknown) => {
       const err = error as {

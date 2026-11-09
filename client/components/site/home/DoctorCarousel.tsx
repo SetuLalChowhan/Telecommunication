@@ -3,7 +3,7 @@
 import React, { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Star, Stethoscope } from "lucide-react";
+import { ArrowLeft, ArrowRight, Star } from "lucide-react";
 import type { DoctorProfile } from "@/features/doctors";
 
 interface DoctorCarouselProps {
@@ -77,17 +77,13 @@ export function DoctorCarousel({ doctors }: DoctorCarouselProps) {
               className="group flex w-[260px] shrink-0 flex-col overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:border-[#cbcbcb]"
             >
               <div className="relative aspect-[4/4.2] w-full overflow-hidden bg-[#f3f1eb]">
-                {image ? (
-                  <Image
-                    src={image}
-                    alt={name}
-                    fill
-                    sizes="260px"
-                    className="object-cover object-top transition-transform duration-300 group-hover:scale-102"
-                  />
-                ) : (
-                  <Stethoscope className="absolute inset-0 m-auto h-10 w-10 text-muted-foreground" />
-                )}
+                <Image
+                  src={image || "/images/doctor-placeholder.jpg"}
+                  alt={name}
+                  fill
+                  sizes="260px"
+                  className="object-cover object-top transition-transform duration-300 group-hover:scale-102"
+                />
 
                 {rating > 0 && (
                   <div className="absolute right-2.5 top-2.5 flex items-center gap-1 rounded-full border border-border bg-card/95 px-2.5 py-0.5 backdrop-blur-xs">

@@ -9,19 +9,17 @@ const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
-  weight: ["400", "500", "600", "700"],
 });
 
 const sourceSerif = Source_Serif_4({
   variable: "--font-serif",
   subsets: ["latin"],
   display: "swap",
-  weight: ["400", "500", "600"],
 });
 
 const notoSansBengali = Noto_Sans_Bengali({
   variable: "--font-bangla",
-  subsets: ["bengali", "latin"],
+  subsets: ["bengali"],
   display: "swap",
 });
 
