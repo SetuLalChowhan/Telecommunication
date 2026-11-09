@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -73,34 +74,35 @@ export const RateDoctorDialog: React.FC<RateDoctorDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={createReviewMutation.isPending ? undefined : onOpenChange}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500 mb-1">
-            <Star className="h-6 w-6 fill-amber-400 text-amber-400" />
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/60 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500 mb-2 shadow-xs">
+            <Star className="h-6 w-6 fill-amber-400 text-amber-400 stroke-[1.8]" />
           </div>
-          <DialogTitle className="text-center text-lg font-bold">
+          <DialogTitle className="text-center text-lg sm:text-xl font-bold tracking-tight text-foreground">
             Rate Your Consultation
           </DialogTitle>
-          <DialogDescription className="text-center text-xs text-muted-foreground">
+          <DialogDescription className="text-center text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
             Share feedback about your completed visit with {doctorName}.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-2 text-xs">
-          {/* Doctor Info Mini Card */}
-          <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/30 p-3">
-            <Avatar className="h-10 w-10 shrink-0 ring-1 ring-primary/20">
-              <AvatarImage src={doctorAvatar || "/images/doctor-placeholder.jpg"} alt={doctorName} />
-              <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
-                {doctorName.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <p className="font-semibold text-foreground text-xs truncate">{doctorName}</p>
-              {doctorSpecialty && (
-                <p className="text-[11px] text-muted-foreground truncate">{doctorSpecialty}</p>
-              )}
+        <form onSubmit={handleSubmit} className="flex flex-col">
+          <DialogBody className="space-y-5 px-6 py-5 text-xs">
+            {/* Doctor Info Mini Card */}
+            <div className="flex items-center gap-3.5 rounded-xl border border-border/80 bg-muted/30 p-3.5 shadow-xs">
+              <Avatar className="h-11 w-11 shrink-0 ring-2 ring-primary/20">
+                <AvatarImage src={doctorAvatar || "/images/doctor-placeholder.jpg"} alt={doctorName} />
+                <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
+                  {doctorName.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 space-y-0.5">
+                <p className="font-semibold text-foreground text-sm truncate">{doctorName}</p>
+                {doctorSpecialty && (
+                  <p className="text-[11px] text-muted-foreground truncate">{doctorSpecialty}</p>
+                )}
+              </div>
             </div>
-          </div>
 
           {/* Star Selection */}
           <div className="space-y-2 text-center py-2">
@@ -156,20 +158,22 @@ export const RateDoctorDialog: React.FC<RateDoctorDialogProps> = ({
             />
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-2 pt-2">
+          </DialogBody>
+
+          <DialogFooter className="px-6 py-4 bg-muted/30 border-t border-border flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2.5">
             <Button
               type="button"
               variant="outline"
               disabled={createReviewMutation.isPending}
               onClick={() => onOpenChange(false)}
-              className="w-full sm:w-auto h-9 text-xs font-semibold cursor-pointer"
+              className="w-full sm:w-auto h-10 px-4 text-xs font-semibold rounded-xl cursor-pointer border-border hover:bg-muted"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={createReviewMutation.isPending || !rating}
-              className="w-full sm:w-auto h-9 text-xs font-semibold bg-primary hover:bg-primary-dark text-white gap-2 cursor-pointer shadow-sm"
+              className="w-full sm:w-auto h-10 px-5 text-xs font-semibold rounded-xl bg-primary hover:bg-primary-dark text-white gap-2 cursor-pointer shadow-sm active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {createReviewMutation.isPending ? (
                 <>

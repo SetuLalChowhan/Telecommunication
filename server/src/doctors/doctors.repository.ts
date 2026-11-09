@@ -399,8 +399,32 @@ export class DoctorRepository {
   // -- Document --------------------------------------------------------------
 
   async createDocument(doctorId: string, docType: string, fileUrl: string) {
+    // Delete any existing document for the same docType so we avoid duplicates
+    await this.prisma.doctorDocument.deleteMany({
+      where: { doctorId, docType: docType as any },
+    });
+
     return this.prisma.doctorDocument.create({
       data: { doctorId, docType: docType as any, fileUrl },
+    });
+  }
+
+  async listDocuments(doctorId: string) {
+    return this.prisma.doctorDocument.findMany({
+      where: { doctorId },
+      orderBy: { uploadedAt: 'desc' },
+    });
+  }
+
+  async findDocumentById(id: string) {
+    return this.prisma.doctorDocument.findUnique({
+      where: { id },
+    });
+  }
+
+  async deleteDocument(id: string) {
+    return this.prisma.doctorDocument.delete({
+      where: { id },
     });
   }
 

@@ -156,9 +156,9 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
               {(isDoctorView ? appointment.patientPhone : appointment.doctorPhone) && (
                 <a
                   href={`tel:${isDoctorView ? appointment.patientPhone : appointment.doctorPhone}`}
-                  className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                  className="mt-1 inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary hover:text-primary-dark hover:underline transition-colors"
                 >
-                  <Phone className="h-3 w-3" />
+                  <Phone className="h-3 w-3 shrink-0" />
                   <span>{isDoctorView ? appointment.patientPhone : appointment.doctorPhone}</span>
                 </a>
               )}
@@ -249,7 +249,7 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
                     variant="outline"
                     size="sm"
                     onClick={() => setUploadModalOpen(true)}
-                    className="h-6 gap-1 px-2 text-[10px] font-semibold text-primary hover:text-primary"
+                    className="h-6 gap-1 px-2 text-[10px] font-semibold text-primary border-primary/40 hover:bg-primary hover:text-white transition-colors cursor-pointer"
                   >
                     <Plus className="h-2.5 w-2.5" />
                     <span>Upload</span>
@@ -423,7 +423,7 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
                     onOpenChange(false);
                     onRescheduleAppointment(appointment);
                   }}
-                  className="h-8 rounded-md px-3 text-xs font-semibold gap-1.5 text-primary border-primary/30 hover:bg-primary/10 cursor-pointer"
+                  className="h-8 rounded-md px-3 text-xs font-semibold gap-1.5 text-primary border-primary/40 hover:bg-primary hover:text-white transition-colors cursor-pointer"
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
                   <span>Reschedule</span>
@@ -446,7 +446,7 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
                   size="sm"
                   disabled={isConfirming}
                   onClick={() => onConfirmAppointment(appointment.id)}
-                  className="h-8 rounded-md px-3 text-xs font-semibold"
+                  className="h-8 rounded-md px-3 text-xs font-semibold bg-primary hover:bg-primary-dark text-white gap-1.5 shadow-xs cursor-pointer active:scale-[0.99]"
                 >
                   {isConfirming ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />

@@ -369,5 +369,6 @@ export const doctorKeys = {
   slugAvailability: (slug: string) =>
     [...doctorKeys.all, "slugAvailability", slug.trim().toLowerCase()] as const,
   googleStatus: () => [...doctorKeys.all, "googleStatus"] as const,
+  documents: () => [...doctorKeys.all, "documents"] as const,
   specialties: () => [...doctorKeys.all, "specialties"] as const,
 };

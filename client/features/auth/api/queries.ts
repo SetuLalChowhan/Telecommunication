@@ -155,7 +155,9 @@ export const useAuth = () => {
 
       await queryClient.invalidateQueries({ queryKey: authKeys.all });
       const userRole = authUser?.role || role;
-      const destination = variables.redirectTo || getRoleDashboardRoute(userRole);
+      const destination =
+        variables.redirectTo ||
+        getRoleDashboardRoute(userRole, authUser?.doctorProfile?.verified);
       router.push(destination);
     },
     onError: (err: Error) => {
@@ -178,11 +180,41 @@ export const useAuth = () => {
       }
       return res.data;
     },
-    onSuccess: (_data, variables) => {
-      toast.success("Account created! Please check your email for verification.");
-      router.push(
-        `/verify-email?email=${encodeURIComponent(variables.email)}&role=${encodeURIComponent(variables.role)}`
-      );
+    onSuccess: (data, variables) => {
+      const authPayload = data as unknown as {
+        user?: User;
+        data?: { user?: User; token?: string };
+        token?: string;
+        session?: { token?: string };
+      };
+      const authUser = authPayload?.user || authPayload?.data?.user;
+      const authToken =
+        authPayload?.token ||
+        authPayload?.data?.token ||
+        authPayload?.session?.token;
+
+      if (authToken) {
+        setClientAuthToken(authToken);
+      }
+      if (authUser) {
+        queryClient.setQueryData(authKeys.profile(), authUser);
+      }
+
+      // Re-sync better-auth session in background
+      authClient.getSession?.().catch(() => undefined);
+      queryClient.invalidateQueries({ queryKey: authKeys.all });
+
+      if (variables.role === "DOCTOR") {
+        toast.success(
+          "Doctor account created! Please upload your medical verification credentials."
+        );
+        router.push("/doctor-verification");
+      } else {
+        toast.success("Account created! Please check your email for verification.");
+        router.push(
+          `/verify-email?email=${encodeURIComponent(variables.email)}&role=PATIENT`
+        );
+      }
     },
     onError: (err: Error) => {
       toast.error(err.message || "Failed to create account");
@@ -348,6 +380,7 @@ export const useAuth = () => {
     isAdmin: role === "ADMIN",
     isAuthenticated,
     isSessionLoading: isAuthLoading,
+    isAuthLoading,
 
     // Auth Action Methods
     login: (params: LoginParams, redirectTo?: string) =>

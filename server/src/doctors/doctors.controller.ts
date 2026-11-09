@@ -162,6 +162,25 @@ export class DoctorController {
     return this.doctorService.uploadDocument(userId, normalizedType, file);
   }
 
+  @Get('me/documents')
+  @Roles('DOCTOR')
+  @UseGuards(RolesGuard)
+  @ResponseMessage('Doctor documents retrieved successfully')
+  getMyDocuments(@CurrentUser('id') userId: string) {
+    return this.doctorService.listDocuments(userId);
+  }
+
+  @Delete('me/documents/:id')
+  @Roles('DOCTOR')
+  @UseGuards(RolesGuard)
+  @ResponseMessage('Doctor document deleted successfully')
+  deleteMyDocument(
+    @CurrentUser('id') userId: string,
+    @Param('id') documentId: string,
+  ) {
+    return this.doctorService.deleteDocument(userId, documentId);
+  }
+
   @Get()
   @AllowAnonymous()
   @ResponseMessage('Doctors fetched successfully')

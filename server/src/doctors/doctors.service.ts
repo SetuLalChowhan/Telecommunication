@@ -435,6 +435,20 @@ export class DoctorService {
     }
   }
 
+  async listDocuments(userId: string) {
+    const profile = await this.getOwnProfileOrThrow(userId);
+    return this.repo.listDocuments(profile.id);
+  }
+
+  async deleteDocument(userId: string, documentId: string) {
+    const profile = await this.getOwnProfileOrThrow(userId);
+    const doc = await this.repo.findDocumentById(documentId);
+    if (!doc || doc.doctorId !== profile.id) {
+      throw new NotFoundException('Document not found or does not belong to you');
+    }
+    return this.repo.deleteDocument(documentId);
+  }
+
   // -- Patients --------------------------------------------------------------
 
   async listMyPatients(userId: string, search?: string) {

@@ -6,13 +6,19 @@ import { useAuth, getRoleDashboardRoute } from "@/features/auth/api/queries";
 
 export default function DashboardRedirectPage() {
   const router = useRouter();
-  const { role, isSessionLoading } = useAuth();
+  const { user, role, isSessionLoading } = useAuth();
 
   useEffect(() => {
     if (!isSessionLoading) {
-      router.replace(getRoleDashboardRoute(role));
+      if (user && user.emailVerified === false) {
+        router.replace(
+          `/verify-email?email=${encodeURIComponent(user.email)}&role=${encodeURIComponent(role)}`
+        );
+        return;
+      }
+      router.replace(getRoleDashboardRoute(role, user?.doctorProfile?.verified));
     }
-  }, [role, isSessionLoading, router]);
+  }, [user, role, isSessionLoading, router]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background text-foreground">

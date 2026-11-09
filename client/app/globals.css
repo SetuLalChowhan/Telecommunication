@@ -151,10 +151,10 @@
   /* Radius */
   --radius: 16px;
 
-  /* Brand Colors - Alden Editorial Healthcare Palette */
-  --primary: #c8dfaa;             /* Sage Action — Primary CTA fill */
-  --primary-dark: #b6cfa0;        /* Hover tone */
-  --primary-foreground: #28262a;  /* Ink Black */
+  /* Brand Colors - High-Contrast Clinical Healthcare Palette */
+  --primary: #15803d;             /* Clinical Green — High contrast, WCAG AA compliant */
+  --primary-dark: #166534;        /* Deep Forest Green hover */
+  --primary-foreground: #ffffff;  /* Pure White */
 
   --secondary: #f3f1eb;           /* Parchment Cream */
   --secondary-dark: #e8e5dc;
@@ -219,8 +219,8 @@
   /* Sidebar */
   --sidebar: #ffffff;
   --sidebar-foreground: #28262a;
-  --sidebar-primary: #c8dfaa;
-  --sidebar-primary-foreground: #28262a;
+  --sidebar-primary: #15803d;
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #f3f1eb;
   --sidebar-accent-foreground: #28262a;
   --sidebar-border: #dddcdd;
@@ -242,9 +242,9 @@
   --popover-foreground: #f3f1eb;
 
   /* Brand Colors */
-  --primary: #c8dfaa;
-  --primary-dark: #b6cfa0;
-  --primary-foreground: #28262a;
+  --primary: #22c55e;
+  --primary-dark: #16a34a;
+  --primary-foreground: #0f172a;
 
   --secondary: #28262a;
   --secondary-dark: #1e1c1f;
@@ -286,8 +286,8 @@
   /* Sidebar */
   --sidebar: #1d1c1e;
   --sidebar-foreground: #f3f1eb;
-  --sidebar-primary: #c8dfaa;
-  --sidebar-primary-foreground: #28262a;
+  --sidebar-primary: #22c55e;
+  --sidebar-primary-foreground: #0f172a;
   --sidebar-accent: #28262a;
   --sidebar-accent-foreground: #97cde5;
   --sidebar-border: #38363b;

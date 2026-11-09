@@ -1,8 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { DashboardSidebar, type DashboardRole } from "./DashboardSidebar";
 import { DashboardHeader } from "./DashboardHeader";
+import { useAuth } from "@/features/auth/api/queries";
+import { Loader2 } from "lucide-react";
 
 interface DashboardShellProps {
   role?: DashboardRole;
@@ -20,6 +23,37 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({
   role = "PATIENT",
   children,
 }) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { user, isAuthenticated, isAuthLoading } = useAuth();
+
+  useEffect(() => {
+    if (isAuthLoading) return;
+
+    if (!isAuthenticated) {
+      router.replace(`/login?redirectTo=${encodeURIComponent(pathname || "/dashboard")}`);
+      return;
+    }
+
+    if (user && user.emailVerified === false) {
+      router.replace(
+        `/verify-email?email=${encodeURIComponent(user.email)}&role=${encodeURIComponent(user.role || role)}`
+      );
+      return;
+    }
+  }, [user, isAuthenticated, isAuthLoading, router, pathname, role]);
+
+  if (isAuthLoading || !isAuthenticated || (user && user.emailVerified === false)) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background text-foreground">
+        <div className="flex flex-col items-center gap-3 text-xs text-muted-foreground">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <span>Verifying session permissions...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen min-h-screen w-full overflow-hidden bg-background text-foreground antialiased">
       {/* Persistent rail (desktop) */}

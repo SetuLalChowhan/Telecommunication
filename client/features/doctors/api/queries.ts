@@ -35,6 +35,9 @@ import {
   fetchGoogleAuthUrl,
   disconnectGoogle,
   uploadDoctorDocument,
+  fetchDoctorDocuments,
+  deleteDoctorDocument,
+  DoctorDocumentItem,
   fetchDoctorSuggestions,
   fetchSlugAvailability,
 } from "./client";
@@ -489,6 +492,17 @@ export function useDisconnectGoogle() {
 }
 
 /**
+ * Hook to query doctor verification documents
+ */
+export function useDoctorDocuments() {
+  return useQuery<DoctorDocumentItem[]>({
+    queryKey: doctorKeys.documents(),
+    queryFn: fetchDoctorDocuments,
+    staleTime: CACHE.privateFast.client.staleTime,
+  });
+}
+
+/**
  * Hook to upload doctor verification document
  */
 export function useUploadDoctorDocument() {
@@ -497,6 +511,22 @@ export function useUploadDoctorDocument() {
   return useMutation({
     mutationFn: (formData: FormData) => uploadDoctorDocument(formData),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: doctorKeys.documents() });
+      queryClient.invalidateQueries({ queryKey: doctorKeys.me() });
+    },
+  });
+}
+
+/**
+ * Hook to delete a doctor verification document
+ */
+export function useDeleteDoctorDocument() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => deleteDoctorDocument(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: doctorKeys.documents() });
       queryClient.invalidateQueries({ queryKey: doctorKeys.me() });
     },
   });

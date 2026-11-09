@@ -220,6 +220,23 @@ export function connectGoogle(
   });
 }
 
+export interface DoctorDocumentItem {
+  id: string;
+  doctorId: string;
+  docType: "LICENSE" | "DEGREE_CERTIFICATE" | "NATIONAL_ID" | "OTHER";
+  fileUrl: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  uploadedAt: string;
+}
+
 export function uploadDoctorDocument(formData: FormData) {
   return http.post<{ message?: string }>("/doctors/me/documents", formData);
+}
+
+export function fetchDoctorDocuments(): Promise<DoctorDocumentItem[]> {
+  return http.get<DoctorDocumentItem[]>("/doctors/me/documents");
+}
+
+export function deleteDoctorDocument(id: string): Promise<{ message?: string }> {
+  return http.delete<{ message?: string }>(`/doctors/me/documents/${id}`);
 }

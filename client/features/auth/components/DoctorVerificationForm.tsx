@@ -2,10 +2,14 @@
 
 import React, { useState, useRef } from "react";
 import Link from "next/link";
-import { Check, UploadCloud, ChevronRight, X, Loader2 } from "lucide-react";
+import { Check, UploadCloud, ChevronRight, X, Loader2, ExternalLink, FileText } from "lucide-react";
 import BrandLogo from "@/components/common/BrandLogo";
 import { Button } from "@/components/ui/button";
-import { useUploadDoctorDocument } from "@/features/doctors/api/queries";
+import {
+  useUploadDoctorDocument,
+  useDoctorDocuments,
+  useDeleteDoctorDocument,
+} from "@/features/doctors/api/queries";
 import { toast } from "react-toastify";
 import { compressImageIfNeeded } from "@/lib/utils/image-compression";
 
@@ -49,13 +53,13 @@ const REQUIRED_DOCUMENTS: DocumentRequirement[] = [
 ];
 
 export const DoctorVerificationForm: React.FC = () => {
-  const [uploadedDocs, setUploadedDocs] = useState<
-    Record<string, { name: string; size: string }>
-  >({});
   const [activeUploadType, setActiveUploadType] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const { data: serverDocs, isLoading: isDocsLoading } = useDoctorDocuments();
   const uploadDocMutation = useUploadDoctorDocument();
+  const deleteDocMutation = useDeleteDoctorDocument();
+
   const isPending = uploadDocMutation.isPending;
 
   const triggerFileSelect = (docType: string) => {
@@ -120,14 +124,6 @@ export const DoctorVerificationForm: React.FC = () => {
     try {
       await uploadDocMutation.mutateAsync(formData);
       toast.success("Verification document uploaded successfully!");
-
-      setUploadedDocs((prev) => ({
-        ...prev,
-        [activeUploadType]: {
-          name: file.name,
-          size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-        },
-      }));
     } catch (err: any) {
       const serverMsg =
         err?.status === 413
@@ -142,19 +138,23 @@ export const DoctorVerificationForm: React.FC = () => {
     }
   };
 
-  const removeDoc = (docType: string) => {
-    setUploadedDocs((prev) => {
-      const next = { ...prev };
-      delete next[docType];
-      return next;
-    });
+  const handleDeleteDocument = async (id: string, title: string) => {
+    try {
+      await deleteDocMutation.mutateAsync(id);
+      toast.success(`${title} removed successfully`);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to remove document");
+    }
   };
 
   const requiredCount = REQUIRED_DOCUMENTS.filter(
     (d) => d.badge === "Required"
   ).length;
+
   const uploadedRequiredCount = REQUIRED_DOCUMENTS.filter(
-    (d) => d.badge === "Required" && uploadedDocs[d.type]
+    (d) =>
+      d.badge === "Required" &&
+      Boolean((serverDocs || []).find((doc) => doc.docType === d.type))
   ).length;
 
   return (
@@ -200,13 +200,14 @@ export const DoctorVerificationForm: React.FC = () => {
           {/* Document Upload Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-6">
             {REQUIRED_DOCUMENTS.map((doc) => {
-              const uploadedFile = uploadedDocs[doc.type];
+              const serverDoc = (serverDocs || []).find((d) => d.docType === doc.type);
               const isUploadingThis = isPending && activeUploadType === doc.type;
+              const isDeletingThis = deleteDocMutation.isPending && deleteDocMutation.variables === serverDoc?.id;
 
               return (
                 <div
                   key={doc.type}
-                  className="rounded-xl border border-border bg-card p-3.5 sm:p-4 flex flex-col justify-between gap-3.5 transition-all hover:border-primary/40"
+                  className="rounded-xl border border-border bg-card p-3.5 sm:p-4 flex flex-col justify-between gap-3.5 transition-all hover:border-primary/40 shadow-2xs"
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-start justify-between gap-2">
@@ -239,31 +240,51 @@ export const DoctorVerificationForm: React.FC = () => {
                     </div>
                   </div>
 
-                  {uploadedFile ? (
-                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-foreground">
-                      <div className="flex items-center gap-2 truncate min-w-0 pr-2">
-                        <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0 stroke-[2.5]" />
-                        <span className="font-medium truncate text-foreground">
-                          {uploadedFile.name}
-                        </span>
-                        <span className="text-muted-foreground shrink-0 text-[11px]">
-                          ({uploadedFile.size})
-                        </span>
+                  {serverDoc ? (
+                    <div className="flex flex-col gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-xs text-foreground">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 truncate min-w-0 pr-1">
+                          <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0 stroke-[2.5]" />
+                          <span className="font-semibold truncate text-foreground text-xs">
+                            {doc.title}
+                          </span>
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 shrink-0">
+                            {serverDoc.status === "APPROVED" ? "Verified" : serverDoc.status === "REJECTED" ? "Rejected" : "Uploaded"}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={deleteDocMutation.isPending}
+                          onClick={() => handleDeleteDocument(serverDoc.id, doc.title)}
+                          className="text-muted-foreground hover:text-destructive p-1 rounded-md hover:bg-destructive/10 transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+                          aria-label={`Remove ${doc.title}`}
+                          title="Delete document"
+                        >
+                          {isDeletingThis ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin text-destructive" />
+                          ) : (
+                            <X className="h-4 w-4" />
+                          )}
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => removeDoc(doc.type)}
-                        className="text-muted-foreground hover:text-foreground p-0.5 rounded transition-colors shrink-0 cursor-pointer"
-                        aria-label={`Remove ${doc.title}`}
-                        title="Remove file"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
+
+                      <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1.5 border-t border-emerald-500/15">
+                        <span>Uploaded {new Date(serverDoc.uploadedAt).toLocaleDateString()}</span>
+                        <a
+                          href={serverDoc.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+                        >
+                          <span>View document</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
                     </div>
                   ) : (
                     <button
                       type="button"
-                      disabled={isPending}
+                      disabled={isPending || isDocsLoading}
                       onClick={() => triggerFileSelect(doc.type)}
                       className="w-full py-2.5 px-3 rounded-lg border border-dashed border-border hover:border-primary hover:bg-muted/40 text-secondary-text hover:text-primary text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
                     >
@@ -299,11 +320,20 @@ export const DoctorVerificationForm: React.FC = () => {
               disabled={uploadedRequiredCount < requiredCount}
               className={`w-full sm:w-auto h-10 px-6 font-semibold text-sm rounded-xl transition-all shadow-xs ${
                 uploadedRequiredCount >= requiredCount
-                  ? "bg-primary hover:bg-primary-dark text-white active:scale-[0.99]"
+                  ? "bg-primary hover:bg-primary-dark text-white active:scale-[0.99] cursor-pointer"
                   : "bg-muted text-muted-foreground cursor-not-allowed border border-border"
               }`}
             >
-              <Link href="/doctor/dashboard">Submit for verification</Link>
+              <Link
+                href="/doctor/dashboard"
+                onClick={() => {
+                  if (uploadedRequiredCount >= requiredCount) {
+                    toast.success("Credentials submitted for verification! Your clinical dashboard is being activated.");
+                  }
+                }}
+              >
+                Submit for verification
+              </Link>
             </Button>
           </div>
         </div>
