@@ -248,6 +248,13 @@ export class DoctorRepository {
     return this.prisma.user.update({ where: { id: userId }, data });
   }
 
+  async updateAvailabilityVisibility(profileId: string, isVisible: boolean) {
+    return this.prisma.doctorProfile.update({
+      where: { id: profileId },
+      data: { isAvailabilityVisible: isVisible },
+    });
+  }
+
   // -- Profile update (transaction) ------------------------------------------
 
   async updateProfileInTx(

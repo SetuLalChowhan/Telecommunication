@@ -144,7 +144,7 @@ export const ResetPasswordForm: React.FC = () => {
 
         <div className="flex flex-col gap-2 sm:gap-2.5">
           <Label htmlFor="newPassword" className="text-sm sm:text-base font-semibold text-foreground">
-            New password
+            New password <span className="text-destructive">*</span>
           </Label>
           <div className="relative">
             <Input
@@ -177,7 +177,7 @@ export const ResetPasswordForm: React.FC = () => {
 
         <div className="flex flex-col gap-2 sm:gap-2.5">
           <Label htmlFor="confirmPassword" className="text-sm sm:text-base font-semibold text-foreground">
-            Confirm password
+            Confirm password <span className="text-destructive">*</span>
           </Label>
           <div className="relative">
             <Input

@@ -35,6 +35,7 @@ export const BOOKING_INCLUDE = {
   },
   reports: true,
   review: true,
+  payment: true,
 } as const;
 
 @Injectable()
@@ -118,10 +119,12 @@ export class AppointmentsRepository {
     doctorId: string,
     slotStart: Date,
     slotEnd: Date,
+    excludeBookingId?: string,
   ) {
     return tx.booking.findFirst({
       where: {
         doctorId,
+        id: excludeBookingId ? { not: excludeBookingId } : undefined,
         status: { not: BookingStatus.CANCELLED },
         OR: [
           { slotStart: { lte: slotStart }, slotEnd: { gt: slotStart } },
@@ -139,8 +142,13 @@ export class AppointmentsRepository {
     slotStart: Date,
     slotEnd: Date,
     notes?: string,
+    paymentData?: {
+      amount: number;
+      paymentMethod?: string;
+      transactionId?: string;
+    },
   ) {
-    return tx.booking.create({
+    const booking = await tx.booking.create({
       data: {
         doctorId,
         patientId,
@@ -149,6 +157,85 @@ export class AppointmentsRepository {
         notes,
         status: BookingStatus.PENDING,
       },
+    });
+
+    if (paymentData) {
+      await tx.payment.create({
+        data: {
+          bookingId: booking.id,
+          amount: paymentData.amount,
+          currency: 'BDT',
+          status: 'PAID',
+          provider: paymentData.paymentMethod || 'SIMULATED',
+          transactionId:
+            paymentData.transactionId ||
+            `TXN-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
+          paidAt: new Date(),
+        },
+      });
+    }
+
+    return tx.booking.findUnique({
+      where: { id: booking.id },
+      include: BOOKING_INCLUDE,
+    });
+  }
+
+  async rescheduleBookingInTx(
+    tx: any,
+    bookingId: string,
+    newSlotStart: Date,
+    newSlotEnd: Date,
+  ) {
+    const current = await tx.booking.findUnique({
+      where: { id: bookingId },
+    });
+    if (!current) return null;
+
+    return tx.booking.update({
+      where: { id: bookingId },
+      data: {
+        originalSlotStart: current.originalSlotStart || current.slotStart,
+        originalSlotEnd: current.originalSlotEnd || current.slotEnd,
+        slotStart: newSlotStart,
+        slotEnd: newSlotEnd,
+        isRescheduled: true,
+        rescheduledAt: new Date(),
+        status: BookingStatus.RESCHEDULED,
+      },
+      include: BOOKING_INCLUDE,
+    });
+  }
+
+  async cancelBookingInTx(
+    tx: any,
+    bookingId: string,
+    cancelledBy: string,
+    refundStatus?: 'NONE' | 'REFUND_PENDING' | 'REFUND_INITIATED' | 'REFUNDED',
+  ) {
+    const booking = await tx.booking.update({
+      where: { id: bookingId },
+      data: {
+        status: BookingStatus.CANCELLED,
+        cancelledAt: new Date(),
+        cancelledBy,
+      },
+      include: BOOKING_INCLUDE,
+    });
+
+    if (refundStatus && booking.payment) {
+      await tx.payment.update({
+        where: { bookingId },
+        data: {
+          refundStatus,
+          refundReason: `Booking cancelled by ${cancelledBy.toLowerCase()}`,
+          refundedAt: new Date(),
+        },
+      });
+    }
+
+    return tx.booking.findUnique({
+      where: { id: bookingId },
       include: BOOKING_INCLUDE,
     });
   }
@@ -189,7 +276,7 @@ export class AppointmentsRepository {
     });
   }
 
-  async updateBooking(id: string, data: { status: BookingStatus; meetLink?: string | null; googleEventId?: string | null }) {
+  async updateBooking(id: string, data: any) {
     return this.prisma.booking.update({
       where: { id },
       data,

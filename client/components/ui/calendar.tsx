@@ -8,6 +8,7 @@ export interface CalendarProps {
   selected?: Date;
   onSelect?: (date: Date) => void;
   minDate?: Date;
+  isDateDisabled?: (date: Date) => boolean;
   className?: string;
 }
 
@@ -15,6 +16,7 @@ export const Calendar: React.FC<CalendarProps> = ({
   selected,
   onSelect,
   minDate = new Date(),
+  isDateDisabled,
   className,
 }) => {
   const [currentMonth, setCurrentMonth] = React.useState<Date>(
@@ -98,6 +100,8 @@ export const Calendar: React.FC<CalendarProps> = ({
           dayDate.setHours(0, 0, 0, 0);
 
           const isPast = dayDate < normalizedMinDate;
+          const isCustomDisabled = isDateDisabled ? isDateDisabled(dayDate) : false;
+          const isDisabled = isPast || isCustomDisabled;
           const isSelected =
             selected &&
             selected.getFullYear() === dayDate.getFullYear() &&
@@ -111,14 +115,14 @@ export const Calendar: React.FC<CalendarProps> = ({
             <button
               key={`day-${dayNum}`}
               type="button"
-              disabled={isPast}
+              disabled={isDisabled}
               onClick={() => onSelect?.(dayDate)}
               className={cn(
                 "h-7 w-7 rounded-lg text-xs font-medium flex items-center justify-center transition-all cursor-pointer",
-                isPast && "text-muted-foreground/40 cursor-not-allowed pointer-events-none",
-                !isPast && !isSelected && "hover:bg-primary/10 hover:text-primary text-foreground",
+                isDisabled && "text-muted-foreground/30 cursor-not-allowed pointer-events-none bg-muted/20",
+                !isDisabled && !isSelected && "hover:bg-primary/10 hover:text-primary text-foreground",
                 isSelected && "bg-primary text-white font-bold shadow-xs",
-                isToday && !isSelected && "border border-primary/40 font-bold text-primary"
+                isToday && !isSelected && !isDisabled && "border border-primary/40 font-bold text-primary"
               )}
             >
               {dayNum}

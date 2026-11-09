@@ -24,6 +24,9 @@ import {
   Eye,
   Download,
   Plus,
+  Star,
+  RefreshCw,
+  CreditCard,
 } from "lucide-react";
 import { DashboardAppointment } from "@/features/appointments/types";
 import { MedicalReport } from "@/features/medical-reports/types";
@@ -40,6 +43,8 @@ interface AppointmentDetailsDialogProps {
   onCancelAppointment?: (id: string) => void;
   onConfirmAppointment?: (id: string) => void;
   onCompleteAppointment?: (id: string) => void;
+  onRescheduleAppointment?: (appointment: DashboardAppointment) => void;
+  onRateAppointment?: (appointment: DashboardAppointment) => void;
   isDoctorView?: boolean;
   isCancelling?: boolean;
   isCompleting?: boolean;
@@ -49,10 +54,12 @@ interface AppointmentDetailsDialogProps {
 const statusChip: Record<string, string> = {
   CONFIRMED:
     "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  RESCHEDULED:
+    "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400",
   PENDING:
     "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400",
-  COMPLETED: "border-border bg-muted text-muted-foreground",
-  CANCELLED: "border-border bg-muted text-muted-foreground",
+  COMPLETED: "border-emerald-500/20 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400",
+  CANCELLED: "border-destructive/30 bg-destructive/10 text-destructive",
 };
 
 export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> = ({
@@ -62,6 +69,8 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
   onCancelAppointment,
   onConfirmAppointment,
   onCompleteAppointment,
+  onRescheduleAppointment,
+  onRateAppointment,
   isDoctorView = false,
   isCancelling = false,
   isCompleting = false,
@@ -178,6 +187,37 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
               </p>
             </div>
           </div>
+
+          {/* Rescheduled Notice */}
+          {appointment.status === "RESCHEDULED" && (
+            <div className="flex items-start gap-2.5 rounded-md border border-blue-500/20 bg-blue-500/5 p-2.5 text-xs">
+              <RefreshCw className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <p className="font-semibold text-blue-700 dark:text-blue-300">
+                  Rescheduled Appointment
+                </p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  This consultation has been moved to a new time slot. All consultation details have been updated.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Cancelled & Refund Notice */}
+          {appointment.status === "CANCELLED" && (
+            <div className="flex items-start gap-2.5 rounded-md border border-destructive/20 bg-destructive/5 p-2.5 text-xs">
+              <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <p className="font-semibold text-destructive">
+                  Appointment Cancelled
+                </p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  This appointment has been cancelled and the time slot was released.
+                  {appointment.fee > 0 && " Payment refund has been recorded as Refund Pending / Initiated."}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Reported symptoms */}
           {appointment.symptoms && (
@@ -359,6 +399,37 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
           </div>
 
           <div className="flex items-center gap-2">
+            {!isDoctorView && appointment.status === "COMPLETED" && onRateAppointment && (
+              <Button
+                size="sm"
+                onClick={() => {
+                  onOpenChange(false);
+                  onRateAppointment(appointment);
+                }}
+                className="h-8 rounded-md px-3 text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white gap-1.5 shadow-xs cursor-pointer"
+              >
+                <Star className="h-3.5 w-3.5 fill-amber-300" />
+                <span>Rate Doctor</span>
+              </Button>
+            )}
+
+            {isDoctorView &&
+              (appointment.status === "PENDING" || appointment.status === "CONFIRMED" || appointment.status === "RESCHEDULED") &&
+              onRescheduleAppointment && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    onOpenChange(false);
+                    onRescheduleAppointment(appointment);
+                  }}
+                  className="h-8 rounded-md px-3 text-xs font-semibold gap-1.5 text-primary border-primary/30 hover:bg-primary/10 cursor-pointer"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  <span>Reschedule</span>
+                </Button>
+              )}
+
             <Button
               variant="outline"
               size="sm"

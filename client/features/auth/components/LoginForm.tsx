@@ -85,7 +85,7 @@ export const LoginForm: React.FC = () => {
 
         <div className="flex flex-col gap-2 sm:gap-2.5">
           <Label htmlFor="email" className="text-sm sm:text-base font-semibold text-foreground">
-            Email address
+            Email address <span className="text-destructive">*</span>
           </Label>
           <div>
             <Input
@@ -109,7 +109,7 @@ export const LoginForm: React.FC = () => {
         <div className="flex flex-col gap-2 sm:gap-2.5">
           <div className="flex items-center justify-between">
             <Label htmlFor="password" className="text-sm sm:text-base font-semibold text-foreground">
-              Password
+              Password <span className="text-destructive">*</span>
             </Label>
             <Link
               href="/forgot-password"

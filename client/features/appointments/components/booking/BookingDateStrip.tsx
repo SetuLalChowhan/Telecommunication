@@ -21,6 +21,7 @@ interface BookingDateStripProps {
   onSelectDate: (date: Date) => void;
   isCalendarOpen: boolean;
   onCalendarOpenChange: (open: boolean) => void;
+  isDateDisabled?: (date: Date) => boolean;
 }
 
 export const BookingDateStrip: React.FC<BookingDateStripProps> = ({
@@ -29,6 +30,7 @@ export const BookingDateStrip: React.FC<BookingDateStripProps> = ({
   onSelectDate,
   isCalendarOpen,
   onCalendarOpenChange,
+  isDateDisabled,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -95,6 +97,7 @@ export const BookingDateStrip: React.FC<BookingDateStripProps> = ({
                   }
                 }}
                 minDate={minDate}
+                isDateDisabled={isDateDisabled}
               />
             </PopoverContent>
           </Popover>
@@ -107,24 +110,32 @@ export const BookingDateStrip: React.FC<BookingDateStripProps> = ({
       >
         {days.map((item) => {
           const isSelected = item.dateString === selectedDateStr;
+          const isDisabled = isDateDisabled ? isDateDisabled(item.date) : false;
+
           return (
             <button
               key={item.dateString}
               type="button"
+              disabled={isDisabled}
               onClick={() => onSelectDate(item.date)}
-              className={`flex flex-col items-center justify-center min-w-[62px] py-2.5 px-2 rounded-lg border text-xs transition-colors snap-start shrink-0 ${
-                isSelected
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-card hover:bg-muted/60 border-border text-foreground"
+              className={`relative flex flex-col items-center justify-center min-w-[62px] py-2.5 px-2 rounded-lg border text-xs transition-colors snap-start shrink-0 ${
+                isDisabled
+                  ? "bg-muted/30 border-dashed border-border/60 text-muted-foreground/40 cursor-not-allowed pointer-events-none opacity-50"
+                  : isSelected
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-card hover:bg-muted/60 border-border text-foreground hover:border-primary/50 cursor-pointer"
               }`}
             >
-              <span className={`text-[10px] font-semibold ${isSelected ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+              <span className={`text-[10px] font-semibold ${isSelected ? "text-primary-foreground/80" : isDisabled ? "text-muted-foreground/40" : "text-muted-foreground"}`}>
                 {item.isToday ? "Today" : item.dayName}
               </span>
               <span className="text-base font-semibold my-0.5">{item.dayNum}</span>
-              <span className={`text-[10px] ${isSelected ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+              <span className={`text-[10px] ${isSelected ? "text-primary-foreground/80" : isDisabled ? "text-muted-foreground/40" : "text-muted-foreground"}`}>
                 {item.monthName}
               </span>
+              {!isDisabled && !isSelected && (
+                <span className="absolute bottom-1 h-1 w-1 rounded-full bg-emerald-500" />
+              )}
             </button>
           );
         })}

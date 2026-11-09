@@ -13,6 +13,7 @@ import { AppointmentsService } from './appointments.service.js';
 import { CreateBookingDto } from './dto/create-booking.dto.js';
 import { SlotQueryDto } from './dto/slot-query.dto.js';
 import { BookingQueryDto } from './dto/booking-query.dto.js';
+import { RescheduleBookingDto } from './dto/reschedule-booking.dto.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { CurrentUser } from '../common/decorator/current-user.decorator.js';
@@ -105,5 +106,18 @@ export class AppointmentsController {
     @CurrentUser('role') role: string,
   ) {
     return this.appointmentsService.completeBooking(id, userId, role);
+  }
+
+  @Patch(':id/reschedule')
+  @Roles('DOCTOR', 'ADMIN')
+  @UseGuards(RolesGuard)
+  @ResponseMessage('Booking rescheduled successfully')
+  rescheduleBooking(
+    @Param('id') id: string,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: string,
+    @Body() dto: RescheduleBookingDto,
+  ) {
+    return this.appointmentsService.rescheduleBooking(id, userId, role, dto);
   }
 }

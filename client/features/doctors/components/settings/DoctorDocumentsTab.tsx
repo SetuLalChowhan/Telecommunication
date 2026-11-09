@@ -134,7 +134,9 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
         <form onSubmit={handleUpload} className="pt-4 border-t border-border/60 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-foreground">Document Type</Label>
+              <Label className="text-xs font-semibold text-foreground">
+                Document Type <span className="text-destructive">*</span>
+              </Label>
               <select
                 value={docType}
                 onChange={(e) => setDocType(e.target.value)}
@@ -145,16 +147,35 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
                 <option value="NATIONAL_ID">National ID / Passport</option>
                 <option value="OTHER">Other Credentials / Certifications</option>
               </select>
+              <p className="text-[11px] text-muted-foreground">
+                {docType === "LICENSE" && "Official BMDC permanent or provisional registration certificate."}
+                {docType === "DEGREE_CERTIFICATE" && "MBBS / BDS graduation certificate or postgraduate medical degree diploma."}
+                {docType === "NATIONAL_ID" && "Government-issued Smart NID (both sides) or passport info page."}
+                {docType === "OTHER" && "Specialized training, fellowship, or hospital appointment letter."}
+              </p>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-foreground">Document File (PDF/JPG/PNG)</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold text-foreground">
+                  Document File <span className="text-destructive">*</span>
+                </Label>
+                <span className="text-[10px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
+                  PDF, JPG, PNG • Max 4 MB
+                </span>
+              </div>
               <Input
                 ref={fileRef}
                 type="file"
-                accept=".pdf,image/*"
+                accept=".pdf,.jpg,.jpeg,.png"
                 onChange={(e) => setDocFile(e.target.files?.[0] || null)}
                 className="h-10 rounded-xl text-sm file:mr-3 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:bg-primary/10 file:text-primary"
               />
+              {docFile && (
+                <p className="text-[11px] text-primary font-medium flex items-center gap-1.5 pt-0.5">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span>Selected: {docFile.name} ({(docFile.size / (1024 * 1024)).toFixed(2)} MB)</span>
+                </p>
+              )}
             </div>
           </div>
 

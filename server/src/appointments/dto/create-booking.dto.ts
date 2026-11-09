@@ -22,4 +22,12 @@ export class CreateBookingDto {
   @IsString()
   @MaxLength(20, { message: 'Phone must be under 20 characters' })
   phone?: string;
+
+  @IsOptional()
+  @IsString()
+  paymentMethod?: string;
+
+  @IsOptional()
+  @IsString()
+  transactionId?: string;
 }

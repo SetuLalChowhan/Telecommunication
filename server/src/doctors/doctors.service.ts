@@ -118,7 +118,13 @@ export class DoctorService {
       todaySchedule,
       activeDaysCount: activeAvailabilityDaysCount,
       verified: profile.verified,
+      isAvailabilityVisible: (profile as any).isAvailabilityVisible ?? true,
     };
+  }
+
+  async toggleAvailabilityVisibility(userId: string, isVisible: boolean) {
+    const profile = await this.getOwnProfileOrThrow(userId);
+    return this.repo.updateAvailabilityVisibility(profile.id, isVisible);
   }
 
   // -- Profile ---------------------------------------------------------------

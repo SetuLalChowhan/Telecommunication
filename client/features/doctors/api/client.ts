@@ -138,6 +138,16 @@ export function cancelDoctorBooking(
   );
 }
 
+export function rescheduleDoctorBooking(
+  bookingId: string,
+  data: { newSlotStart: string; newSlotEnd: string; reason?: string }
+): Promise<DoctorDashboardBooking> {
+  return http.patch<DoctorDashboardBooking>(
+    `/appointments/${bookingId}/reschedule`,
+    data
+  );
+}
+
 export function fetchDoctorScheduleSlots(): Promise<DoctorAvailability[]> {
   return http.get<DoctorAvailability[]>("/doctors/me/availability");
 }
@@ -160,6 +170,10 @@ export function updateDoctorScheduleSlot(
 
 export function deleteDoctorScheduleSlot(slotId: string): Promise<void> {
   return http.delete<void>(`/doctors/me/availability/${slotId}`);
+}
+
+export function toggleAvailabilityVisibility(isVisible: boolean): Promise<DoctorProfile> {
+  return http.patch<DoctorProfile>("/doctors/me/availability-visibility", { isVisible });
 }
 
 export function fetchDoctorDaysOff(): Promise<DoctorDayOff[]> {
