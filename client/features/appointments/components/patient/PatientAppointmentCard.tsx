@@ -16,6 +16,7 @@ export const PatientAppointmentCard: React.FC<PatientAppointmentCardProps> = ({
   onSelect,
 }) => {
   const isConfirmed = appointment.status === "CONFIRMED";
+  const isRescheduled = appointment.status === "RESCHEDULED";
   const isPending = appointment.status === "PENDING";
   const isCompleted = appointment.status === "COMPLETED";
 
@@ -50,6 +51,8 @@ export const PatientAppointmentCard: React.FC<PatientAppointmentCardProps> = ({
               className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                 isConfirmed
                   ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                  : isRescheduled
+                  ? "bg-indigo-500/10 text-indigo-600 border-indigo-500/20"
                   : isPending
                   ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
                   : isCompleted
@@ -80,7 +83,7 @@ export const PatientAppointmentCard: React.FC<PatientAppointmentCardProps> = ({
         className="flex items-center gap-2 self-end sm:self-center"
         onClick={(e) => e.stopPropagation()}
       >
-        {isConfirmed && appointment.meetLink && (
+        {(isConfirmed || isRescheduled) && appointment.meetLink && (
           <a href={appointment.meetLink} target="_blank" rel="noopener noreferrer">
             <Button
               size="sm"

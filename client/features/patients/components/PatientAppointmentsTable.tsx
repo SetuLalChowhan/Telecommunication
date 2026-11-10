@@ -26,6 +26,8 @@ interface PatientAppointmentsTableProps {
 const statusChip: Record<string, string> = {
   CONFIRMED:
     "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  RESCHEDULED:
+    "border-indigo-500/30 bg-indigo-500/10 text-indigo-700 dark:text-indigo-400",
   PENDING:
     "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400",
   COMPLETED: "border-border bg-muted text-muted-foreground",

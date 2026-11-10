@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Calendar,
   Clock,
@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   RefreshCw,
   User,
+  Bell,
 } from "lucide-react";
 import {
   Dialog,
@@ -24,7 +25,12 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAvailableSlots, AvailableSlotItem } from "@/features/patients";
-import { useRescheduleDoctorBooking } from "@/features/doctors/api/queries";
+import {
+  useRescheduleDoctorBooking,
+  useDoctorDetails,
+  useMyDoctorSchedule,
+  useMyDoctorDaysOff,
+} from "@/features/doctors/api/queries";
 import { toDateInputValue, formatTime, formatDate, buildBookingDateStrip } from "@/lib/time";
 import { BookingDateStrip } from "@/features/appointments/components/booking/BookingDateStrip";
 import { BookingSlotGrid } from "@/features/appointments/components/booking/BookingSlotGrid";
@@ -46,11 +52,67 @@ export const DoctorRescheduleDialog: React.FC<DoctorRescheduleDialogProps> = ({
 }) => {
   const days = useMemo(() => buildBookingDateStrip(14), []);
 
-  const [selectedDateObj, setSelectedDateObj] = useState<Date>(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    return d;
-  });
+  const { data: doctorProfile } = useDoctorDetails(doctorId);
+  const { data: mySchedule } = useMyDoctorSchedule();
+  const { data: myDaysOff } = useMyDoctorDaysOff();
+
+  const DAY_NAMES = useMemo(
+    () => ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"],
+    []
+  );
+
+  const activeDaysSet = useMemo(() => {
+    const list =
+      mySchedule && mySchedule.length > 0
+        ? mySchedule
+        : doctorProfile?.availabilities || [];
+    return new Set(
+      list
+        .filter((a: any) => a.isActive !== false)
+        .map((a: any) => String(a.dayOfWeek).toUpperCase())
+    );
+  }, [mySchedule, doctorProfile?.availabilities]);
+
+  const daysOffSet = useMemo(() => {
+    const list =
+      myDaysOff && myDaysOff.length > 0
+        ? myDaysOff
+        : doctorProfile?.daysOff || [];
+    return new Set(
+      list.map((d: any) =>
+        typeof d.date === "string" ? d.date.slice(0, 10) : toDateInputValue(new Date(d.date))
+      )
+    );
+  }, [myDaysOff, doctorProfile?.daysOff]);
+
+  const isDateDisabled = useCallback(
+    (date: Date) => {
+      const dateStr = toDateInputValue(date);
+      if (daysOffSet.has(dateStr)) return true;
+      const dayName = DAY_NAMES[date.getDay()];
+      if (activeDaysSet.size > 0 && !activeDaysSet.has(dayName)) return true;
+      return false;
+    },
+    [daysOffSet, activeDaysSet, DAY_NAMES]
+  );
+
+  const firstAvailableDate = useMemo(() => {
+    const first = days.find((d) => !isDateDisabled(d.date));
+    return first?.date ?? days[0]?.date ?? new Date();
+  }, [days, isDateDisabled]);
+
+  const [selectedDateObj, setSelectedDateObj] = useState<Date>(firstAvailableDate);
+
+  // Sync date when dialog opens or when availability loads
+  useEffect(() => {
+    if (open) {
+      if (isDateDisabled(selectedDateObj)) {
+        setSelectedDateObj(firstAvailableDate);
+      }
+      setSelectedSlot(null);
+      setShowConfirm(false);
+    }
+  }, [open, firstAvailableDate, isDateDisabled]);
 
   const selectedDateStr = useMemo(
     () => toDateInputValue(selectedDateObj),
@@ -182,6 +244,7 @@ export const DoctorRescheduleDialog: React.FC<DoctorRescheduleDialogProps> = ({
                   onSelectDate={handleSelectDate}
                   isCalendarOpen={isCalendarOpen}
                   onCalendarOpenChange={setIsCalendarOpen}
+                  isDateDisabled={isDateDisabled}
                 />
               </div>
 
