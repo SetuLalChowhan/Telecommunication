@@ -111,22 +111,35 @@ export class GoogleService {
       );
     }
 
-    // 1. State verification for CSRF prevention
-    if (!state || state.trim() === '') {
-      throw new BadRequestException('Missing OAuth state parameter');
-    }
+    // 1. State verification for CSRF prevention (required for redirect-based OAuth flow)
+    const isPopupFlow = redirectUri === 'postmessage';
+    if (!isPopupFlow) {
+      if (!state || state.trim() === '') {
+        throw new BadRequestException('Missing OAuth state parameter');
+      }
 
-    const stateRecord = await this.repo.findOAuthState(state);
-    if (
-      !stateRecord ||
-      stateRecord.value !== userId ||
-      stateRecord.expiresAt <= new Date()
-    ) {
-      throw new BadRequestException('Invalid or expired OAuth state');
-    }
+      const stateRecord = await this.repo.findOAuthState(state);
+      if (
+        !stateRecord ||
+        stateRecord.value !== userId ||
+        stateRecord.expiresAt <= new Date()
+      ) {
+        throw new BadRequestException('Invalid or expired OAuth state');
+      }
 
-    // Consume the one-time state
-    await this.repo.consumeOAuthState(stateRecord.id);
+      // Consume the one-time state
+      await this.repo.consumeOAuthState(stateRecord.id);
+    } else if (state && state.trim() !== '') {
+      const stateRecord = await this.repo.findOAuthState(state);
+      if (
+        !stateRecord ||
+        stateRecord.value !== userId ||
+        stateRecord.expiresAt <= new Date()
+      ) {
+        throw new BadRequestException('Invalid or expired OAuth state');
+      }
+      await this.repo.consumeOAuthState(stateRecord.id);
+    }
 
     const oauth2Client = this.getOAuth2Client(redirectUri);
 

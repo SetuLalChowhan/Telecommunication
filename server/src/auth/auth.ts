@@ -66,6 +66,7 @@ export const auth = betterAuth({
     const origins = parseTrustedOrigins(process.env.TRUSTED_ORIGINS);
     const defaults = [
       'http://localhost:3000',
+      'http://localhost:3001',
       'http://localhost:4000',
       'http://localhost:5173',
       'http://localhost:5000',
