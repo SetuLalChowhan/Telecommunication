@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     process.env.NEXT_PUBLIC_BETTER_AUTH_URL ||
     process.env.NEXT_PRIVATE_API_URL ||
     process.env.NEXT_PRIVATE_BETTER_AUTH_URL ||
-    "http://localhost:5000";
+    "http://localhost:4000";
 
   try {
     const res = await fetch(

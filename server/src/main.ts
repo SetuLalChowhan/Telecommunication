@@ -61,6 +61,7 @@ async function bootstrap() {
   );
   const defaultOrigins = [
     'http://localhost:3000',
+    'http://localhost:3001',
     'http://localhost:4000',
     'http://localhost:5173',
     'http://localhost:5000',
@@ -136,7 +137,7 @@ async function bootstrap() {
   // Graceful shutdown
   app.enableShutdownHooks();
 
-  const port = config.get<number>('PORT') ?? 3000;
+  const port = config.get<number>('PORT') ?? 4000;
 
   await app.listen(port);
 

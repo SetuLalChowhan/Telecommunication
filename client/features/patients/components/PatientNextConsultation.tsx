@@ -16,6 +16,7 @@ interface PatientNextConsultationProps {
 
 const statusChip: Record<string, string> = {
   CONFIRMED: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  RESCHEDULED: "border-indigo-500/30 bg-indigo-500/10 text-indigo-700 dark:text-indigo-400",
   PENDING: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400",
   COMPLETED: "border-border bg-muted text-muted-foreground",
   CANCELLED: "border-border bg-muted text-muted-foreground",
@@ -69,7 +70,8 @@ export const PatientNextConsultation: React.FC<PatientNextConsultationProps> = (
   }
 
   const canJoin =
-    Boolean(appointment.meetLink) && appointment.status === "CONFIRMED";
+    Boolean(appointment.meetLink) &&
+    (appointment.status === "CONFIRMED" || appointment.status === "RESCHEDULED");
 
   return (
     <section className="panel overflow-hidden">
@@ -83,12 +85,14 @@ export const PatientNextConsultation: React.FC<PatientNextConsultationProps> = (
       <div className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <Avatar className="h-11 w-11 shrink-0">
-            <AvatarImage
-              src={appointment.doctorAvatar}
-              alt={appointment.doctorName}
-            />
+            {appointment.doctorAvatar && !appointment.doctorAvatar.includes("doctor-placeholder") && (
+              <AvatarImage
+                src={appointment.doctorAvatar}
+                alt={appointment.doctorName}
+              />
+            )}
             <AvatarFallback className="bg-muted text-xs font-semibold text-foreground">
-              {appointment.doctorName.slice(0, 2).toUpperCase()}
+              {appointment.doctorName.replace(/^Dr\.\s*/i, "").slice(0, 2).toUpperCase() || "DR"}
             </AvatarFallback>
           </Avatar>
 

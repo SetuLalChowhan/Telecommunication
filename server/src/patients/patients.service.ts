@@ -160,7 +160,7 @@ export class PatientsService {
         doctorSlug: doctor?.slug,
         doctorName,
         doctorSpecialty: primarySpecialty,
-        doctorAvatar: doctor?.user?.image || '/images/doctor-placeholder.jpg',
+        doctorAvatar: doctor?.user?.image || null,
         doctorHospital: doctor?.hospitalAffiliation || '',
         doctorDegrees,
         slotStart: b.slotStart.toISOString(),
@@ -194,7 +194,7 @@ export class PatientsService {
         rating: Number(doc.rating) || 5.0,
         fee: Number(doc.fee) || 0,
         experienceYears: doc.experienceYears || 0,
-        avatar: doc.user.image || '/images/doctor-placeholder.jpg',
+        avatar: doc.user.image || null,
       };
     });
 

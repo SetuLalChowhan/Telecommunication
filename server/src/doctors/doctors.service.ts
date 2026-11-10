@@ -414,12 +414,33 @@ export class DoctorService {
   ) {
     const profile = await this.getOwnProfileOrThrow(userId);
 
+    // Enforce 1 document per docType (maximum 4 types total)
+    const existingDocs = await this.repo.listDocuments(profile.id);
+    const existingDoc = existingDocs.find((d) => d.docType === docType);
+
+    if (!existingDoc && existingDocs.length >= 4) {
+      throw new BadRequestException(
+        'Maximum 4 verification documents allowed per doctor profile.',
+      );
+    }
+
     try {
       const uploadRes = await this.cloudinaryService.uploadFile(
         file,
         'telehealth/documents',
         { resourceType: 'auto' },
       );
+
+      // If a document for this specific type was previously uploaded, remove old file from Cloudinary
+      if (existingDoc?.fileUrl) {
+        await this.cloudinaryService
+          .deleteFile(existingDoc.fileUrl)
+          .catch((err) => {
+            this.logger.warn(
+              `Failed to delete previous document from Cloudinary: ${err?.message || err}`,
+            );
+          });
+      }
 
       return await this.repo.createDocument(profile.id, docType, uploadRes.secureUrl);
     } catch (error: any) {
@@ -445,6 +466,15 @@ export class DoctorService {
     const doc = await this.repo.findDocumentById(documentId);
     if (!doc || doc.doctorId !== profile.id) {
       throw new NotFoundException('Document not found or does not belong to you');
+    }
+    if (doc.fileUrl) {
+      await this.cloudinaryService
+        .deleteFile(doc.fileUrl)
+        .catch((err) => {
+          this.logger.warn(
+            `Failed to delete removed document from Cloudinary: ${err?.message || err}`,
+          );
+        });
     }
     return this.repo.deleteDocument(documentId);
   }

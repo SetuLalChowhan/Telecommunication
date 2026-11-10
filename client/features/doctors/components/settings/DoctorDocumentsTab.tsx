@@ -8,29 +8,50 @@ import {
   CheckCircle2,
   Loader2,
   ExternalLink,
-  Trash2,
+  AlertCircle,
+  FileCheck,
+  Clock,
+  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "react-toastify";
-import { uploadDoctorDocument, deleteDoctorDocument } from "@/features/doctors/api/client";
+import { uploadDoctorDocument } from "@/features/doctors/api/client";
 import { compressImageIfNeeded } from "@/lib/utils/image-compression";
 import type { DoctorDocument } from "@/features/doctors/types";
 
-const DOC_TYPE_OPTIONS = [
-  { value: "LICENSE", label: "Medical License (BMDC Registration)" },
-  { value: "DEGREE_CERTIFICATE", label: "Degree Certificate (MBBS / MD / Spec.)" },
-  { value: "NATIONAL_ID", label: "National ID / Passport" },
-  { value: "OTHER", label: "Other Credentials / Certifications" },
-];
+interface DocumentSlotDef {
+  type: "LICENSE" | "DEGREE_CERTIFICATE" | "NATIONAL_ID" | "OTHER";
+  title: string;
+  description: string;
+  required: boolean;
+}
 
-const DOC_TYPE_LABELS: Record<string, string> = {
-  LICENSE: "Medical License (BMDC Registration)",
-  DEGREE_CERTIFICATE: "Degree Certificate (MBBS / MD / Spec.)",
-  NATIONAL_ID: "National ID / Passport",
-  OTHER: "Other Credentials / Certifications",
-};
+const DOCUMENT_SLOTS: DocumentSlotDef[] = [
+  {
+    type: "LICENSE",
+    title: "Medical License (BMDC Registration)",
+    description: "Official certificate issued by Bangladesh Medical and Dental Council (BMDC).",
+    required: true,
+  },
+  {
+    type: "DEGREE_CERTIFICATE",
+    title: "Degree Certificate (MBBS / MD / Spec.)",
+    description: "Original MBBS graduation diploma or postgraduate specialist qualification.",
+    required: true,
+  },
+  {
+    type: "NATIONAL_ID",
+    title: "National ID / Passport",
+    description: "Government-issued National ID (NID) smart card or valid passport.",
+    required: true,
+  },
+  {
+    type: "OTHER",
+    title: "Other Credentials / Certifications",
+    description: "Fellowships, hospital appointment letters, or additional specialization diplomas.",
+    required: false,
+  },
+];
 
 interface DoctorDocumentsTabProps {
   documents: DoctorDocument[];
@@ -43,46 +64,71 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
   isVerified,
   onRefresh,
 }) => {
-  const [docType, setDocType] = useState("LICENSE");
-  const [docFile, setDocFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploadingType, setUploadingType] = useState<string | null>(null);
+  const [activeSlotType, setActiveSlotType] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!docFile) {
-      toast.error("Please select a document file to upload");
-      return;
+  // Map uploaded documents by docType
+  const docsByType = React.useMemo(() => {
+    const map = new Map<string, DoctorDocument>();
+    for (const doc of documents) {
+      const typeKey = (doc as any).docType || doc.type;
+      if (typeKey && !map.has(typeKey)) {
+        map.set(typeKey, doc);
+      }
     }
+    return map;
+  }, [documents]);
+
+  const uploadedCount = docsByType.size;
+
+  const handleTriggerUpload = (type: string) => {
+    setActiveSlotType(type);
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeSlotType) return;
 
     const allowedExtensions = [".pdf", ".jpg", ".jpeg", ".png"];
-    const ext = docFile.name.includes(".")
-      ? docFile.name.slice(docFile.name.lastIndexOf(".")).toLowerCase()
+    const ext = file.name.includes(".")
+      ? file.name.slice(file.name.lastIndexOf(".")).toLowerCase()
       : "";
-    if (!allowedExtensions.includes(ext) && !docFile.type.match(/^image\/(jpeg|png)|application\/pdf$/)) {
+    if (
+      !allowedExtensions.includes(ext) &&
+      !file.type.match(/^image\/(jpeg|png)|application\/pdf$/)
+    ) {
       toast.error("Invalid file format. Allowed formats: PDF, JPG, PNG.");
       return;
     }
 
-    const isPdf = docFile.type === "application/pdf" || ext === ".pdf";
-
-    // Enforce 4MB limit for PDFs on Vercel
-    if (isPdf && docFile.size > 4 * 1024 * 1024) {
+    const isPdf = file.type === "application/pdf" || ext === ".pdf";
+    if (isPdf && file.size > 4 * 1024 * 1024) {
       toast.error(
-        `PDF document is too large (${(docFile.size / (1024 * 1024)).toFixed(1)} MB). Server upload limit is 4MB. Please compress your PDF before uploading.`
+        `PDF document is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). Server upload limit is 4MB.`
       );
       return;
     }
 
-    setIsUploading(true);
-    try {
-      let uploadFile = docFile;
+    setSelectedFile(file);
+    executeUpload(activeSlotType, file);
+  };
 
-      // Automatically optimize images in browser so large photos shrink safely below 1MB
-      if (!isPdf && docFile.type.startsWith("image/")) {
+  const executeUpload = async (docType: string, file: File) => {
+    setUploadingType(docType);
+    const isPdf = file.type === "application/pdf" || file.name.endsWith(".pdf");
+
+    try {
+      let uploadFile = file;
+      if (!isPdf && file.type.startsWith("image/")) {
         try {
-          uploadFile = await compressImageIfNeeded(docFile);
+          uploadFile = await compressImageIfNeeded(file);
         } catch (e) {
           console.warn("Image compression skipped:", e);
         }
@@ -92,7 +138,6 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
         toast.error(
           `File is too large (${(uploadFile.size / (1024 * 1024)).toFixed(1)} MB). Maximum allowed upload size is 4MB.`
         );
-        setIsUploading(false);
         return;
       }
 
@@ -102,204 +147,200 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
 
       await uploadDoctorDocument(data);
 
+      const slot = DOCUMENT_SLOTS.find((s) => s.type === docType);
       toast.success(
-        `${DOC_TYPE_LABELS[docType] || "Document"} uploaded successfully (replaced previous version)`
+        `${slot?.title || "Document"} uploaded successfully (previous version replaced)`
       );
-      setDocFile(null);
-      if (fileRef.current) fileRef.current.value = "";
       onRefresh();
     } catch (err: any) {
       const errorMsg =
         err?.status === 413
-          ? "File is too large for the server (limit: 4MB). Please optimize the document and try again."
+          ? "File is too large for the server (limit: 4MB)."
           : err?.response?.data?.message || err?.message || "Failed to upload document";
       toast.error(typeof errorMsg === "string" ? errorMsg : JSON.stringify(errorMsg));
     } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleDelete = async (id: string, label: string) => {
-    setDeletingId(id);
-    try {
-      await deleteDoctorDocument(id);
-      toast.success(`${label} removed successfully`);
-      onRefresh();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to remove document");
-    } finally {
-      setDeletingId(null);
+      setUploadingType(null);
+      setActiveSlotType(null);
+      setSelectedFile(null);
     }
   };
 
   return (
-    <div className="space-y-4">
-      <div className="panel space-y-4 p-4">
-        <div className="flex items-center justify-between">
+    <div className="space-y-5">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.jpg,.jpeg,.png"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      {/* Header Panel */}
+      <div className="panel space-y-4 p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-              <ShieldCheck className="h-4 w-4" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <ShieldCheck className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-foreground">Practicing License & Verification</h3>
-              <p className="text-xs text-muted-foreground">
-                Upload your BMDC registration and medical degree certificates for official verification.
+              <h3 className="text-sm sm:text-base font-bold text-foreground">
+                Practicing License & Official Verification
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Upload your medical credentials across the 4 verified categories. Maximum 4 documents total.
               </p>
             </div>
           </div>
-          {isVerified && (
-            <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              Verified Practitioner
+
+          <div className="flex items-center gap-2 self-start sm:self-center">
+            {isVerified ? (
+              <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Verified Practitioner
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                <Clock className="h-3.5 w-3.5" />
+                Verification In Progress
+              </span>
+            )}
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-muted text-muted-foreground border border-border">
+              {uploadedCount} of 4 Complete
             </span>
-          )}
+          </div>
         </div>
 
-        <form onSubmit={handleUpload} className="space-y-4 border-t border-border pt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="docType" className="text-xs font-semibold text-foreground">
-                Document Type <span className="text-destructive">*</span>
-              </Label>
-              <select
-                id="docType"
-                value={docType}
-                onChange={(e) => setDocType(e.target.value)}
-                className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground text-xs sm:text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 cursor-pointer"
-              >
-                {DOC_TYPE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <p className="text-[11px] text-muted-foreground">
-                Uploading a new document will automatically replace any existing upload for this section (maximum 4 documents total).
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="docFile" className="text-xs font-semibold text-foreground">
-                  Document File <span className="text-destructive">*</span>
-                </Label>
-                <span className="text-[10px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
-                  PDF, JPG, PNG • Max 4 MB
-                </span>
-              </div>
-              <Input
-                ref={fileRef}
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) => setDocFile(e.target.files?.[0] || null)}
-                className="h-10 rounded-xl text-sm file:mr-3 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:bg-primary/10 file:text-primary"
-              />
-              {docFile && (
-                <p className="text-[11px] text-primary font-medium flex items-center gap-1.5 pt-0.5">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  <span>Selected: {docFile.name} ({(docFile.size / (1024 * 1024)).toFixed(2)} MB)</span>
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              disabled={isUploading || !docFile}
-              className="h-10 px-5 rounded-xl bg-primary hover:bg-primary-dark text-white font-semibold gap-2 shadow-sm"
-            >
-              {isUploading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <UploadCloud className="h-4 w-4" />
-              )}
-              <span>Upload Document</span>
-            </Button>
-          </div>
-        </form>
+        <p className="text-xs text-muted-foreground border-t border-border/80 pt-3 flex items-center gap-1.5">
+          <AlertCircle className="h-3.5 w-3.5 text-primary shrink-0" />
+          <span>
+            Uploading a new document for any category automatically replaces the previous version and removes the old file from secure storage.
+          </span>
+        </p>
       </div>
 
-      {documents.length > 0 && (
-        <div className="panel space-y-3 p-4">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-semibold text-foreground">Uploaded Documents</h4>
-            <span className="text-xs text-muted-foreground font-medium">
-              {documents.length} of 4 maximum
-            </span>
-          </div>
-          <div className="space-y-2.5">
-            {documents.map((doc) => {
-              const docTypeKey = (doc as any).docType || doc.type || "";
-              const docTitle = DOC_TYPE_LABELS[docTypeKey] || docTypeKey || "Medical Credential";
-              const isDeleting = deletingId === doc.id;
+      {/* 4 Fixed Document Category Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {DOCUMENT_SLOTS.map((slot) => {
+          const uploadedDoc = docsByType.get(slot.type);
+          const isSlotUploading = uploadingType === slot.type;
+          const status = uploadedDoc?.status;
 
-              return (
-                <div
-                  key={doc.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-card border border-border/80 text-xs shadow-xs"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <FileText className="h-4 w-4 shrink-0" />
+          return (
+            <div
+              key={slot.type}
+              className={`panel p-4 flex flex-col justify-between transition-all rounded-2xl border ${
+                uploadedDoc
+                  ? status === "APPROVED"
+                    ? "border-emerald-500/30 bg-card shadow-xs"
+                    : status === "REJECTED"
+                    ? "border-red-500/30 bg-card shadow-xs"
+                    : "border-border/90 bg-card shadow-xs"
+                  : "border-dashed border-border/80 bg-muted/20"
+              }`}
+            >
+              <div className="space-y-2.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                        uploadedDoc
+                          ? "bg-primary/10 text-primary"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {uploadedDoc ? (
+                        <FileCheck className="h-4.5 w-4.5" />
+                      ) : (
+                        <FileText className="h-4.5 w-4.5" />
+                      )}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-semibold text-foreground text-xs sm:text-sm truncate">
-                        {docTitle}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        Uploaded on {new Date(doc.uploadedAt).toLocaleDateString()}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h4 className="text-xs sm:text-sm font-bold text-foreground truncate">
+                          {slot.title}
+                        </h4>
+                        {slot.required && (
+                          <span className="text-[10px] font-bold text-destructive">
+                            *Required
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2 mt-0.5">
+                        {slot.description}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
+                  {uploadedDoc && (
                     <span
-                      className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] tracking-wide border ${
-                        doc.status === "APPROVED"
+                      className={`shrink-0 px-2 py-0.5 rounded-full font-bold text-[10px] tracking-wide border ${
+                        status === "APPROVED"
                           ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
-                          : doc.status === "REJECTED"
+                          : status === "REJECTED"
                           ? "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/25"
                           : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25"
                       }`}
                     >
-                      {doc.status}
+                      {status}
                     </span>
+                  )}
+                </div>
 
-                    {doc.fileUrl && (
+                {uploadedDoc && (
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground bg-muted/40 rounded-xl px-3 py-2 border border-border/60">
+                    <span className="truncate">
+                      Uploaded on {new Date(uploadedDoc.uploadedAt).toLocaleDateString()}
+                    </span>
+                    {uploadedDoc.fileUrl && (
                       <a
-                        href={doc.fileUrl}
+                        href={uploadedDoc.fileUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border hover:bg-muted text-foreground text-[11px] font-semibold transition-colors"
+                        className="inline-flex items-center gap-1 font-semibold text-primary hover:underline shrink-0 ml-2"
                       >
                         <span>View</span>
-                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                        <ExternalLink className="h-3 w-3" />
                       </a>
                     )}
-
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      disabled={isDeleting}
-                      onClick={() => handleDelete(doc.id, docTitle)}
-                      className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg cursor-pointer"
-                      title="Remove document"
-                    >
-                      {isDeleting ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin text-destructive" />
-                      ) : (
-                        <Trash2 className="h-3.5 w-3.5" />
-                      )}
-                    </Button>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-3 mt-3 border-t border-border/60 flex items-center justify-between gap-2">
+                <span className="text-[10px] text-muted-foreground font-mono">
+                  PDF, JPG, PNG • Max 4 MB
+                </span>
+
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={isSlotUploading}
+                  onClick={() => handleTriggerUpload(slot.type)}
+                  className={`h-9 px-3.5 rounded-xl font-semibold text-xs gap-1.5 cursor-pointer ${
+                    uploadedDoc
+                      ? "bg-muted hover:bg-muted/80 text-foreground border border-border shadow-xs"
+                      : "bg-primary hover:bg-primary-dark text-white shadow-xs"
+                  }`}
+                >
+                  {isSlotUploading ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className="h-3.5 w-3.5" />
+                      <span>{uploadedDoc ? "Replace Document" : "Upload Document"}</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };

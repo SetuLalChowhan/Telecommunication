@@ -137,9 +137,11 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
           {/* Counterpart banner */}
           <div className="flex items-center gap-3 rounded-md border border-border bg-muted/40 p-3">
             <Avatar className="h-10 w-10 shrink-0">
-              <AvatarImage src={counterpartAvatar} alt={counterpartName} />
+              {counterpartAvatar && !counterpartAvatar.includes("doctor-placeholder") && (
+                <AvatarImage src={counterpartAvatar} alt={counterpartName} />
+              )}
               <AvatarFallback className="bg-muted text-[11px] font-semibold text-foreground">
-                {counterpartName.slice(0, 2).toUpperCase()}
+                {counterpartName.replace(/^Dr\.\s*/i, "").slice(0, 2).toUpperCase() || "US"}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">

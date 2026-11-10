@@ -93,9 +93,11 @@ export const RateDoctorDialog: React.FC<RateDoctorDialogProps> = ({
             {/* Doctor Info Mini Card */}
             <div className="flex items-center gap-3.5 rounded-xl border border-border/80 bg-muted/30 p-3.5 shadow-xs">
               <Avatar className="h-11 w-11 shrink-0 ring-2 ring-primary/20">
-                <AvatarImage src={doctorAvatar || "/images/doctor-placeholder.jpg"} alt={doctorName} />
+                {doctorAvatar && !doctorAvatar.includes("doctor-placeholder") && (
+                  <AvatarImage src={doctorAvatar} alt={doctorName} />
+                )}
                 <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
-                  {doctorName.slice(0, 2).toUpperCase()}
+                  {doctorName.replace(/^Dr\.\s*/i, "").slice(0, 2).toUpperCase() || "DR"}
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0 space-y-0.5">

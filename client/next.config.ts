@@ -5,17 +5,17 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_API_URL:
       process.env.NEXT_PRIVATE_API_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
-      'http://localhost:5000',
+      'http://localhost:4000',
     NEXT_PUBLIC_BETTER_AUTH_URL:
       process.env.NEXT_PRIVATE_BETTER_AUTH_URL ||
       process.env.NEXT_PUBLIC_BETTER_AUTH_URL ||
       process.env.NEXT_PRIVATE_API_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
-      'http://localhost:5000',
+      'http://localhost:4000',
     NEXT_PUBLIC_CLIENT_URL:
       process.env.NEXT_PRIVATE_APP_URL ||
       process.env.NEXT_PUBLIC_CLIENT_URL ||
-      'http://localhost:3000',
+      'http://localhost:3001',
     NEXT_PUBLIC_GOOGLE_CLIENT_ID:
       process.env.NEXT_PRIVATE_GOOGLE_CLIENT_ID ||
       process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
@@ -24,16 +24,16 @@ const nextConfig: NextConfig = {
     NEXT_PRIVATE_API_URL:
       process.env.NEXT_PRIVATE_API_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
-      'http://localhost:5000',
+      'http://localhost:4000',
     NEXT_PRIVATE_BETTER_AUTH_URL:
       process.env.NEXT_PRIVATE_BETTER_AUTH_URL ||
       process.env.NEXT_PUBLIC_BETTER_AUTH_URL ||
       process.env.NEXT_PRIVATE_API_URL ||
-      'http://localhost:5000',
+      'http://localhost:4000',
     NEXT_PRIVATE_APP_URL:
       process.env.NEXT_PRIVATE_APP_URL ||
       process.env.NEXT_PUBLIC_CLIENT_URL ||
-      'http://localhost:3000',
+      'http://localhost:3001',
     NEXT_PRIVATE_GOOGLE_CLIENT_ID:
       process.env.NEXT_PRIVATE_GOOGLE_CLIENT_ID ||
       process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||

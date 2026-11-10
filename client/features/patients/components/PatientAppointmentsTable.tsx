@@ -26,6 +26,8 @@ interface PatientAppointmentsTableProps {
 const statusChip: Record<string, string> = {
   CONFIRMED:
     "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  RESCHEDULED:
+    "border-indigo-500/30 bg-indigo-500/10 text-indigo-700 dark:text-indigo-400",
   PENDING:
     "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400",
   COMPLETED: "border-border bg-muted text-muted-foreground",
@@ -124,12 +126,14 @@ export const PatientAppointmentsTable: React.FC<PatientAppointmentsTableProps> =
                     <TableCell className="px-4 py-2.5">
                       <div className="flex items-center gap-2.5">
                         <Avatar className="h-8 w-8 shrink-0">
-                          <AvatarImage
-                            src={appt.doctorAvatar}
-                            alt={appt.doctorName}
-                          />
+                          {appt.doctorAvatar && !appt.doctorAvatar.includes("doctor-placeholder") && (
+                            <AvatarImage
+                              src={appt.doctorAvatar}
+                              alt={appt.doctorName}
+                            />
+                          )}
                           <AvatarFallback className="bg-muted text-[11px] font-semibold text-foreground">
-                            {appt.doctorName.slice(0, 2).toUpperCase()}
+                            {appt.doctorName.replace(/^Dr\.\s*/i, "").slice(0, 2).toUpperCase() || "DR"}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
