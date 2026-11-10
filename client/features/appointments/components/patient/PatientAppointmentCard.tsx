@@ -34,7 +34,9 @@ export const PatientAppointmentCard: React.FC<PatientAppointmentCardProps> = ({
     >
       <div className="flex items-center gap-3.5 min-w-0">
         <Avatar className="h-12 w-12 ring-2 ring-primary/10 shrink-0">
-          <AvatarImage src={appointment.doctorAvatar} alt={appointment.doctorName} />
+          {appointment.doctorAvatar && !appointment.doctorAvatar.includes("doctor-placeholder") && (
+            <AvatarImage src={appointment.doctorAvatar} alt={appointment.doctorName} />
+          )}
           <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
             {getInitials(appointment.doctorName)}
           </AvatarFallback>

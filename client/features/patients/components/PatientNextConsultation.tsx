@@ -83,12 +83,14 @@ export const PatientNextConsultation: React.FC<PatientNextConsultationProps> = (
       <div className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <Avatar className="h-11 w-11 shrink-0">
-            <AvatarImage
-              src={appointment.doctorAvatar}
-              alt={appointment.doctorName}
-            />
+            {appointment.doctorAvatar && !appointment.doctorAvatar.includes("doctor-placeholder") && (
+              <AvatarImage
+                src={appointment.doctorAvatar}
+                alt={appointment.doctorName}
+              />
+            )}
             <AvatarFallback className="bg-muted text-xs font-semibold text-foreground">
-              {appointment.doctorName.slice(0, 2).toUpperCase()}
+              {appointment.doctorName.replace(/^Dr\.\s*/i, "").slice(0, 2).toUpperCase() || "DR"}
             </AvatarFallback>
           </Avatar>
 

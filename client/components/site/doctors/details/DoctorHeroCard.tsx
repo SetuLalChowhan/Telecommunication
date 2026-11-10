@@ -16,14 +16,25 @@ interface DoctorHeroCardProps {
 }
 
 export const DoctorHeroCard: React.FC<DoctorHeroCardProps> = ({ doctor }) => {
-  const [imgSrc, setImgSrc] = React.useState<string>(
-    doctor.user?.image || "/images/doctor-placeholder.jpg"
+  const hasRealImage = Boolean(
+    doctor.user?.image &&
+      doctor.user.image !== "/images/doctor-placeholder.jpg" &&
+      !doctor.user.image.includes("doctor-placeholder")
   );
+  const [imgError, setImgError] = React.useState(false);
 
   const doctorName =
     doctor.user?.name ||
     `${doctor.user?.firstName || ""} ${doctor.user?.lastName || ""}`.trim() ||
     "Dr. Specialist";
+
+  const initials = doctorName
+    .replace(/^Dr\.\s*/i, "")
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "DR";
 
   const ratingValue =
     doctor.rating !== undefined && doctor.rating !== null && Number(doctor.rating) > 0
@@ -52,15 +63,26 @@ export const DoctorHeroCard: React.FC<DoctorHeroCardProps> = ({ doctor }) => {
     <div className="rounded-xl border border-border bg-card p-6">
       <div className="flex flex-col sm:flex-row gap-6 items-start">
         {/* Doctor Photo */}
-        <div className="relative h-28 w-28 sm:h-36 sm:w-36 shrink-0 rounded-xl overflow-hidden border border-border bg-muted">
-          <Image
-            src={imgSrc}
-            alt={doctorName}
-            fill
-            sizes="(min-width: 640px) 150px, 112px"
-            className="object-cover object-top"
-            onError={() => setImgSrc("/images/doctor-placeholder.jpg")}
-          />
+        <div className="relative h-28 w-28 sm:h-36 sm:w-36 shrink-0 rounded-2xl overflow-hidden border border-border bg-muted flex items-center justify-center shadow-xs">
+          {hasRealImage && !imgError ? (
+            <Image
+              src={doctor.user!.image!}
+              alt={doctorName}
+              fill
+              sizes="(min-width: 640px) 150px, 112px"
+              className="object-cover object-top"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center text-center p-3 w-full h-full bg-gradient-to-br from-muted/60 via-muted to-muted/80 text-muted-foreground">
+              <div className="h-14 w-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-lg shadow-xs mb-1.5">
+                {initials}
+              </div>
+              <span className="text-[10px] font-medium text-muted-foreground/80 leading-none">
+                No photo available
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Doctor Main Details */}

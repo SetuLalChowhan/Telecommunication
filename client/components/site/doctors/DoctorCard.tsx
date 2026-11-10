@@ -11,9 +11,12 @@ interface DoctorCardProps {
 }
 
 export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor }) => {
-  const [imgSrc, setImgSrc] = React.useState<string>(
-    doctor.user?.image || "/images/doctor-placeholder.jpg"
+  const hasRealImage = Boolean(
+    doctor.user?.image &&
+      doctor.user.image !== "/images/doctor-placeholder.jpg" &&
+      !doctor.user.image.includes("doctor-placeholder")
   );
+  const [imgError, setImgError] = React.useState(false);
 
   const profileUrl = `/doctors/${doctor.slug || doctor.id}`;
   const doctorName =
@@ -35,18 +38,35 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor }) => {
   const experience = doctor.experienceYears ?? 0;
   const feeFormatted = Number(doctor.fee ?? 0).toLocaleString();
 
+  const initials = doctorName
+    .replace(/^Dr\.\s*/i, "")
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "DR";
+
   return (
     <div className="group flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-primary/40">
       {/* Doctor image */}
       <div className="relative aspect-[4/3.2] w-full overflow-hidden bg-muted">
-        <Image
-          src={imgSrc}
-          alt={doctorName}
-          fill
-          sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-          className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
-          onError={() => setImgSrc("/images/doctor-placeholder.jpg")}
-        />
+        {hasRealImage && !imgError ? (
+          <Image
+            src={doctor.user!.image!}
+            alt={doctorName}
+            fill
+            sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center w-full h-full bg-gradient-to-br from-muted/60 via-muted to-muted/80 text-muted-foreground p-4">
+            <div className="h-16 w-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-base shadow-xs mb-2">
+              {initials}
+            </div>
+            <span className="text-[11px] font-medium text-muted-foreground/80">No photo available</span>
+          </div>
+        )}
 
         <div className="absolute top-3 inset-x-3 flex items-center justify-between pointer-events-none">
           {doctor.verified ? (

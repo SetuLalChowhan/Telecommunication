@@ -146,9 +146,9 @@ export function DoctorAppointmentsClient({
   const handleOpenAppointmentDetails = (item: DoctorScheduleItem) => {
     setSelectedAppointment({
       id: item.id,
-      doctorName: "Dr. Specialist",
+      doctorName: user?.name || "Dr. Specialist",
       doctorSpecialty: "Specialist",
-      doctorAvatar: "/images/doctor-placeholder.jpg",
+      doctorAvatar: user?.image || "",
       patientName: item.patientName,
       patientAvatar: item.patientAvatar,
       patientAge: item.patientAge,

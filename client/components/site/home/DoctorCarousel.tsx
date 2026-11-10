@@ -71,19 +71,44 @@ export function DoctorCarousel({ doctors }: DoctorCarouselProps) {
           const rating = Number(doctor.rating ?? 0);
           const reviews = Number(doctor.totalReviews ?? 0);
 
+          const hasRealImage = Boolean(
+            image &&
+              image !== "/images/doctor-placeholder.jpg" &&
+              !image.includes("doctor-placeholder")
+          );
+
+          const initials = name
+            .replace(/^Dr\.\s*/i, "")
+            .split(" ")
+            .map((w) => w[0])
+            .slice(0, 2)
+            .join("")
+            .toUpperCase() || "DR";
+
           return (
             <div
               key={doctor.id}
               className="group flex w-[260px] shrink-0 flex-col overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:border-[#cbcbcb]"
             >
-              <div className="relative aspect-[4/4.2] w-full overflow-hidden bg-[#f3f1eb]">
-                <Image
-                  src={image || "/images/doctor-placeholder.jpg"}
-                  alt={name}
-                  fill
-                  sizes="260px"
-                  className="object-cover object-top transition-transform duration-300 group-hover:scale-102"
-                />
+              <div className="relative aspect-[4/4.2] w-full overflow-hidden bg-muted flex items-center justify-center">
+                {hasRealImage ? (
+                  <Image
+                    src={image!}
+                    alt={name}
+                    fill
+                    sizes="260px"
+                    className="object-cover object-top transition-transform duration-300 group-hover:scale-102"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-center p-4 w-full h-full bg-gradient-to-br from-muted/60 via-muted to-muted/80 text-muted-foreground">
+                    <div className="h-16 w-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-base shadow-xs mb-2">
+                      {initials}
+                    </div>
+                    <span className="text-[11px] font-medium text-muted-foreground/80">
+                      No photo available
+                    </span>
+                  </div>
+                )}
 
                 {rating > 0 && (
                   <div className="absolute right-2.5 top-2.5 flex items-center gap-1 rounded-full border border-border bg-card/95 px-2.5 py-0.5 backdrop-blur-xs">

@@ -228,9 +228,7 @@ export function mapBookingToAppointment(b: RawBooking): DashboardAppointment {
     id: b.id,
     doctorName,
     doctorSpecialty: primarySpecialty,
-    doctorAvatar:
-      doctor?.user?.image ||
-      "/images/doctor-placeholder.jpg",
+    doctorAvatar: doctor?.user?.image || "",
     doctorPhone: doctor?.user?.phone || undefined,
     patientName: b.patient?.user?.name || "You",
     patientAvatar: b.patient?.user?.image || undefined,

@@ -124,12 +124,14 @@ export const PatientAppointmentsTable: React.FC<PatientAppointmentsTableProps> =
                     <TableCell className="px-4 py-2.5">
                       <div className="flex items-center gap-2.5">
                         <Avatar className="h-8 w-8 shrink-0">
-                          <AvatarImage
-                            src={appt.doctorAvatar}
-                            alt={appt.doctorName}
-                          />
+                          {appt.doctorAvatar && !appt.doctorAvatar.includes("doctor-placeholder") && (
+                            <AvatarImage
+                              src={appt.doctorAvatar}
+                              alt={appt.doctorName}
+                            />
+                          )}
                           <AvatarFallback className="bg-muted text-[11px] font-semibold text-foreground">
-                            {appt.doctorName.slice(0, 2).toUpperCase()}
+                            {appt.doctorName.replace(/^Dr\.\s*/i, "").slice(0, 2).toUpperCase() || "DR"}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
