@@ -180,7 +180,7 @@ export const DoctorRescheduleDialog: React.FC<DoctorRescheduleDialogProps> = ({
     <Dialog open={open} onOpenChange={rescheduleMutation.isPending ? undefined : onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/60 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-2 shadow-xs">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 mb-2 shadow-xs">
             <RefreshCw className="h-5 w-5 stroke-[2.2]" />
           </div>
           <DialogTitle className="text-center text-lg sm:text-xl font-bold tracking-tight text-foreground">
@@ -210,17 +210,17 @@ export const DoctorRescheduleDialog: React.FC<DoctorRescheduleDialogProps> = ({
             </div>
 
             <div className="space-y-1.5 sm:border-l sm:border-border/80 sm:pl-4">
-              <span className="text-[10px] uppercase font-bold text-primary tracking-wider block">
+              <span className="text-[10px] uppercase font-bold text-foreground/80 tracking-wider block">
                 Proposed New Time
               </span>
               {selectedSlot ? (
                 <>
-                  <p className="font-semibold text-primary text-sm flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <p className="font-semibold text-emerald-800 dark:text-emerald-300 text-sm flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                     <span className="truncate">{proposedFormattedTime}</span>
                   </p>
                   <div className="pt-0.5">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
                       Selected Slot
                     </span>
                   </div>
@@ -228,7 +228,7 @@ export const DoctorRescheduleDialog: React.FC<DoctorRescheduleDialogProps> = ({
               ) : (
                 <div className="flex items-center gap-1.5 py-1 text-muted-foreground text-xs italic">
                   <Calendar className="h-3.5 w-3.5 shrink-0 opacity-60" />
-                  <span>Select date & slot below</span>
+                  <span>Select date &amp; slot below</span>
                 </div>
               )}
             </div>
@@ -331,7 +331,7 @@ export const DoctorRescheduleDialog: React.FC<DoctorRescheduleDialogProps> = ({
                 type="button"
                 disabled={!selectedSlot || isSlotsLoading}
                 onClick={handleProceedToConfirm}
-                className="w-full sm:w-auto h-10 px-5 text-xs font-semibold rounded-xl bg-primary hover:bg-primary-dark text-white gap-2 shadow-sm cursor-pointer"
+                className="w-full sm:w-auto h-10 px-5 text-xs font-semibold rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white gap-2 shadow-sm cursor-pointer disabled:bg-muted disabled:text-muted-foreground/70 disabled:border-border disabled:shadow-none"
               >
                 <span>Continue</span>
                 <ArrowRight className="h-3.5 w-3.5" />
@@ -352,7 +352,7 @@ export const DoctorRescheduleDialog: React.FC<DoctorRescheduleDialogProps> = ({
                 type="button"
                 disabled={rescheduleMutation.isPending}
                 onClick={handleExecuteReschedule}
-                className="w-full sm:w-auto h-10 px-5 text-xs font-semibold rounded-xl bg-primary hover:bg-primary-dark text-white gap-2 shadow-sm cursor-pointer"
+                className="w-full sm:w-auto h-10 px-5 text-xs font-semibold rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white gap-2 shadow-sm cursor-pointer"
               >
                 {rescheduleMutation.isPending ? (
                   <>
