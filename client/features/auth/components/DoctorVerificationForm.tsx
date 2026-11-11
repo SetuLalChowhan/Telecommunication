@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Check, UploadCloud, ChevronRight, X, Loader2, ExternalLink, FileText } from "lucide-react";
 import BrandLogo from "@/components/common/BrandLogo";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/features/auth/api/queries";
 import {
   useUploadDoctorDocument,
   useDoctorDocuments,
@@ -53,12 +55,31 @@ const REQUIRED_DOCUMENTS: DocumentRequirement[] = [
 ];
 
 export const DoctorVerificationForm: React.FC = () => {
+  const router = useRouter();
+  const { user, isAuthenticated, isAuthLoading } = useAuth();
   const [activeUploadType, setActiveUploadType] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: serverDocs, isLoading: isDocsLoading } = useDoctorDocuments();
   const uploadDocMutation = useUploadDoctorDocument();
   const deleteDocMutation = useDeleteDoctorDocument();
+
+  useEffect(() => {
+    if (isAuthLoading) return;
+
+    if (!isAuthenticated) {
+      router.replace("/login?redirectTo=/doctor-verification");
+      return;
+    }
+
+    if (user && user.emailVerified === false) {
+      toast.info("Please verify your email address before uploading verification documents.");
+      router.replace(
+        `/verify-email?email=${encodeURIComponent(user.email)}&role=DOCTOR`
+      );
+      return;
+    }
+  }, [user, isAuthenticated, isAuthLoading, router]);
 
   const isPending = uploadDocMutation.isPending;
 
@@ -156,6 +177,17 @@ export const DoctorVerificationForm: React.FC = () => {
       d.badge === "Required" &&
       Boolean((serverDocs || []).find((doc) => doc.docType === d.type))
   ).length;
+
+  if (isAuthLoading || !isAuthenticated || (user && user.emailVerified === false)) {
+    return (
+      <main className="min-h-dvh w-full bg-background flex flex-col items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-3 text-xs text-muted-foreground">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <span>Verifying account status...</span>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-dvh w-full bg-background flex flex-col justify-between p-4 sm:p-6 md:p-8 lg:p-10 antialiased selection:bg-accent selection:text-primary">

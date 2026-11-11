@@ -155,6 +155,15 @@ export const useAuth = () => {
 
       await queryClient.invalidateQueries({ queryKey: authKeys.all });
       const userRole = authUser?.role || role;
+
+      if (authUser && authUser.emailVerified === false) {
+        toast.info("Please verify your email address to continue.");
+        router.push(
+          `/verify-email?email=${encodeURIComponent(authUser.email)}&role=${encodeURIComponent(userRole)}`
+        );
+        return;
+      }
+
       const destination =
         variables.redirectTo ||
         getRoleDashboardRoute(userRole, authUser?.doctorProfile?.verified);
@@ -204,17 +213,14 @@ export const useAuth = () => {
       authClient.getSession?.().catch(() => undefined);
       queryClient.invalidateQueries({ queryKey: authKeys.all });
 
-      if (variables.role === "DOCTOR") {
-        toast.success(
-          "Doctor account created! Please upload your medical verification credentials."
-        );
-        router.push("/doctor-verification");
-      } else {
-        toast.success("Account created! Please check your email for verification.");
-        router.push(
-          `/verify-email?email=${encodeURIComponent(variables.email)}&role=PATIENT`
-        );
-      }
+      toast.success(
+        variables.role === "DOCTOR"
+          ? "Doctor account created! Please verify your email to proceed."
+          : "Account created! Please check your email for verification."
+      );
+      router.push(
+        `/verify-email?email=${encodeURIComponent(variables.email)}&role=${encodeURIComponent(variables.role)}`
+      );
     },
     onError: (err: Error) => {
       toast.error(err.message || "Failed to create account");
@@ -289,6 +295,7 @@ export const useAuth = () => {
     },
     onSuccess: () => {
       toast.success("Email verified successfully!");
+      queryClient.invalidateQueries({ queryKey: authKeys.all });
     },
     onError: (err: Error) => {
       toast.error(err.message || "Email verification failed");

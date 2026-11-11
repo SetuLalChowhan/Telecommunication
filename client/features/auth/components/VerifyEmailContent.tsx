@@ -20,16 +20,20 @@ export const VerifyEmailContent: React.FC = () => {
   const token = searchParams.get("token");
   const status = searchParams.get("status");
   const errorMessage = searchParams.get("message");
-  const email = searchParams.get("email") || "";
-  const role = searchParams.get("role")?.toUpperCase() || "";
-  const isDoctor = role === "DOCTOR";
+  const emailParam = searchParams.get("email") || "";
+  const queryRole = searchParams.get("role")?.toUpperCase() || "";
 
   const {
+    user,
     verifyEmail,
     verifyEmailMutation,
     resendVerificationEmail,
     resendVerificationEmailMutation,
   } = useAuth();
+
+  const email = emailParam || user?.email || "";
+  const role = (queryRole || user?.role || "").toUpperCase();
+  const isDoctor = role === "DOCTOR";
 
   const isManualVerifying = verifyEmailMutation.isPending;
   const isManualSuccess = verifyEmailMutation.isSuccess;
@@ -56,7 +60,10 @@ export const VerifyEmailContent: React.FC = () => {
   const handleResend = async () => {
     if (countdown > 0 || isResending || !email) return;
     try {
-      await resendVerificationEmail({ email });
+      await resendVerificationEmail({
+        email,
+        callbackURL: `${typeof window !== "undefined" ? window.location.origin : ""}/api/auth/verify-email?role=${isDoctor ? "DOCTOR" : "PATIENT"}`,
+      });
       setResendSuccess(true);
       setCountdown(60);
     } catch {
