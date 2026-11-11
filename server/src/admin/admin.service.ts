@@ -65,7 +65,17 @@ export class AdminService {
       throw new NotFoundException(`Doctor with ID "${doctorId}" not found`);
     }
 
-    return doctor;
+    // Ensure at most 1 document per docType (latest uploaded)
+    const seen = new Set<string>();
+    const deduplicatedDocs = [];
+    for (const doc of doctor.documents || []) {
+      if (!seen.has(doc.docType)) {
+        seen.add(doc.docType);
+        deduplicatedDocs.push(doc);
+      }
+    }
+
+    return { ...doctor, documents: deduplicatedDocs };
   }
 
   async updateDoctor(doctorId: string, dto: UpdateDoctorDto) {

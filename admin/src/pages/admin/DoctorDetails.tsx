@@ -66,6 +66,13 @@ function InfoRow({
   );
 }
 
+const DOC_TYPE_LABELS: Record<string, string> = {
+  LICENSE: "Medical License (BMDC)",
+  DEGREE_CERTIFICATE: "Degree Certificate (MBBS/MD)",
+  NATIONAL_ID: "National ID / Passport",
+  OTHER: "Other Credentials",
+};
+
 const DoctorDetails = () => {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -303,7 +310,7 @@ const DoctorDetails = () => {
                         title={`Open ${document.docType} in a new tab`}
                         className="inline-flex cursor-pointer items-center gap-1.5 text-primary hover:underline disabled:opacity-60"
                       >
-                        {document.docType}
+                        {DOC_TYPE_LABELS[document.docType] || document.docType}
                         {openingDocumentId === document.id ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
