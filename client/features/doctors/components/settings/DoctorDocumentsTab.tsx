@@ -109,9 +109,9 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
     }
 
     const isPdf = file.type === "application/pdf" || ext === ".pdf";
-    if (isPdf && file.size > 4 * 1024 * 1024) {
+    if (isPdf && file.size > 3.5 * 1024 * 1024) {
       toast.error(
-        `PDF document is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). Server upload limit is 4MB.`
+        `PDF document is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). Server upload limit is 3.5 MB. Please compress your PDF before uploading.`
       );
       return;
     }
@@ -134,9 +134,9 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
         }
       }
 
-      if (uploadFile.size > 4.2 * 1024 * 1024) {
+      if (uploadFile.size > 3.8 * 1024 * 1024) {
         toast.error(
-          `File is too large (${(uploadFile.size / (1024 * 1024)).toFixed(1)} MB). Maximum allowed upload size is 4MB.`
+          `File is too large (${(uploadFile.size / (1024 * 1024)).toFixed(1)} MB). Maximum allowed upload size is 3.5 MB.`
         );
         return;
       }
@@ -155,7 +155,7 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
     } catch (err: any) {
       const errorMsg =
         err?.status === 413
-          ? "File is too large for the server (limit: 4MB)."
+          ? "File is too large for the server (limit: 3.5 MB). Please compress the document and try again."
           : err?.response?.data?.message || err?.message || "Failed to upload document";
       toast.error(typeof errorMsg === "string" ? errorMsg : JSON.stringify(errorMsg));
     } finally {
@@ -310,7 +310,7 @@ export const DoctorDocumentsTab: React.FC<DoctorDocumentsTabProps> = ({
               {/* Action Buttons */}
               <div className="pt-3 mt-3 border-t border-border/60 flex items-center justify-between gap-2">
                 <span className="text-[10px] text-muted-foreground font-mono">
-                  PDF, JPG, PNG • Max 4 MB
+                  PDF, JPG, PNG • Max 3.5 MB
                 </span>
 
                 <Button

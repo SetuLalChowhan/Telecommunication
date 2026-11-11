@@ -30,7 +30,7 @@ import { formatRecordDate, getFileKind } from "@/features/medical-reports/utils/
 import { toast } from "react-toastify";
 import { compressImageIfNeeded } from "@/lib/utils/image-compression";
 
-const MAX_FILE_SIZE = 4.2 * 1024 * 1024; // Safe ceiling under Vercel's 4.5MB limit
+const MAX_FILE_SIZE = 3.8 * 1024 * 1024; // Safe ceiling under Vercel's 4.5MB limit
 
 const uploadReportSchema = z.object({
   fileName: z.string().min(2, "Document title must be at least 2 characters"),
@@ -86,8 +86,8 @@ export function UploadReportModal({
   const handleFile = async (file: File) => {
     const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
 
-    if (isPdf && file.size > 4 * 1024 * 1024) {
-      toast.error("PDF size exceeds the 4 MB limit for server upload. Please optimize your PDF.");
+    if (isPdf && file.size > 3.5 * 1024 * 1024) {
+      toast.error("PDF size exceeds the 3.5 MB limit for server upload. Please compress your PDF before uploading.");
       return;
     }
 
@@ -260,7 +260,7 @@ export function UploadReportModal({
                       or drag it here
                     </span>
                     <span className="text-xs text-secondary-text">
-                      PDF, JPG or PNG · up to 10 MB
+                      PDF, JPG or PNG · up to 3.5 MB
                     </span>
                   </div>
                 </div>

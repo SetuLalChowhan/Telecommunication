@@ -115,14 +115,14 @@ export const DoctorVerificationForm: React.FC = () => {
     const isPdf = file.type === "application/pdf" || ext === ".pdf";
 
     // For PDFs: Vercel serverless functions enforce a strict 4.5MB request limit
-    if (isPdf && file.size > 4 * 1024 * 1024) {
+    if (isPdf && file.size > 3.5 * 1024 * 1024) {
       toast.error(
-        `PDF document is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). Server upload limit is 4MB. Please compress your PDF before uploading.`
+        `PDF document is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). Server upload limit is 3.5 MB. Please compress your PDF before uploading.`
       );
       return;
     }
 
-    // For Images: Automatically optimize/compress in browser so 4MB+ photos shrink safely below 1MB
+    // For Images: Automatically optimize/compress in browser so 4MB+ photos shrink safely below 1.5MB
     if (!isPdf && file.type.startsWith("image/")) {
       try {
         file = await compressImageIfNeeded(file);
@@ -131,9 +131,9 @@ export const DoctorVerificationForm: React.FC = () => {
       }
     }
 
-    if (file.size > 4.2 * 1024 * 1024) {
+    if (file.size > 3.8 * 1024 * 1024) {
       toast.error(
-        `File is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). Maximum allowed upload size is 4MB.`
+        `File is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). Maximum allowed upload size is 3.5 MB.`
       );
       return;
     }
@@ -148,7 +148,7 @@ export const DoctorVerificationForm: React.FC = () => {
     } catch (err: any) {
       const serverMsg =
         err?.status === 413
-          ? "File is too large for the server (limit: 4MB). Please optimize the document and try again."
+          ? "File is too large for the server (limit: 3.5 MB). Please compress the document and try again."
           : err?.details?.message ||
             err?.response?.data?.message ||
             err?.message ||
@@ -268,7 +268,7 @@ export const DoctorVerificationForm: React.FC = () => {
 
                     <div className="pt-1 flex items-center gap-2 text-[10px] text-muted-foreground font-mono">
                       <span className="rounded bg-muted px-1.5 py-0.5 font-medium">Formats: PDF, JPG, PNG</span>
-                      <span className="rounded bg-muted px-1.5 py-0.5 font-medium">Max 4 MB</span>
+                      <span className="rounded bg-muted px-1.5 py-0.5 font-medium">Max 3.5 MB</span>
                     </div>
                   </div>
 

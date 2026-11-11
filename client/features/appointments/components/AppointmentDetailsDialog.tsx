@@ -158,10 +158,10 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
               {(isDoctorView ? appointment.patientPhone : appointment.doctorPhone) && (
                 <a
                   href={`tel:${isDoctorView ? appointment.patientPhone : appointment.doctorPhone}`}
-                  className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 hover:underline transition-colors bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20"
+                  className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-semibold text-foreground bg-card hover:bg-muted px-2.5 py-1 rounded-md border border-border shadow-2xs transition-colors group"
                 >
-                  <Phone className="h-3 w-3 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                  <span>{isDoctorView ? appointment.patientPhone : appointment.doctorPhone}</span>
+                  <Phone className="h-3 w-3 shrink-0 text-primary group-hover:scale-110 transition-transform" />
+                  <span className="font-mono">{isDoctorView ? appointment.patientPhone : appointment.doctorPhone}</span>
                 </a>
               )}
             </div>
@@ -425,9 +425,9 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
                     onOpenChange(false);
                     onRescheduleAppointment(appointment);
                   }}
-                  className="h-8 rounded-md px-3 text-xs font-semibold gap-1.5 text-primary border-primary/40 hover:bg-primary hover:text-white transition-colors cursor-pointer"
+                  className="h-8 rounded-lg px-3.5 text-xs font-semibold gap-1.5 border-border bg-card text-foreground hover:bg-muted hover:border-foreground/30 shadow-xs transition-all cursor-pointer"
                 >
-                  <RefreshCw className="h-3.5 w-3.5" />
+                  <RefreshCw className="h-3.5 w-3.5 text-foreground/80" />
                   <span>Reschedule</span>
                 </Button>
               )}
@@ -436,7 +436,7 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
               variant="outline"
               size="sm"
               onClick={() => onOpenChange(false)}
-              className="h-8 rounded-md px-3 text-xs"
+              className="h-8 rounded-lg px-3.5 text-xs font-semibold border-border hover:bg-muted"
             >
               Close
             </Button>
@@ -448,12 +448,12 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
                   size="sm"
                   disabled={isConfirming}
                   onClick={() => onConfirmAppointment(appointment.id)}
-                  className="h-8 rounded-md px-3 text-xs font-semibold bg-primary hover:bg-primary-dark text-white gap-1.5 shadow-xs cursor-pointer active:scale-[0.99]"
+                  className="h-8 rounded-lg px-3.5 text-xs font-semibold bg-emerald-700 hover:bg-emerald-800 text-white gap-1.5 shadow-sm cursor-pointer active:scale-[0.99]"
                 >
                   {isConfirming ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <Check className="h-3.5 w-3.5" />
+                    <Check className="h-3.5 w-3.5 stroke-[2.5]" />
                   )}
                   <span>{isConfirming ? "Confirming…" : "Confirm"}</span>
                 </Button>

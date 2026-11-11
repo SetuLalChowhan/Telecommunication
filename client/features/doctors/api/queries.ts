@@ -135,7 +135,8 @@ export function useMyDoctorProfile() {
   return useQuery({
     queryKey: doctorKeys.me(),
     queryFn: fetchMyDoctorProfile,
-    staleTime: CACHE.profile.client.staleTime,
+    staleTime: 5000,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -207,7 +208,7 @@ export function useDoctorDashboard() {
   return useQuery({
     queryKey: doctorKeys.dashboard(),
     queryFn: fetchDoctorDashboard,
-    staleTime: 10_000,
+    staleTime: 5000,
     refetchOnWindowFocus: true,
   });
 }

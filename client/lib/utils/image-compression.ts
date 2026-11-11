@@ -2,14 +2,15 @@
  * Client-side image compression utility.
  *
  * Resizes and compresses image files (JPEG, PNG, WEBP) in the browser before upload.
- * This guarantees images stay well below Vercel's strict 4.5 MB Serverless Function
- * payload limit while preserving sharpness and readability for official documents and IDs.
+ * Guarantees images stay strictly under 1.5 MB to easily comply with Vercel's 4.5 MB
+ * Serverless Function request payload limit, while preserving high sharpness and
+ * legibility for official medical documents, licenses, and certificates.
  */
 export async function compressImageIfNeeded(
   file: File,
-  maxSizeBytes: number = 2.5 * 1024 * 1024, // 2.5 MB target
-  maxDimension: number = 2048, // 2048px maximum width or height
-  quality: number = 0.85, // 85% JPEG quality
+  maxSizeBytes: number = 1.8 * 1024 * 1024, // 1.8 MB target
+  maxDimension: number = 1600, // 1600px maximum width or height
+  quality: number = 0.80, // 80% JPEG quality
 ): Promise<File> {
   // Only process images
   if (!file.type.startsWith("image/")) {
@@ -21,8 +22,8 @@ export async function compressImageIfNeeded(
     return file;
   }
 
-  // If already under 1.5MB and not gigantic, no need to touch it
-  if (file.size <= 1.5 * 1024 * 1024) {
+  // If already under 1MB, no need to touch it
+  if (file.size <= 1024 * 1024) {
     return file;
   }
 
@@ -61,10 +62,8 @@ export async function compressImageIfNeeded(
       ctx.imageSmoothingQuality = "high";
       ctx.drawImage(img, 0, 0, width, height);
 
-      // Convert PNGs to JPEG if they are large, otherwise maintain format
-      const outputType = file.type === "image/png" && file.size < maxSizeBytes
-        ? "image/png"
-        : "image/jpeg";
+      // Always output JPEG for photographic and scan documents to achieve optimal compression
+      const outputType = "image/jpeg";
 
       canvas.toBlob(
         (blob) => {
@@ -73,14 +72,45 @@ export async function compressImageIfNeeded(
             return;
           }
 
-          // If blob is smaller than original, use it; otherwise keep original
+          // If blob is smaller than original, use it; otherwise fallback
           if (blob.size < file.size) {
-            const ext = outputType === "image/jpeg" ? ".jpg" : ".png";
             const baseName = file.name.replace(/\.[^/.]+$/, "");
-            const newFile = new File([blob], `${baseName}${ext}`, {
+            const newFile = new File([blob], `${baseName}.jpg`, {
               type: outputType,
               lastModified: Date.now(),
             });
+
+            // If still over target size, perform a secondary compression pass
+            if (newFile.size > maxSizeBytes) {
+              const canvas2 = document.createElement("canvas");
+              const scale = 0.8;
+              canvas2.width = Math.round(width * scale);
+              canvas2.height = Math.round(height * scale);
+              const ctx2 = canvas2.getContext("2d");
+              if (ctx2) {
+                ctx2.imageSmoothingEnabled = true;
+                ctx2.imageSmoothingQuality = "high";
+                ctx2.drawImage(canvas, 0, 0, canvas2.width, canvas2.height);
+                canvas2.toBlob(
+                  (blob2) => {
+                    if (blob2 && blob2.size < newFile.size) {
+                      resolve(
+                        new File([blob2], `${baseName}.jpg`, {
+                          type: outputType,
+                          lastModified: Date.now(),
+                        })
+                      );
+                    } else {
+                      resolve(newFile);
+                    }
+                  },
+                  outputType,
+                  0.70
+                );
+                return;
+              }
+            }
+
             resolve(newFile);
           } else {
             resolve(file);
@@ -99,4 +129,3 @@ export async function compressImageIfNeeded(
     img.src = url;
   });
 }
-

@@ -513,17 +513,20 @@
 
 /* Sidebar navigation item. */
 .nav-item {
-  @apply relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium text-secondary-text transition-colors hover:bg-muted hover:text-foreground;
+  @apply relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium text-secondary-text transition-all hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/15 dark:hover:text-primary;
 }
 
 .nav-item-active {
-  @apply bg-accent font-semibold text-accent-foreground hover:bg-accent hover:text-accent-foreground;
+  @apply bg-primary/10 text-primary font-semibold shadow-xs border-l-[3.5px] border-primary pl-2 rounded-r-md dark:bg-primary/20 dark:text-primary;
 }
 
-/* Left accent rail that marks the active nav item. */
+.nav-item-active:hover {
+  @apply bg-primary/15 text-primary;
+}
+
+/* Left accent rail fallback */
 .nav-item-active::before {
-  content: "";
-  @apply absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-primary;
+  content: none;
 }
 
 /* Horizontal toolbar row used above tables and lists. */

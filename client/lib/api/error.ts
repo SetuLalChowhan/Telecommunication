@@ -69,23 +69,27 @@ export function toApiError(err: unknown): ApiError {
     }
 
     if (!err.response) {
+      const isFormData =
+        typeof FormData !== 'undefined' && err.config?.data instanceof FormData;
       const isNetworkAborted = err.code === 'ERR_NETWORK' || err.message === 'Network Error';
       const detailMsg =
         err.message && !isNetworkAborted && err.message !== 'Error'
           ? ` (${err.message})`
           : '';
-      return new ApiError(
-        `Unable to reach the server. If uploading a file, please ensure it is under 4MB${detailMsg}.`,
-        {
-          kind: 'network',
-          code: err.code || 'NETWORK',
-        },
-      );
+
+      const message = isFormData
+        ? `Unable to complete file upload. The file may exceed the server limit (max 3.5 MB) or the connection was interrupted. Please compress the file and try again${detailMsg}.`
+        : `Unable to reach the server. Please check your connection or try again${detailMsg}.`;
+
+      return new ApiError(message, {
+        kind: 'network',
+        code: err.code || 'NETWORK',
+      });
     }
 
     if (err.response.status === 413) {
       return new ApiError(
-        'The uploaded file exceeds the server limit (4MB). Please compress the file before uploading.',
+        'The uploaded file exceeds the server limit (3.5 MB). Please compress the file before uploading.',
         {
           status: 413,
           code: 'PAYLOAD_TOO_LARGE',

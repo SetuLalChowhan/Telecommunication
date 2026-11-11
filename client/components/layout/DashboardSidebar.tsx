@@ -172,15 +172,17 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                       onClick={onItemClick}
                       aria-current={isActive ? "page" : undefined}
                       className={cn(
-                        "nav-item flex items-center justify-between",
+                        "nav-item group flex items-center justify-between",
                         isActive && "nav-item-active"
                       )}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <Icon
                           className={cn(
-                            "h-4 w-4 shrink-0",
-                            isActive ? "text-primary" : "text-muted-foreground"
+                            "h-4 w-4 shrink-0 transition-colors",
+                            isActive
+                              ? "text-primary"
+                              : "text-muted-foreground group-hover:text-primary"
                           )}
                         />
                         <span className="truncate">{item.label}</span>

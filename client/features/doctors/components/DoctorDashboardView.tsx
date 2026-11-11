@@ -17,6 +17,7 @@ import { AppointmentDetailsDialog } from "@/features/appointments/components/App
 import { PageHeader } from "@/components/layout";
 import {
   useDoctorDashboard,
+  useMyDoctorProfile,
   useConfirmDoctorBooking,
   useCompleteDoctorBooking,
   useGoogleConnectionStatus,
@@ -77,12 +78,13 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   const { data: dashboardData, isLoading: isDashboardLoading } = useDoctorDashboard();
+  const { data: myProfile, isLoading: isProfileLoading } = useMyDoctorProfile();
   const { data: googleStatus, isLoading: isGoogleLoading } = useGoogleConnectionStatus();
   const confirmMutation = useConfirmDoctorBooking();
   const completeMutation = useCompleteDoctorBooking();
 
   const isDoctorVerified = Boolean(
-    dashboardData?.verified !== undefined ? dashboardData.verified : isVerified
+    dashboardData?.verified || myProfile?.verified || isVerified
   );
   const isGoogleConnected = googleStatus?.isConnected ?? false;
 
@@ -110,7 +112,10 @@ export const DoctorDashboardView: React.FC<DoctorDashboardViewProps> = ({
     adaptBookingToScheduleItem
   );
   const activeSlotsCount = dashboardData?.activeDaysCount ?? 0;
-  const isLoading = (isParentLoading || isDashboardLoading) && !dashboardData;
+  const isLoading =
+    (isParentLoading || isDashboardLoading || isProfileLoading) &&
+    !dashboardData &&
+    !myProfile;
 
   return (
     <div className="w-full space-y-4 sm:space-y-5">
